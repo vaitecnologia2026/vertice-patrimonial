@@ -1,0 +1,357 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── USUÁRIOS / AUTH ──────────────────────────────────────────
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      Role     @default(LIC)
+  avatar    String?
+  ativo     Boolean  @default(true)
+  licId     String?
+  licenciado Licenciado? @relation(fields: [licId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  refreshTokens RefreshToken[]
+  auditoria     Auditoria[]
+}
+
+enum Role {
+  ADMIN
+  LIC
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+// ─── LICENCIADOS ──────────────────────────────────────────────
+model Licenciado {
+  id        String   @id @default(cuid())
+  nome      String
+  empresa   String
+  cnpj      String   @unique
+  estado    String
+  email     String   @unique
+  tel       String
+  pix       String?
+  banco     String?
+  status    StatusLic @default(ATIVO)
+  meta      Float    @default(3000000)
+  inicio    DateTime
+  ano       Int      @default(1)
+  taxa      String   @default("cobrado")
+  comHE     Float    @default(1.0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users      User[]
+  clientes   Cliente[]
+  vendas     Venda[]
+  comissoes  Comissao[]
+  metas      Meta[]
+}
+
+enum StatusLic {
+  ATIVO
+  SUSPENSO
+  INATIVO
+}
+
+// ─── CLIENTES ────────────────────────────────────────────────
+model Cliente {
+  id        String   @id @default(cuid())
+  nome      String
+  cpf       String   @unique
+  tel       String?
+  email     String?
+  orig      String?
+  end       String?
+  status    StatusCli @default(ATIVO)
+  prod      String?
+  data      DateTime @default(now())
+  licId     String
+  licenciado Licenciado @relation(fields: [licId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  vendas     Venda[]
+  kanbanCards KanbanCard[]
+}
+
+enum StatusCli {
+  ATIVO
+  FECHADO
+  PERDIDO
+}
+
+// ─── KANBAN CRM ──────────────────────────────────────────────
+model KanbanCard {
+  id        String   @id @default(cuid())
+  cliId     String
+  cliente   Cliente  @relation(fields: [cliId], references: [id])
+  licId     String
+  col       String   @default("Prospecção")
+  prod      String?
+  val       Float?
+  dias      Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─── VENDAS ──────────────────────────────────────────────────
+model Venda {
+  id        String   @id @default(cuid())
+  cliId     String
+  cliente   Cliente  @relation(fields: [cliId], references: [id])
+  licId     String
+  licenciado Licenciado @relation(fields: [licId], references: [id])
+  prod      String
+  val       Float
+  canal     String   @default("Licenciado")
+  status    StatusVenda @default(ABERTA)
+  comStatus String   @default("pendente")
+  opId      String?
+  data      DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  comissoes  Comissao[]
+  contrato   Contrato?
+}
+
+enum StatusVenda {
+  ABERTA
+  FECHADA
+  CANCELADA
+}
+
+// ─── COMISSÕES ───────────────────────────────────────────────
+model Comissao {
+  id          String   @id @default(cuid())
+  vendaId     String
+  venda       Venda    @relation(fields: [vendaId], references: [id])
+  licId       String
+  licenciado  Licenciado @relation(fields: [licId], references: [id])
+  prod        String
+  valNeg      Float
+  regra       String?
+  comEmpresa  Float
+  val         Float
+  comAdv      Float    @default(0)
+  comAna      Float    @default(0)
+  netEmpresa  Float
+  papel       String   @default("Licenciado")
+  status      StatusCom @default(PENDENTE)
+  recorrente  Boolean  @default(false)
+  totalFuturo Float?
+  data        DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+enum StatusCom {
+  PENDENTE
+  PAGO
+  CANCELADO
+}
+
+// ─── OPERAÇÕES (Arrematação / Home Equity / etc) ─────────────
+model Operacao {
+  id         String   @id @default(cuid())
+  tipo       TipoOp
+  cliId      String?
+  licId      String?
+  status     String   @default("em_analise")
+  // Arrematação
+  end        String?
+  bairro     String?
+  cidade     String?
+  tipo_imovel String?
+  modalidade String?
+  leilao     DateTime?
+  lance      Float?
+  aval       Float?
+  deb        Float?
+  ref        Float?
+  mes        String?
+  // Home Equity
+  valImovel  Float?
+  valSolicit Float?
+  prazo      Int?
+  taxa       Float?
+  // Revisão Contratual
+  banco      String?
+  contratoCodigo String?
+  dataContrato DateTime?
+  motivo     String?
+  economia   Float?
+  // Clube do Milhão
+  grupo      Int?
+  cota       Int?
+  parcelas   Int?
+  parcelaPagas Int?
+  valorMensal Float?
+  assembleia DateTime?
+  cl         Json?
+  msgs       Json?
+  resp       String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+enum TipoOp {
+  ARREMATA
+  HOMEEQUITY
+  REVISAO
+  CLUBE
+}
+
+// ─── CONTRATOS ───────────────────────────────────────────────
+model Contrato {
+  id        String   @id @default(cuid())
+  vendaId   String   @unique
+  venda     Venda    @relation(fields: [vendaId], references: [id])
+  numero    String   @unique
+  tipo      String
+  status    StatusContrato @default(RASCUNHO)
+  hash      String?
+  hashPrev  String?
+  dataAss   DateTime?
+  pdf       String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum StatusContrato {
+  RASCUNHO
+  ASSINADO
+  CANCELADO
+}
+
+// ─── DOCUMENTOS ──────────────────────────────────────────────
+model Documento {
+  id        String   @id @default(cuid())
+  nome      String
+  tipo      String
+  tam       String?
+  status    StatusDoc @default(PENDENTE)
+  url       String?
+  cliId     String?
+  licId     String?
+  data      DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum StatusDoc {
+  PENDENTE
+  ENTREGUE
+  REJEITADO
+}
+
+// ─── METAS ───────────────────────────────────────────────────
+model Meta {
+  id        String   @id @default(cuid())
+  licId     String
+  licenciado Licenciado @relation(fields: [licId], references: [id])
+  periodo   String   // "Q2/2026"
+  meta      Float
+  realizado Float    @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─── CONSÓRCIOS ──────────────────────────────────────────────
+model Consorcio {
+  id        String   @id @default(cuid())
+  tipo      String   // imovel, veiculo, servico, outros
+  nome      String
+  admin     String
+  carta     String
+  prazo     String?
+  parcela   String?
+  taxa      String?
+  comissao  String?
+  tabela    String?
+  visivel   Boolean  @default(true)
+  status    String   @default("aprovado")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─── ÁREA DE MEMBROS ─────────────────────────────────────────
+model Curso {
+  id        String   @id @default(cuid())
+  titulo    String
+  desc      String?
+  thumb     String?
+  ativo     Boolean  @default(true)
+  ordem     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  modulos   Modulo[]
+}
+
+model Modulo {
+  id        String   @id @default(cuid())
+  cursoId   String
+  curso     Curso    @relation(fields: [cursoId], references: [id], onDelete: Cascade)
+  titulo    String
+  ordem     Int      @default(0)
+  createdAt DateTime @default(now())
+
+  aulas     Aula[]
+}
+
+model Aula {
+  id        String   @id @default(cuid())
+  moduloId  String
+  modulo    Modulo   @relation(fields: [moduloId], references: [id], onDelete: Cascade)
+  titulo    String
+  video     String?
+  desc      String?
+  pdf       String?
+  ordem     Int      @default(0)
+  createdAt DateTime @default(now())
+}
+
+// ─── CONFIGURAÇÃO DA LICENÇA ─────────────────────────────────
+model Configuracao {
+  id         String  @id @default("singleton")
+  nomeEmpresa String @default("Vértice")
+  corPrimaria String @default("#F87131")
+  corSidebar  String @default("#FDFEFF")
+  corBG       String @default("#F4F6F9")
+  corCard     String @default("#FFFFFF")
+  logo        String?
+  updatedAt  DateTime @updatedAt
+}
+
+// ─── AUDITORIA ───────────────────────────────────────────────
+model Auditoria {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  action    String
+  entity    String?
+  entityId  String?
+  desc      String?
+  ip        String?
+  createdAt DateTime @default(now())
+}
