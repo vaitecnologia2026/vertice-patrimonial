@@ -3913,8 +3913,8 @@ a:focus-visible { outline: 2px solid var(--v-ink) !important; outline-offset: 2p
 //  Camada de integração com o backend Node.js/Express
 //  Se API_URL não estiver definida, o sistema opera em modo local (localStorage)
 // ══════════════════════════════════════════════════════════════
-const API_URL = window.__VERTICE_API__ || '';  // Ex: 'https://api.seudominio.com.br'
-const API_MODE = !!API_URL; // true = conectado ao backend, false = localStorage
+const API_URL = window.__VERTICE_API__ || '';  // Ex: 'https://api.seudominio.com.br' ou '' para mesmo domínio
+const API_MODE = !window.__VERTICE_LOCAL_MODE__; // true = usa backend, false = modo local (setar window.__VERTICE_LOCAL_MODE__=true para desativar)
 
 const API = {
   _tokens: {
@@ -4729,133 +4729,30 @@ function toggleTheme(){
 // ══ STATE ══
 const S={role:'admin',screen:'dashboard',user:{name:'Ana Vértice',role:'Admin Master',av:'A'},selRole:'admin',dragging:null,draggingFrom:null,params:{}};
 
-// ══ MOCK DATA v3 ══
+// ══ DADOS ══
 const D={
-  licenciados:[
-    {id:'L001',nome:'João Silva',empresa:'Silva Parceiros LTDA',cnpj:'12.345.678/0001-90',estado:'SP',email:'joao@parceiro.com.br',tel:'(11) 98765-4321',pix:'joao@parceiro.com.br',banco:'Itaú · Ag 1234 · CC 56789-0',status:'ativo',vendas:14,vol:2340000,meta:3000000,pct:78,com:87300,taxa:'isento',inicio:'2024-01-15',ano:2,ticket:167143,conv:38,leads:37,rank:2,comHE:1},
-    {id:'L002',nome:'Maria Costa',empresa:'Costa Negócios ME',cnpj:'98.765.432/0001-10',estado:'RJ',email:'maria@costa.com.br',tel:'(21) 97654-3210',pix:'maria@costa.com.br',banco:'Bradesco · Ag 5678 · CC 12345-6',status:'ativo',vendas:8,vol:1200000,meta:3000000,pct:40,com:36000,taxa:'cobrado',inicio:'2024-03-10',ano:2,ticket:150000,conv:22,leads:36,rank:3,comHE:1},
-    {id:'L003',nome:'Roberto Lima',empresa:'Lima & Associados',cnpj:'11.222.333/0001-44',estado:'MG',email:'roberto@lima.com.br',tel:'(31) 96543-2109',pix:'roberto@lima.com.br',banco:'BB · Ag 9012 · CC 34567-8',status:'ativo',vendas:22,vol:4100000,meta:3000000,pct:137,com:183000,taxa:'isento',inicio:'2023-08-20',ano:3,ticket:186364,conv:55,leads:40,rank:1,comHE:1.5},
-    {id:'L004',nome:'Fernanda Ramos',empresa:'Ramos Consultoria',cnpj:'55.444.333/0001-77',estado:'PR',email:'fernanda@ramos.com.br',tel:'(41) 95432-1098',pix:'fernanda@ramos.com.br',banco:'Caixa · Ag 3456 · CC 78901-2',status:'suspenso',vendas:2,vol:200000,meta:3000000,pct:7,com:6000,taxa:'inadimplente',inicio:'2024-06-01',ano:1,ticket:100000,conv:8,leads:25,rank:4,comHE:1},
-  ],
-  clientes:[
-    {id:'C001',nome:'Carlos Mendes',cpf:'123.456.789-01',tel:'(11) 98765-4321',email:'carlos@email.com',orig:'Indicação',owner:'L001',ownerNome:'João Silva',prod:'Arrematação Individual',status:'ativo',data:'2026-03-15',end:'Av. Paulista, 1578, Apto 42, SP'},
-    {id:'C002',nome:'Ana Paula Souza',cpf:'234.567.890-12',tel:'(21) 97654-3210',email:'ana@email.com',orig:'Instagram',owner:'L001',ownerNome:'João Silva',prod:'Home Equity',status:'ativo',data:'2026-03-18',end:'Rua Copacabana, 300, RJ'},
-    {id:'C003',nome:'Roberto Freitas',cpf:'345.678.901-23',tel:'(31) 96543-2109',email:'roberto.f@email.com',orig:'Evento',owner:'L002',ownerNome:'Maria Costa',prod:'Revisão Contratual',status:'ativo',data:'2026-03-22',end:'Rua Minas, 500, BH/MG'},
-    {id:'C004',nome:'Beatriz Nunes',cpf:'456.789.012-34',tel:'(41) 95432-1098',email:'beatriz@email.com',orig:'Google',owner:'L001',ownerNome:'João Silva',prod:'Arrematação Individual',status:'fechado',data:'2026-03-28',end:'Av. Iguaçu, 1000, CWB/PR'},
-    {id:'C005',nome:'Paulo Ramos',cpf:'567.890.123-45',tel:'(51) 94321-0987',email:'paulo@email.com',orig:'WhatsApp',owner:'L003',ownerNome:'Roberto Lima',prod:'Clube do Milhão',status:'ativo',data:'2026-04-01',end:'Av. Borges, 700, POA/RS'},
-  ],
-  // OPERACOES com fluxo real bifurcado
-  operacoes:[
-    {id:'OP001',cliId:'C004',cli:'Beatriz Nunes',prod:'Arrematação Individual',lic:'L001',licNome:'João Silva',val:1100000,status:'concluida',
-     contrato:'CTR-001',contratoStatus:'vigente',inicio:'2026-03-28',
-     fluxo:{
-       leilaoId:'ok',lanceRealizado:'ok',arrematado:'ok',pagamentoLance:'ok',
-       cartaTipo:'judicial',carta:'ok',
-       itbi:'ok',escritura:'pulou',
-       posseTipo:'mansa',posse:'ok',
-       cartorio:'ok',reforma:'nao',
-       desfecho:'venda',desfechoStatus:'ok'
-     },
-     tarefas:[
-       {id:'T1',etapa:'cartorio',texto:'Enviar documentação ao 5º RI',resp:'Adm.',status:'ok',data:'2026-03-30'},
-       {id:'T2',etapa:'desfecho',texto:'Publicar anúncio de venda - Zap e QuintoAndar',resp:'Equipe Comercial',status:'ok',data:'2026-04-01'},
-     ]},
-    {id:'OP002',cliId:'C001',cli:'Carlos Mendes',prod:'Arrematação Individual',lic:'L001',licNome:'João Silva',val:800000,status:'em_andamento',
-     contrato:'CTR-003',contratoStatus:'pendente',inicio:'2026-04-03',
-     fluxo:{
-       leilaoId:'ok',lanceRealizado:'ok',arrematado:'ok',pagamentoLance:'ok',
-       cartaTipo:'judicial',carta:'ok',
-       itbi:'andamento',escritura:null,
-       posseTipo:null,posse:null,
-       cartorio:null,reforma:null,
-       desfecho:null,desfechoStatus:null
-     },
-     tarefas:[
-       {id:'T3',etapa:'itbi',texto:'Aguardar aprovação do ITBI na prefeitura',resp:'Jurídico',status:'andamento',data:'2026-04-10'},
-     ]},
-    {id:'OP003',cliId:'C002',cli:'Ana Paula Souza',prod:'Home Equity',lic:'L001',licNome:'João Silva',val:300000,comPct:1,status:'em_andamento',
-     contrato:'CTR-002',contratoStatus:'enviado',inicio:'2026-04-03',
-     etapas:['Contrato Assinado','Avaliação do Imóvel','Aprovação de Crédito','Liberação','Quitação'],
-     etapasStatus:['ok','ok','andamento','n','n'],tarefas:[]},
-    {id:'OP004',cliId:'C005',cli:'Paulo Ramos',prod:'Clube do Milhão',lic:'L003',licNome:'Roberto Lima',val:3300,status:'em_andamento',
-     contrato:'CTR-004',contratoStatus:'vigente',inicio:'2026-04-01',grupo:'G001',cota:18,parcelaPagas:2,totalParcelas:48,foiArrematado:false,tarefas:[]},
-    {id:'OP005',cliId:'C003',cli:'Roberto Freitas',prod:'Revisão Contratual',lic:'L002',licNome:'Maria Costa',val:2000,status:'em_andamento',
-     contrato:null,contratoStatus:'intencao_criada',inicio:'2026-04-04',
-     acoesProtoc:1,acoesNaoProtoc:2,docsEntregues:3,docsPendentes:2,valEstimado:15000,valRealizado:0,tarefas:[]},
-  ],
-  vendas:[
-    {id:'VND-2026-0847',cliId:'C004',cli:'Beatriz Nunes',cpf:'456.789.012-34',prod:'Arrematação Individual',val:1100000,canal:'Licenciado',licId:'L001',lic:'João Silva',data:'2026-03-28',status:'fechada',comStatus:'pago',opId:'OP001'},
-    {id:'VND-2026-0851',cliId:'C005',cli:'Paulo Ramos',cpf:'567.890.123-45',prod:'Clube do Milhão',val:3300,canal:'Licenciado',licId:'L003',lic:'Roberto Lima',data:'2026-04-01',status:'fechada',comStatus:'pendente',opId:'OP004'},
-    {id:'VND-2026-0853',cliId:'C002',cli:'Ana Paula Souza',cpf:'234.567.890-12',prod:'Home Equity',val:300000,canal:'Licenciado',licId:'L001',lic:'João Silva',data:'2026-04-03',status:'em_andamento',comStatus:'pendente',opId:'OP003'},
-    {id:'VND-2026-0855',cliId:'C001',cli:'Carlos Mendes',cpf:'123.456.789-01',prod:'Arrematação Individual',val:800000,canal:'Licenciado',licId:'L001',lic:'João Silva',data:'2026-04-03',status:'em_andamento',comStatus:'aprovado',opId:'OP002'},
-    {id:'VND-2026-0860',cliId:'C003',cli:'Roberto Freitas',cpf:'345.678.901-23',prod:'Revisão Contratual',val:2000,canal:'Licenciado',licId:'L002',lic:'Maria Costa',data:'2026-04-04',status:'em_andamento',comStatus:'pendente',opId:'OP005'},
-  ],
-  comissoes:[
-    {id:'COM-001',venda:'VND-2026-0847',cli:'Beatriz Nunes',prod:'Arrematação Individual',valNeg:1100000,regra:'≥R$1M: 10% empresa → 30% licenciado',comEmpresa:110000,val:33000,comAdv:1650,comAna:1650,netEmpresa:73700,papel:'Licenciado',bene:'João Silva',status:'pago',data:'2026-03-30'},
-    {id:'COM-002',venda:'VND-2026-0851',cli:'Paulo Ramos',prod:'Clube do Milhão',valNeg:3300,regra:'R$150/mês × 36 + R$2.000',comEmpresa:660,val:150,comAdv:0,comAna:0,netEmpresa:510,papel:'Licenciado',bene:'Roberto Lima',status:'pendente',data:'2026-04-01',recorrente:true,totalFuturo:7400},
-    {id:'COM-003',venda:'VND-2026-0853',cli:'Ana Paula Souza',prod:'Home Equity',valNeg:300000,regra:'1% sobre valor liberado',comEmpresa:3000,val:3000,comAdv:0,comAna:0,netEmpresa:0,papel:'Licenciado',bene:'João Silva',status:'pendente',data:'2026-04-03'},
-    {id:'COM-004',venda:'VND-2026-0855',cli:'Carlos Mendes',prod:'Arrematação Individual',valNeg:800000,regra:'<R$1M: 12% empresa → 30% licenciado',comEmpresa:96000,val:28800,comAdv:1440,comAna:1440,netEmpresa:64320,papel:'Licenciado',bene:'João Silva',status:'aprovado',data:'2026-04-03'},
-    {id:'COM-005',venda:'VND-2026-0860',cli:'Roberto Freitas',prod:'Revisão Contratual',valNeg:2000,regra:'Entrada: 50% empresa / 50% licenciado',comEmpresa:1000,val:1000,comAdv:0,comAna:0,netEmpresa:1000,papel:'Licenciado',bene:'Maria Costa',status:'pendente',data:'2026-04-04',valFuturo:15000,pctFuturo:30},
-  ],
-  grupos:[
-    {id:'G001',nome:'Grupo Abr/26 · Lote 1',mes:'Abril/2026',cotas:20,ocup:17,proxArrem:'Out/2026',status:'aberto',val:3300,prazo:48},
-    {id:'G002',nome:'Grupo Mar/26 · Lote 2',mes:'Março/2026',cotas:20,ocup:20,proxArrem:'Set/2026',status:'completo',val:3300,prazo:48},
-    {id:'G003',nome:'Grupo Abr/26 · Lote 2',mes:'Abril/2026',cotas:20,ocup:19,proxArrem:'Out/2026',status:'aberto',val:3300,prazo:48},
-    {id:'G004',nome:'Grupo Mai/26 · Lote 1',mes:'Maio/2026',cotas:20,ocup:5,proxArrem:'Nov/2026',status:'aberto',val:3300,prazo:48},
-  ],
-  cotas_G001:['Carlos Mendes','Ana Paula Souza','Roberto Freitas','Beatriz Nunes','Paulo Ramos','Claudia Torres','João Oliveira','Maria Lima','Pedro Costa','Felipe Araújo','Sandra Melo','Ricardo Dias','Cristina Santos','André Ferreira','Patricia Rocha','Marcos Souza','Tatiana Nunes'],
-  cotas_G001_lic:['L001','L001','L002','L001','L003','L003','L001','L002','L003','L001','L002','L003','L001','L002','L003','L001','L002'],
-  contratos:[
-    {id:'CTR-001',cli:'Beatriz Nunes',prod:'Arrematação Individual',val:1100000,status:'vigente',data:'2026-03-28',ass:'2026-03-29',hash:'a3f9e8c2d1b7...4e2a1',lic:'João Silva',opId:'OP001'},
-    {id:'CTR-002',cli:'Ana Paula Souza',prod:'Home Equity',val:300000,status:'contrato_enviado',data:'2026-04-03',ass:null,hash:'b7f2c1d4e8...9a3f',lic:'João Silva',opId:'OP003'},
-    {id:'CTR-003',cli:'Carlos Mendes',prod:'Arrematação Individual',val:800000,status:'contrato_gerado',data:'2026-04-03',ass:null,hash:'c9d3e7f1a2...5b8e',lic:'João Silva',opId:'OP002'},
-    {id:'CTR-004',cli:'Paulo Ramos',prod:'Clube do Milhão',val:3300,status:'vigente',data:'2026-04-01',ass:'2026-04-01',hash:'d4e8f2a1b7...3c9f',lic:'Roberto Lima',opId:'OP004'},
-    {id:'CTR-005',cli:'Roberto Freitas',prod:'Revisão Contratual',val:2000,status:'intencao_criada',data:'2026-04-04',ass:null,hash:null,lic:'Maria Costa',opId:'OP005'},
-  ],
-  parcelas:[
-    {lic:'L001',licNome:'João Silva',desc:'Parcela 4/10 · Licença',venc:'10/04/2026',val:10000,status:'em_dia'},
-    {lic:'L001',licNome:'João Silva',desc:'Parcela 5/10 · Licença',venc:'10/05/2026',val:10000,status:'futuro'},
-    {lic:'L002',licNome:'Maria Costa',desc:'Taxa de Manutenção · Abr/26',venc:'01/04/2026',val:5000,status:'em_atraso'},
-    {lic:'L003',licNome:'Roberto Lima',desc:'Licença quitada',venc:'10/2025',val:10000,status:'pago'},
-    {lic:'L004',licNome:'Fernanda Ramos',desc:'Taxa de Manutenção · Abr/26',venc:'01/04/2026',val:5000,status:'inadimplente'},
-  ],
-  oportunidades:[
-    {id:'OPT-001',titulo:'Leilão Judicial · Ap. 3 Dorm. Paraíso - SP',prod:'Arrematação Individual',data:'2026-04-18',estado:'SP',cidade:'São Paulo',val:380000,desc:'Apartamento 80m² no Paraíso. Débito IPTU. Leilão 2ª praça. Excelente rentabilidade estimada em 28% ao ano.',status:'disponivel',semana:'Esta semana',img:'',linkEstudo:'https://drive.google.com/...'},
-    {id:'OPT-002',titulo:'Leilão Judicial · Casa em Condomínio - BH',prod:'Arrematação Individual',data:'2026-04-22',estado:'MG',cidade:'Belo Horizonte',val:520000,desc:'Casa 160m² em condomínio fechado. Execução de dívida. Ótima localização, infraestrutura completa.',status:'disponivel',semana:'Esta semana',img:'',linkEstudo:''},
-    {id:'OPT-003',titulo:'Home Equity · Liberação Express - RJ/SP',prod:'Home Equity',data:'2026-04-25',estado:'RJ',cidade:'Rio de Janeiro',val:250000,desc:'Taxa especial para imóveis quitados acima de R$400k. Aprovação em até 15 dias úteis.',status:'disponivel',semana:'Próxima semana',img:'',linkEstudo:'https://drive.google.com/...'},
-    {id:'OPT-004',titulo:'Revisão de Financiamento · Banco do Brasil',prod:'Revisão Contratual',data:'2026-04-26',estado:'Nacional',cidade:'Nacional',val:15000,desc:'Campanha de revisão de contratos BB pré-2020. Alto índice de êxito confirmado. Estimativa R$15k de retorno médio.',status:'disponivel',semana:'Próxima semana',img:'',linkEstudo:'https://drive.google.com/...'},
-    {id:'OPT-005',titulo:'Leilão · Sala Comercial 45m² - Santo André',prod:'Arrematação Individual',data:'2026-05-08',estado:'SP',cidade:'Santo André',val:210000,desc:'Sala no centro de Santo André. Débito apenas IPTU. Fácil regularização.',status:'disponivel',semana:'Este mês',img:'',linkEstudo:''},
-    {id:'OPT-006',titulo:'Clube do Milhão · Grupo Mai/26 Lote 2',prod:'Clube do Milhão',data:'2026-05-01',estado:'Nacional',cidade:'Nacional',val:3300,desc:'Novas vagas abertas para maio/2026. Apenas 12 cotas disponíveis. Próxima arrematação: Nov/2026.',status:'disponivel',semana:'Este mês',img:'',linkEstudo:''},
-  ],
+  licenciados:[],
+  clientes:[],
+  operacoes:[],
+  vendas:[],
+  comissoes:[],
+  grupos:[],
+  cotas_G001:[],
+  cotas_G001_lic:[],
+  contratos:[],
+  parcelas:[],
+  oportunidades:[],
   kanban:{
-    'Prospecção':[{id:'K1',nome:'Carlos Mendes',orig:'Indicação',lic:'João Silva',resp:'Ana Costa',dias:2,val:450000,prod:'Arrematação Ind.'},{id:'K2',nome:'Maria Santos',orig:'Instagram',lic:'João Silva',resp:'Ana Costa',dias:4,val:0,prod:'Home Equity'},{id:'K3',nome:'Felipe Andrade',orig:'Google',lic:'Roberto Lima',resp:'Bruno Araújo',dias:7,val:200000,prod:'Revisão Cont.'}],
-    'Qualificado':[{id:'K4',nome:'Roberto Lima Jr',orig:'WhatsApp',lic:'Roberto Lima',resp:'Ana Costa',dias:3,val:1200000,prod:'Arrematação Ind.'},{id:'K5',nome:'Ana Paula',orig:'Evento',lic:'Maria Costa',resp:'Ana Costa',dias:5,val:800000,prod:'Arrematação Ind.'}],
-    'Proposta':[{id:'K6',nome:'Fernanda Costa',orig:'Indicação',lic:'João Silva',resp:'Bruno Araújo',dias:8,val:950000,prod:'Arrematação Ind.'}],
-    'Negociação':[{id:'K7',nome:'Paulo Ramos',orig:'WhatsApp',lic:'Roberto Lima',resp:'Ana Costa',dias:1,val:1500000,prod:'Arrematação Ind.'}],
-    'Fechado':[{id:'K8',nome:'Beatriz Nunes',orig:'Google',lic:'João Silva',resp:'Ana Costa',dias:0,val:1100000,prod:'Arrematação Ind.'}],
-    'Perdido':[{id:'K9',nome:'Carlos Oliveira',orig:'Instagram',lic:'Maria Costa',resp:'Bruno Araújo',dias:15,val:800000,prod:'Arrematação Ind.'}],
+    'Prospecção':[],
+    'Qualificado':[],
+    'Proposta':[],
+    'Negociação':[],
+    'Fechado':[],
+    'Perdido':[],
   },
-  docs:[
-    {id:'D001',nome:'Contrato Arrematação - Beatriz Nunes.pdf',cliId:'C004',cli:'Beatriz Nunes',licId:'L001',lic:'João Silva',tipo:'Contrato',data:'2026-03-29',tam:'245 KB',status:'entregue'},
-    {id:'D002',nome:'RG - Carlos Mendes.jpg',cliId:'C001',cli:'Carlos Mendes',licId:'L001',lic:'João Silva',tipo:'Doc. Pessoal',data:'2026-04-03',tam:'1.2 MB',status:'entregue'},
-    {id:'D003',nome:'IPTU - Imóvel Leilão SP.pdf',cliId:'C001',cli:'Carlos Mendes',licId:'L001',lic:'João Silva',tipo:'Imóvel',data:'2026-04-02',tam:'89 KB',status:'pendente'},
-    {id:'D004',nome:'Comprovante Renda - Paulo Ramos.pdf',cliId:'C005',cli:'Paulo Ramos',licId:'L003',lic:'Roberto Lima',tipo:'Financeiro',data:'2026-04-01',tam:'320 KB',status:'entregue'},
-  ],
-  logs:[
-    {time:'04/04/2026 15:42:33',action:'VENDA_CRIADA',actor:'João Silva (Lic.)',desc:'VND-2026-0855 · Carlos Mendes · R$800.000 · Arrematação Ind.'},
-    {time:'04/04/2026 14:18:07',action:'CPF_DUPLICADO',actor:'Maria Costa (Lic.)',desc:'Tentativa CPF 456.789.012-34 (Beatriz Nunes). Bloqueado automaticamente.'},
-    {time:'04/04/2026 13:55:22',action:'COMISSAO_APROV',actor:'Admin Financeiro',desc:'COM-004 aprovada · R$28.800 · João Silva'},
-    {time:'04/04/2026 12:30:11',action:'CONTRATO_GERADO',actor:'Admin Jurídico',desc:'CTR-003 · Carlos Mendes · SHA256: c9d3...5b8e'},
-    {time:'04/04/2026 11:15:45',action:'CLIENTE_CRIADO',actor:'João Silva (Lic.)',desc:'Carlos Mendes cadastrado · CPF validado ✓ · Ownership: L001'},
-    {time:'03/04/2026 17:44:02',action:'CONFIG_UPDATE',actor:'Admin Master',desc:'Parcelas: 10x R$10.000 · Taxa: R$5.000/mês · Vigência: 01/05/2026'},
-  ],
-  usuarios:[
-    {id:'U001',nome:'Ana Vértice',email:'ana@vertice.com.br',perfil:'Admin Master',status:'ativo',last:'Agora'},
-    {id:'U002',nome:'Marcos Financeiro',email:'marcos@vertice.com.br',perfil:'Financeiro',status:'ativo',last:'Há 2h'},
-    {id:'U003',nome:'Dra. Patricia Melo',email:'patricia@vertice.com.br',perfil:'Jurídico',status:'ativo',last:'Há 1d'},
-    {id:'U004',nome:'Ana Costa',email:'anac@vertice.com.br',perfil:'Analista',status:'ativo',last:'Há 5h'},
-    {id:'U005',nome:'Camila Marketing',email:'camila@vertice.com.br',perfil:'Marketing',status:'ativo',last:'Há 4h'},
-  ],
+  docs:[],
+  logs:[],
+  usuarios:[],
 };
 
 // ══ NAV ══
@@ -4863,7 +4760,7 @@ const ADMIN_NAV=[
   {s:'Principal'},{id:'dashboard',i:'dashboard',l:'Dashboard'},
   {s:'Comercial'},{id:'licenciados',i:'licenciados',l:'Licenciados'},{id:'clientes',i:'clientes',l:'Clientes'},{id:'crm',i:'crm',l:'CRM · Kanban'},{id:'oportunidades',i:'oportunidades',l:'Oportunidades'},{id:'vendas',i:'vendas',l:'Vendas'},
   {s:'Produtos'},{id:'arremata',i:'arremata',l:'Arrematação Individual'},{id:'homeequity',i:'homeequity',l:'Home Equity'},{id:'revisao',i:'revisao',l:'Revisão Contratual'},{id:'clube',i:'clube',l:'Clube do Milhão'},
-  {s:'Financeiro'},{id:'comissoes',i:'comissoes',l:'Comissões',b:'3'},{id:'financeiro',i:'financeiro',l:'Financeiro'},{id:'contas',i:'contas',l:'Contas a Receber'},
+  {s:'Financeiro'},{id:'comissoes',i:'comissoes',l:'Comissões'},{id:'financeiro',i:'financeiro',l:'Financeiro'},{id:'contas',i:'contas',l:'Contas a Receber'},
   {s:'Operações'},{id:'contratos',i:'contratos',l:'Contratos'},{id:'documentos',i:'documentos',l:'Documentos'},
   {s:'Gestão'},{id:'metas',i:'metas',l:'Metas & Performance'},{id:'cfg-licenca',i:'config',l:'Configurações'},{id:'usuarios',i:'usuarios',l:'Usuários'},{id:'auditoria',i:'auditoria',l:'Auditoria'},
 ];
@@ -5128,7 +5025,7 @@ SCREENS['recuperar']=()=>`<div style="position:fixed;inset:0;background:var(--bg
 SCREENS['dashboard']=()=>S.role==='admin'?adminDash():licDash();
 
 function adminDash(){
-  const bars=[60,75,45,88,92,55,78,84,40,67,95,80];const mx=Math.max(...bars);
+  const bars=[];const mx=bars.length?Math.max(...bars):1;
   const totalVol=D.licenciados.reduce((s,l)=>s+l.vol,0);const pctG=Math.round(totalVol/12000000*100);
   return `<div class="page">
   <div class="ph">
@@ -5137,28 +5034,26 @@ function adminDash(){
     <select style="font-size:10px;border-radius:4px;padding:5px 10px;background:var(--clarity);border:1.5px solid var(--border);color:var(--dark);font-family:var(--fm)"><option>Q2/2026</option><option>Q1/2026</option></select></div>
   </div>
 
-  <!-- ALERTAS -->
-  <div class="alert alert-e" style="margin-bottom:6px"><span class="ai"></span><div style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--red);margin-right:8px;flex-shrink:0"></div><b>2 CPFs duplicados</b> aguardam decisão há +24h. <span style="cursor:pointer;text-decoration:underline" onclick="go('cpf-dup')">Resolver →</span></div></div>
-  <div class="alert alert-e" style="margin-bottom:6px"><span class="ai" style="width:16px;height:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="10" height="10" viewBox="0 0 10 10" fill="var(--red)"><circle cx="5" cy="5" r="5"/></svg></span><div><b>Fernanda Ramos</b> inadimplente há 2 meses. Suspensão automática ativa.</div></div>
-  <div class="alert alert-w" style="margin-bottom:16px"><span class="ai" style="width:16px;height:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="12" height="11" viewBox="0 0 12 11" fill="none" stroke="var(--gold2)" stroke-width="1.5" stroke-linecap="round"><path d="M6 1L1 10h10L6 1z"/><line x1="6" y1="4" x2="6" y2="7"/><circle cx="6" cy="9" r=".5" fill="var(--gold2)"/></svg></span><div><b>3 comissões</b> pendentes · R$ 32.950. <span style="cursor:pointer;text-decoration:underline" onclick="go('comissoes')">Aprovar →</span></div></div>
+  <!-- ALERTAS DINÂMICOS -->
+  ${(()=>{const inad=D.licenciados.filter(l=>l.taxa==='inadimplente');const pend=D.comissoes.filter(c=>c.status==='pendente');const alerts=[];if(inad.length)alerts.push(`<div class="alert alert-e" style="margin-bottom:6px"><div><b>${inad.map(l=>l.nome).join(', ')}</b> inadimplente${inad.length>1?'s':''} — suspensão automática ativa.</div></div>`);if(pend.length)alerts.push(`<div class="alert alert-w" style="margin-bottom:6px"><div><b>${pend.length} comissão${pend.length>1?'ões':''}</b> pendente${pend.length>1?'s':''} · ${RM(pend.reduce((s,c)=>s+c.val,0))}. <span style="cursor:pointer;text-decoration:underline" onclick="go('comissoes')">Aprovar →</span></div></div>`);return alerts.join('');})()}
 
   <!-- FORECAST -->
   <div class="section-divider">Visão Financeira · Q2/2026</div>
   <div class="forecast mb16">
-    <div class="fc-cell"><div class="fc-lbl">Esperado</div><div class="fc-val">R$ 13,2M</div><div class="fc-bar"><div class="fc-fill" style="width:100%;background:var(--bg5)"></div></div><div style="font-size:9px;color:var(--dim);margin-top:4px;font-family:var(--fm)">Contratos vigentes</div></div>
-    <div class="fc-cell"><div class="fc-lbl">Previsto</div><div class="fc-val" style="color:var(--sem-info)">R$ 5,7M</div><div class="fc-bar"><div class="fc-fill" style="width:43%;background:var(--sem-info)"></div></div><div style="font-size:9px;color:var(--dim);margin-top:4px;font-family:var(--fm)">Pipeline avançado</div></div>
-    <div class="fc-cell"><div class="fc-lbl">Realizado</div><div class="fc-val" style="color:var(--dark3)">R$ 7,84M</div><div class="fc-bar"><div class="fc-fill" style="width:59%;background:var(--dark3)"></div></div><div style="font-size:9px;color:var(--dim);margin-top:4px;font-family:var(--fm)">Vendas fechadas</div></div>
+    <div class="fc-cell"><div class="fc-lbl">Esperado</div><div class="fc-val">${RM(D.contratos.filter(c=>c.status==='vigente').reduce((s,c)=>s+c.val,0))}</div><div class="fc-bar"><div class="fc-fill" style="width:100%;background:var(--bg5)"></div></div><div style="font-size:9px;color:var(--dim);margin-top:4px;font-family:var(--fm)">Contratos vigentes</div></div>
+    <div class="fc-cell"><div class="fc-lbl">Previsto</div><div class="fc-val" style="color:var(--sem-info)">${RM(D.vendas.filter(v=>v.status==='em_andamento').reduce((s,v)=>s+v.val,0))}</div><div class="fc-bar"><div class="fc-fill" style="width:${pctG>0?Math.min(Math.round(D.vendas.filter(v=>v.status==='em_andamento').reduce((s,v)=>s+v.val,0)/12000000*100),100):0}%;background:var(--sem-info)"></div></div><div style="font-size:9px;color:var(--dim);margin-top:4px;font-family:var(--fm)">Pipeline avançado</div></div>
+    <div class="fc-cell"><div class="fc-lbl">Realizado</div><div class="fc-val" style="color:var(--dark3)">${RM(D.vendas.filter(v=>v.status==='fechada').reduce((s,v)=>s+v.val,0))}</div><div class="fc-bar"><div class="fc-fill" style="width:${pctG}%;background:var(--dark3)"></div></div><div style="font-size:9px;color:var(--dim);margin-top:4px;font-family:var(--fm)">Vendas fechadas</div></div>
     <div class="fc-cell"><div class="fc-lbl">Atingido</div><div class="fc-val" style="color:${pctColor(pctG)}">${pctG}%</div><div class="fc-bar"><div class="fc-fill" style="width:${pctG}%;background:${pctColor(pctG)}"></div></div><div style="font-size:9px;color:var(--dim);margin-top:4px;font-family:var(--fm)">Meta R$12M</div></div>
   </div>
 
-  <div class="kpi-grid kpi-g6 mb14">
-    <div class="kpi"><div class="kpi-lbl">Vendas Q2</div><div class="kpi-val">27</div><div class="kpi-chg up">↑ +8 vs Q1</div></div>
-    <div class="kpi"><div class="kpi-lbl">Novos Clientes</div><div class="kpi-val">12</div><div class="kpi-chg up">↑ +4 semana</div></div>
-    <div class="kpi"><div class="kpi-lbl">Leads no CRM</div><div class="kpi-val">9</div><div class="kpi-chg">3 em Negociação</div></div>
-    <div class="kpi"><div class="kpi-lbl">Contratos Ativos</div><div class="kpi-val">4</div><div class="kpi-chg">2 aguard. assin.</div></div>
-    <div class="kpi" style="border-color:var(--red3);background:var(--red2)"><div class="kpi-lbl">Comissões Pend.</div><div class="kpi-val red">R$ 32,9k</div><div class="kpi-chg dn">3 para aprovar</div></div>
-    <div class="kpi"><div class="kpi-lbl">Grupos Clube</div><div class="kpi-val">3 abertos</div><div class="kpi-chg">16 vagas</div></div>
-  </div>
+  ${(()=>{const vendasQ=D.vendas.filter(v=>v.status==='fechada').length;const clientes=D.clientes.length;const leads=Object.values(D.kanban).flat().length;const contratos=D.contratos.filter(c=>c.status==='vigente').length;const comPend=D.comissoes.filter(c=>c.status==='pendente');const gruposAbertos=D.grupos.filter(g=>g.status==='aberto');const vagas=gruposAbertos.reduce((s,g)=>s+(g.cotas-g.ocup),0);return`<div class="kpi-grid kpi-g6 mb14">
+    <div class="kpi"><div class="kpi-lbl">Vendas Q2</div><div class="kpi-val">${vendasQ}</div><div class="kpi-chg">fechadas</div></div>
+    <div class="kpi"><div class="kpi-lbl">Clientes</div><div class="kpi-val">${clientes}</div><div class="kpi-chg">cadastrados</div></div>
+    <div class="kpi"><div class="kpi-lbl">Leads no CRM</div><div class="kpi-val">${leads}</div><div class="kpi-chg">no pipeline</div></div>
+    <div class="kpi"><div class="kpi-lbl">Contratos Ativos</div><div class="kpi-val">${contratos}</div><div class="kpi-chg">vigentes</div></div>
+    <div class="kpi${comPend.length?` style="border-color:var(--red3);background:var(--red2)"`:''}"><div class="kpi-lbl">Comissões Pend.</div><div class="kpi-val${comPend.length?' red':''}">${RM(comPend.reduce((s,c)=>s+c.val,0))}</div><div class="kpi-chg dn">${comPend.length} para aprovar</div></div>
+    <div class="kpi"><div class="kpi-lbl">Grupos Clube</div><div class="kpi-val">${gruposAbertos.length} abertos</div><div class="kpi-chg">${vagas} vagas</div></div>
+  </div>`})()}
 
   <div class="g2 mb12">
     <div class="card">
@@ -5180,12 +5075,13 @@ function adminDash(){
   <div class="g2">
     <div class="card">
       <div class="card-h"><span class="card-ht">Módulos — Resumo</span></div>
-      ${[{i:'',l:'Arrematação Individual',d:'2 em andamento · 1 concluída',c:()=>go('arremata')},
-         {i:'',l:'Home Equity',d:'1 em andamento · Aguardando crédito',c:()=>go('homeequity')},
-         {i:'',l:'Revisão Contratual',d:'1 caso · 1 ação não protocolada',c:()=>go('revisao')},
-         {i:'',l:'Clube do Milhão',d:'4 grupos · 16 vagas disponíveis',c:()=>go('clube')},
-         {i:'',l:'Licenciamento',d:'4 licenciados · 1 suspenso',c:()=>go('licenciados')},
-      ].map(m=>`<div class="fc g10" style="padding:9px 14px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .11s" onclick="(${m.c.toString()})()" onmouseenter="this.style.background='rgba(80,82,88,.02)'" onmouseleave="this.style.background=''">
+      ${(()=>{const ops=D.operacoes;const grps=D.grupos;const lics=D.licenciados;return[
+         {i:'',l:'Arrematação Individual',d:`${ops.filter(o=>o.prod==='Arrematação Individual'&&o.status==='em_andamento').length} em andamento · ${ops.filter(o=>o.prod==='Arrematação Individual'&&o.status==='concluida').length} concluída(s)`,c:()=>go('arremata')},
+         {i:'',l:'Home Equity',d:`${ops.filter(o=>o.prod==='Home Equity'&&o.status==='em_andamento').length} em andamento`,c:()=>go('homeequity')},
+         {i:'',l:'Revisão Contratual',d:`${ops.filter(o=>o.prod==='Revisão Contratual').length} caso(s)`,c:()=>go('revisao')},
+         {i:'',l:'Clube do Milhão',d:`${grps.filter(g=>g.status==='aberto').length} grupos · ${grps.filter(g=>g.status==='aberto').reduce((s,g)=>s+(g.cotas-g.ocup),0)} vagas`,c:()=>go('clube')},
+         {i:'',l:'Licenciamento',d:`${lics.length} licenciado(s) · ${lics.filter(l=>l.status==='suspenso').length} suspenso(s)`,c:()=>go('licenciados')},
+      ]})()}.map(m=>`<div class="fc g10" style="padding:9px 14px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .11s" onclick="(${m.c.toString()})()" onmouseenter="this.style.background='rgba(80,82,88,.02)'" onmouseleave="this.style.background=''">
         <span style="font-size:18px">${m.i}</span><div style="flex:1"><div style="font-size:11px;color:var(--dark);font-weight:500">${m.l}</div><div style="font-size:9.5px;color:var(--muted)">${m.d}</div></div>
         <span style="font-size:10px;color:var(--muted)">→</span>
       </div>`).join('')}
@@ -5202,7 +5098,9 @@ function adminDash(){
 }
 
 function licDash(){
-  const eu=D.licenciados[0];const p=eu.pct;const r=42;const circ=2*Math.PI*r;
+  const eu=D.licenciados[0];
+  if(!eu)return`<div class="page"><div class="alert alert-i" style="margin:24px 0"><div style="font-size:10.5px">Nenhum dado disponível. Aguardando sincronização com o servidor.</div></div></div>`;
+  const p=eu.pct;const r=42;const circ=2*Math.PI*r;
   const minhasVendas=myVendas();const minhasComs=myComs();
   return `<div class="page">
   <div style="padding:14px 18px;background:var(--dark);border-radius:var(--r);margin-bottom:14px;display:flex;align-items:center;gap:12px;box-shadow:var(--sh2)">
@@ -5804,12 +5702,12 @@ SCREENS['comissoes']=()=>S.role==='admin'?comAdmin():comLic();
 function comAdmin(){return `<div class="page">
   <div class="ph"><div class="ph-l"><div class="pt">Comissões</div><div class="ps">Motor v3 · Regras corrigidas por produto</div></div>
   <div class="pa"><button class="btn btn-ok" onclick="toast('Todas aprovadas!','ok')">✓ Aprovar Pendentes</button></div></div>
-  <div class="kpi-grid kpi-g4 mb14">
-    <div class="kpi"><div class="kpi-lbl">Pendente</div><div class="kpi-val red">R$ 32,9k</div></div>
-    <div class="kpi"><div class="kpi-lbl">Aprovado</div><div class="kpi-val" style="color:var(--dark3)">R$ 28,8k</div></div>
-    <div class="kpi"><div class="kpi-lbl">Pago este Mês</div><div class="kpi-val green">R$ 33k</div></div>
-    <div class="kpi"><div class="kpi-lbl">Recorrente (projeção)</div><div class="kpi-val">R$ 17,4k</div></div>
-  </div>
+  ${(()=>{const pend=D.comissoes.filter(c=>c.status==='pendente').reduce((s,c)=>s+c.val,0);const aprov=D.comissoes.filter(c=>c.status==='aprovado').reduce((s,c)=>s+c.val,0);const pago=D.comissoes.filter(c=>c.status==='pago').reduce((s,c)=>s+c.val,0);const recor=D.comissoes.filter(c=>c.recorrente).reduce((s,c)=>s+(c.totalFuturo||0),0);return`<div class="kpi-grid kpi-g4 mb14">
+    <div class="kpi"><div class="kpi-lbl">Pendente</div><div class="kpi-val red">${RM(pend)}</div></div>
+    <div class="kpi"><div class="kpi-lbl">Aprovado</div><div class="kpi-val" style="color:var(--dark3)">${RM(aprov)}</div></div>
+    <div class="kpi"><div class="kpi-lbl">Pago este Mês</div><div class="kpi-val green">${RM(pago)}</div></div>
+    <div class="kpi"><div class="kpi-lbl">Recorrente (projeção)</div><div class="kpi-val">${RM(recor)}</div></div>
+  </div>`})()}
   <div class="tw"><table><thead><tr><th>ID</th><th>Cliente</th><th>Produto</th><th>Regra</th><th>Com. Empresa</th><th>Licenciado</th><th>Adv.</th><th>Analista</th><th>Liq. Empresa</th><th>Beneficiário</th><th>Status</th><th>Ações</th></tr></thead>
   <tbody>${D.comissoes.map(c=>`<tr>
     <td class="td-m xs">${c.id}</td>
@@ -5833,8 +5731,8 @@ function comLic(){const minha=myComs();return `<div class="page">
   <div class="alert alert-i mb12"><span class="ai" style="width:16px;height:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="var(--sem-info)" stroke-width="1.5" stroke-linecap="round"><circle cx="6" cy="6" r="5"/><line x1="6" y1="5.5" x2="6" y2="8.5"/><circle cx="6" cy="3.5" r=".5" fill="var(--sem-info)"/></svg></span><div style="font-size:10px">Você vê apenas as comissões referentes às suas vendas. Valores internos da empresa não são exibidos.</div></div>
   <div class="kpi-grid kpi-g3 mb14">
     <div class="kpi"><div class="kpi-lbl">Total a Receber</div><div class="kpi-val">${RM(minha.reduce((s,c)=>s+c.val,0))}</div></div>
-    <div class="kpi"><div class="kpi-lbl">Aprovado / Pago</div><div class="kpi-val green">${RM(28800)}</div></div>
-    <div class="kpi"><div class="kpi-lbl">Recorrente (projeção)</div><div class="kpi-val">R$ 7.400</div><div class="kpi-sub">Clube · por cliente</div></div>
+    <div class="kpi"><div class="kpi-lbl">Aprovado / Pago</div><div class="kpi-val green">${RM(minha.filter(c=>c.status==='aprovado'||c.status==='pago').reduce((s,c)=>s+c.val,0))}</div></div>
+    <div class="kpi"><div class="kpi-lbl">Recorrente (projeção)</div><div class="kpi-val">${RM(minha.filter(c=>c.recorrente).reduce((s,c)=>s+(c.totalFuturo||0),0))}</div><div class="kpi-sub">Clube · por cliente</div></div>
   </div>
   <div class="tw"><table><thead><tr><th>Data</th><th>Cliente</th><th>Produto</th><th>Regra</th><th>Sua Comissão</th><th>Status</th><th>Valor Futuro</th></tr></thead>
   <tbody>${minha.map(c=>`<tr>
@@ -5851,26 +5749,27 @@ function comLic(){const minha=myComs();return `<div class="page">
 // ══ FINANCEIRO (ADMIN ONLY) ══
 SCREENS['financeiro']=()=>S.role!=='admin'?`<div class="page"><div class="alert alert-e"><span class="ai" style="width:16px;height:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="var(--red)" stroke-width="1.5" stroke-linecap="round"><rect x="2" y="5" width="8" height="6" rx="1"/><path d="M4 5V4a2 2 0 0 1 4 0v1"/></svg></span><div>Acesso restrito. Apenas administradores.</div></div></div>`:`<div class="page">
   <div class="ph"><div class="ph-l"><div class="pt">Financeiro da Empresa</div><div class="ps">DRE consolidado · Visão interna</div></div><div class="pa"><button class="btn btn-s sm">⬇ DRE</button></div></div>
-  <div class="forecast mb14">
-    <div class="fc-cell"><div class="fc-lbl">Receita Esperada</div><div class="fc-val">R$ 13,2M</div></div>
-    <div class="fc-cell"><div class="fc-lbl">Receita Prevista</div><div class="fc-val" style="color:var(--sem-info)">R$ 5,7M</div></div>
-    <div class="fc-cell"><div class="fc-lbl">Receita Realizada</div><div class="fc-val" style="color:var(--dark3)">R$ 7,84M</div></div>
-    <div class="fc-cell"><div class="fc-lbl">Margem Líquida</div><div class="fc-val green">88%</div></div>
-  </div>
+  ${(()=>{const esperado=D.contratos.filter(c=>c.status==='vigente').reduce((s,c)=>s+c.val,0);const previsto=D.vendas.filter(v=>v.status==='em_andamento').reduce((s,v)=>s+v.val,0);const realizado=D.vendas.filter(v=>v.status==='fechada').reduce((s,v)=>s+v.val,0);return`<div class="forecast mb14">
+    <div class="fc-cell"><div class="fc-lbl">Receita Esperada</div><div class="fc-val">${RM(esperado)}</div></div>
+    <div class="fc-cell"><div class="fc-lbl">Receita Prevista</div><div class="fc-val" style="color:var(--sem-info)">${RM(previsto)}</div></div>
+    <div class="fc-cell"><div class="fc-lbl">Receita Realizada</div><div class="fc-val" style="color:var(--dark3)">${RM(realizado)}</div></div>
+    <div class="fc-cell"><div class="fc-lbl">Margem Líquida</div><div class="fc-val green">—</div></div>
+  </div>`})()}
   <div class="g2 mb12">
     <div class="card"><div class="card-h"><span class="card-ht">DRE Simplificado</span></div><div class="card-b">
       <div class="cflow">
-        <div class="crow total"><span class="crow-l">(+) Receita Bruta</span><span class="crow-v">R$ 7.840.000</span></div>
-        <div class="crow debit"><span class="crow-l">(-) Comissões Licenciados</span><span class="crow-v r" style="font-size:11px">− R$ 225.000</span></div>
-        <div class="crow debit"><span class="crow-l">(-) Comissões Internas (adv+ana)</span><span class="crow-v r" style="font-size:11px">− R$ 78.000</span></div>
-        <div class="crow debit"><span class="crow-l">(-) Folha / Equipe</span><span class="crow-v r" style="font-size:11px">− R$ 82.000</span></div>
-        <div class="crow debit"><span class="crow-l">(-) Operacional / TI</span><span class="crow-v r" style="font-size:11px">− R$ 60.000</span></div>
-        <div class="crow"><span class="crow-l">(+) Taxas de Manutenção</span><span class="crow-v" style="font-size:11px">+ R$ 10.000</span></div>
-        <div class="crow net"><span class="crow-l">= Resultado Líquido</span><span class="crow-v g" style="font-size:16px">R$ 7.405.000</span></div>
+        ${(()=>{const receita=D.vendas.filter(v=>v.status==='fechada').reduce((s,v)=>s+v.val,0);const comLic=D.comissoes.filter(c=>c.papel==='Licenciado').reduce((s,c)=>s+c.val,0);const comInt=D.comissoes.reduce((s,c)=>s+(c.comAdv||0)+(c.comAna||0),0);const taxas=D.parcelas.filter(p=>p.status==='pago'||p.status==='em_dia').reduce((s,p)=>s+p.val,0);const resultado=receita-comLic-comInt+taxas;return`
+        <div class="crow total"><span class="crow-l">(+) Receita Bruta</span><span class="crow-v">${RM(receita)}</span></div>
+        <div class="crow debit"><span class="crow-l">(-) Comissões Licenciados</span><span class="crow-v r" style="font-size:11px">− ${RM(comLic)}</span></div>
+        <div class="crow debit"><span class="crow-l">(-) Comissões Internas (adv+ana)</span><span class="crow-v r" style="font-size:11px">− ${RM(comInt)}</span></div>
+        <div class="crow debit"><span class="crow-l">(-) Folha / Equipe</span><span class="crow-v r" style="font-size:11px">— informar manualmente</span></div>
+        <div class="crow debit"><span class="crow-l">(-) Operacional / TI</span><span class="crow-v r" style="font-size:11px">— informar manualmente</span></div>
+        <div class="crow"><span class="crow-l">(+) Taxas de Manutenção</span><span class="crow-v" style="font-size:11px">+ ${RM(taxas)}</span></div>
+        <div class="crow net"><span class="crow-l">= Resultado Líquido (parcial)</span><span class="crow-v g" style="font-size:16px">${RM(resultado)}</span></div>`})()}
       </div>
     </div></div>
     <div class="card"><div class="card-h"><span class="card-ht">Por Produto</span></div><div class="card-b">
-      ${[[' Arrematação','R$ 5,2M',66],[' Home Equity','R$ 1,1M',14],[' Licenciamento','R$ 900k',11],[' Revisão','R$ 400k',5],[' Clube','R$ 240k',3]].map(([p,v,pct])=>`
+      ${(()=>{const prods=['Arrematação Individual','Home Equity','Revisão Contratual','Clube do Milhão','Licenciamento'];const tots=prods.map(p=>({p,v:D.vendas.filter(v=>v.prod===p&&v.status==='fechada').reduce((s,x)=>s+x.val,0)}));const max=Math.max(...tots.map(t=>t.v),1);return tots.map(({p,v})=>[p,RM(v),Math.round(v/max*100)]);})().map(([p,v,pct])=>`
       <div class="fc g10 mb8"><div style="min-width:140px;font-size:10.5px;color:var(--soft)">${p}</div>
       <div class="pbar" style="flex:1"><div class="pfill" style="width:${pct}%;background:var(--dark)"></div></div>
       <div class="mono" style="min-width:65px;text-align:right;font-size:10px;color:var(--dark3)">${v}</div>
@@ -5883,11 +5782,11 @@ SCREENS['financeiro']=()=>S.role!=='admin'?`<div class="page"><div class="alert 
 SCREENS['contas']=()=>`<div class="page">
   <div class="ph"><div class="ph-l"><div class="pt">Contas a Receber</div><div class="ps">10x R$10.000 · Taxa de manutenção a partir do 13º mês</div></div><div class="pa"><button class="btn btn-s sm">⬇ Exportar</button></div></div>
   <div class="alert alert-ok mb12"><span class="ai" style="width:16px;height:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="var(--sem-success)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg></span><div style="font-size:10px"><b>Parcelamento correto (v3):</b> 10x R$10.000 (meses 1–10) · Carência: meses 11–12 · Taxa R$5.000/mês a partir do 13º mês somente se meta não atingida.</div></div>
-  <div class="kpi-grid kpi-g3 mb14">
-    <div class="kpi"><div class="kpi-lbl">A Receber (mês)</div><div class="kpi-val" style="color:var(--dark3)">R$ 30.000</div></div>
-    <div class="kpi"><div class="kpi-lbl">Em Atraso</div><div class="kpi-val red">R$ 15.000</div></div>
-    <div class="kpi"><div class="kpi-lbl">Recebido (mês)</div><div class="kpi-val green">R$ 10.000</div></div>
-  </div>
+  ${(()=>{const aReceber=D.parcelas.filter(p=>p.status==='em_dia'||p.status==='futuro').reduce((s,p)=>s+p.val,0);const atrasado=D.parcelas.filter(p=>p.status==='em_atraso'||p.status==='inadimplente').reduce((s,p)=>s+p.val,0);const recebido=D.parcelas.filter(p=>p.status==='pago').reduce((s,p)=>s+p.val,0);return`<div class="kpi-grid kpi-g3 mb14">
+    <div class="kpi"><div class="kpi-lbl">A Receber (mês)</div><div class="kpi-val" style="color:var(--dark3)">${RM(aReceber)}</div></div>
+    <div class="kpi"><div class="kpi-lbl">Em Atraso</div><div class="kpi-val red">${RM(atrasado)}</div></div>
+    <div class="kpi"><div class="kpi-lbl">Recebido (mês)</div><div class="kpi-val green">${RM(recebido)}</div></div>
+  </div>`})()}
   <div class="tw"><table><thead><tr><th>Licenciado</th><th>Descrição</th><th>Vencimento</th><th>Valor</th><th>Status</th><th>Ações</th></tr></thead>
   <tbody>${D.parcelas.map(p=>`<tr style="${p.status==='inadimplente'?'background:rgba(192,57,43,.03)':p.status==='em_atraso'?'background:rgba(249,232,178,.08)':''}">
     <td class="td-n">${p.licNome}</td><td style="font-size:10px;color:var(--muted)">${p.desc}</td>
