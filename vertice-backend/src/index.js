@@ -6,6 +6,7 @@ const compression = require('compression');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
 const path = require('path');
+const fs = require('fs');
 
 const logger = require('./utils/logger');
 const { errorHandler, notFound } = require('./middleware/errorHandler');
@@ -38,14 +39,21 @@ app.use(helmet({
   contentSecurityPolicy: false,
 }));
 
-// CORS — rejeitar wildcard em produção
-const corsOrigin = process.env.CORS_ORIGIN || (process.env.NODE_ENV === 'production' ? false : '*');
+// CORS — suporta múltiplas origens separadas por vírgula ou wildcard em dev
+const rawCorsOrigin = process.env.CORS_ORIGIN;
+let corsOrigin;
+if (rawCorsOrigin) {
+  const origins = rawCorsOrigin.split(',').map(o => o.trim());
+  corsOrigin = origins.length === 1 ? origins[0] : origins;
+} else {
+  corsOrigin = process.env.NODE_ENV === 'production' ? false : '*';
+}
 app.use(cors({
   origin: corsOrigin,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true,
-  maxAge: 600, // cache preflight por 10 min
+  maxAge: 600,
 }));
 
 // Rate limiting global
@@ -78,11 +86,15 @@ app.use(express.urlencoded({ extended: true }));
 app.use(morgan('combined', { stream: { write: msg => logger.http(msg.trim()) } }));
 
 // Uploads estáticos — com headers de segurança
+// UPLOAD_DIR pode ser sobrescrito via env (ex: /tmp para Vercel)
+const uploadDir = process.env.UPLOAD_DIR
+  ? path.resolve(process.env.UPLOAD_DIR)
+  : path.join(__dirname, '../uploads');
 app.use('/uploads', (req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('Content-Disposition', 'attachment');
   next();
-}, express.static(path.join(__dirname, '../uploads')));
+}, express.static(uploadDir));
 
 // ─── HEALTH CHECK ────────────────────────────────────────────
 app.get('/health', (req, res) => {
@@ -112,14 +124,25 @@ app.use('/api/usuarios',     usuariosRoutes);
 app.use('/api/kanban',       kanbanRoutes);
 app.use('/api/dashboard',    dashboardRoutes);
 
+// ─── FRONTEND SPA (catch-all para rotas não-API) ─────────────
+// Serve o HTML principal para qualquer rota que não seja /api, /uploads ou /health
+const frontendPath = path.resolve(__dirname, '../../vertice-vai.html');
+if (fs.existsSync(frontendPath)) {
+  app.get(/^(?!\/api|\/uploads|\/health).*$/, (req, res) => {
+    res.sendFile(frontendPath);
+  });
+}
+
 // ─── ERROR HANDLERS ──────────────────────────────────────────
 app.use(notFound);
 app.use(errorHandler);
 
-// ─── START ───────────────────────────────────────────────────
-const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => {
-  logger.info(`Vertice API v3.1.0 rodando na porta ${PORT} [${process.env.NODE_ENV || 'development'}]`);
-});
+// ─── START (apenas quando rodando diretamente, não via Vercel) ─
+if (require.main === module) {
+  const PORT = process.env.PORT || 4000;
+  app.listen(PORT, () => {
+    logger.info(`Vertice API v3.1.0 rodando na porta ${PORT} [${process.env.NODE_ENV || 'development'}]`);
+  });
+}
 
 module.exports = app;

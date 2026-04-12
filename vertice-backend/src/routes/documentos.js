@@ -1,14 +1,25 @@
 const express = require('express');
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
 const prisma = require('../utils/prisma');
 const { auth, adminOnly } = require('../middleware/auth');
 const { isAllowedFile } = require('../utils/sanitize');
 
 const router = express.Router();
 
+// Resolve diretório de upload: env UPLOAD_DIR (ex: /tmp no Vercel) ou ./uploads local
+const uploadDir = process.env.UPLOAD_DIR
+  ? path.resolve(process.env.UPLOAD_DIR)
+  : path.join(__dirname, '../../../uploads');
+
+// Garante que o diretório existe
+if (!fs.existsSync(uploadDir)) {
+  try { fs.mkdirSync(uploadDir, { recursive: true }); } catch (_) {}
+}
+
 const storage = multer.diskStorage({
-  destination: process.env.UPLOAD_DIR || './uploads',
+  destination: uploadDir,
   filename: (req, file, cb) => {
     const safe = file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_');
     cb(null, `${Date.now()}-${safe}`);
