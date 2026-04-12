@@ -5081,10 +5081,10 @@ function adminDash(){
          {i:'',l:'Revisão Contratual',d:`${ops.filter(o=>o.prod==='Revisão Contratual').length} caso(s)`,c:()=>go('revisao')},
          {i:'',l:'Clube do Milhão',d:`${grps.filter(g=>g.status==='aberto').length} grupos · ${grps.filter(g=>g.status==='aberto').reduce((s,g)=>s+(g.cotas-g.ocup),0)} vagas`,c:()=>go('clube')},
          {i:'',l:'Licenciamento',d:`${lics.length} licenciado(s) · ${lics.filter(l=>l.status==='suspenso').length} suspenso(s)`,c:()=>go('licenciados')},
-      ]})()}.map(m=>`<div class="fc g10" style="padding:9px 14px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .11s" onclick="(${m.c.toString()})()" onmouseenter="this.style.background='rgba(80,82,88,.02)'" onmouseleave="this.style.background=''">
+      ].map(m=>`<div class="fc g10" style="padding:9px 14px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .11s" onclick="(${m.c.toString()})()" onmouseenter="this.style.background='rgba(80,82,88,.02)'" onmouseleave="this.style.background=''">
         <span style="font-size:18px">${m.i}</span><div style="flex:1"><div style="font-size:11px;color:var(--dark);font-weight:500">${m.l}</div><div style="font-size:9.5px;color:var(--muted)">${m.d}</div></div>
         <span style="font-size:10px;color:var(--muted)">→</span>
-      </div>`).join('')}
+      </div>`).join('');})()}
     </div>
     <div class="card">
       <div class="card-h"><span class="card-ht">Últimas Vendas</span><button class="btn btn-g xs" onclick="go('vendas')">Ver todas</button></div>
