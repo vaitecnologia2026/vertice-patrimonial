@@ -5241,27 +5241,49 @@ SCREENS['det-lic']=()=>{
 
 // ══ NOVO LICENCIADO ══
 SCREENS['novo-lic']=()=>`<div class="page">
-  <div class="ph"><div class="ph-l"><div class="pt">Novo Licenciado</div><div class="ps">Cadastro completo · E-mail de acesso automático após salvar</div></div>
+  <div class="ph"><div class="ph-l"><div class="pt">Novo Licenciado</div><div class="ps">Cadastro completo · Acesso criado automaticamente após salvar</div></div>
   <div class="pa"><button class="btn btn-g" onclick="go('licenciados')">← Voltar</button></div></div>
   <div class="split">
     <div>
       <div class="card mb10"><div class="card-h"><span class="card-ht">Dados Pessoais e Empresa</span></div><div class="card-b">
-        <div class="fgrid"><div class="fg s2"><label>Razão Social / Nome *</label><input placeholder="Nome completo"></div>
-        <div class="fg"><label>CNPJ / CPF *</label><input placeholder="00.000.000/0001-00"></div>
-        <div class="fg"><label>Estado *</label><select><option>SP</option><option>RJ</option><option>MG</option><option>PR</option><option>RS</option></select></div>
-        <div class="fg"><label>E-mail *</label><input type="email" placeholder="email@empresa.com"></div>
-        <div class="fg"><label>WhatsApp *</label><input placeholder="(00) 00000-0000"></div>
-        <div class="fg"><label>PIX *</label><input placeholder="CPF, CNPJ ou e-mail"></div>
-        <div class="fg"><label>Banco *</label><input placeholder="341 - Itaú · Ag 0000 · CC 00000-0"></div>
-        <div class="fg"><label>% Home Equity (config.)</label><input type="number" value="1" step="0.5"></div></div>
+        <div class="fgrid">
+        <div class="fg"><label>Nome Completo *</label><input id="nl-nome" placeholder="Nome do licenciado"></div>
+        <div class="fg"><label>Razão Social / Empresa *</label><input id="nl-empresa" placeholder="Empresa Ltda."></div>
+        <div class="fg"><label>CNPJ / CPF *</label><input id="nl-cnpj" placeholder="00.000.000/0001-00"></div>
+        <div class="fg"><label>Estado *</label><select id="nl-estado"><option value="SP">SP</option><option value="RJ">RJ</option><option value="MG">MG</option><option value="PR">PR</option><option value="RS">RS</option><option value="BA">BA</option><option value="SC">SC</option><option value="GO">GO</option><option value="DF">DF</option><option value="CE">CE</option><option value="PE">PE</option><option value="MT">MT</option><option value="MS">MS</option><option value="AM">AM</option><option value="PA">PA</option></select></div>
+        <div class="fg"><label>E-mail *</label><input id="nl-email" type="email" placeholder="email@empresa.com"></div>
+        <div class="fg"><label>WhatsApp *</label><input id="nl-tel" placeholder="(00) 00000-0000"></div>
+        <div class="fg"><label>PIX</label><input id="nl-pix" placeholder="CPF, CNPJ ou e-mail"></div>
+        <div class="fg"><label>Dados Bancários</label><input id="nl-banco" placeholder="Banco · Ag 0000 · CC 00000-0"></div>
+        </div>
+      </div></div>
+      <div class="card mb10"><div class="card-h"><span class="card-ht">Regras de Ganho por Produto</span></div><div class="card-b">
+        <div class="alert alert-i mb10"><div style="font-size:10px">Comissões padrão do sistema. Apenas o % de Home Equity é configurável por licenciado.</div></div>
+        <div class="fgrid">
+        <div class="fg"><label>Arrematação &lt;R$1M</label><input value="30% do bruto da empresa (12%)" readonly style="color:var(--muted);font-size:10px"></div>
+        <div class="fg"><label>Arrematação ≥R$1M</label><input value="30% do bruto da empresa (10%)" readonly style="color:var(--muted);font-size:10px"></div>
+        <div class="fg"><label>% Home Equity (config.) *</label><input id="nl-comHE" type="number" value="1" min="0.5" max="5" step="0.5"></div>
+        <div class="fg"><label>Revisão Contratual</label><input value="50% do honorário da empresa" readonly style="color:var(--muted);font-size:10px"></div>
+        <div class="fg"><label>Clube do Milhão</label><input value="R$ 150 fixo por cota/mês" readonly style="color:var(--muted);font-size:10px"></div>
+        <div class="fg"><label>Cobrança de taxa</label><select id="nl-taxa"><option value="cobrado">Cobrado (padrão)</option><option value="isento">Isento (parceiro estratégico)</option></select></div>
+        </div>
       </div></div>
       <div class="card mb10"><div class="card-h"><span class="card-ht">Configuração da Licença</span></div><div class="card-b">
-        <div class="fgrid"><div class="fg"><label>Data de Início *</label><input type="date" value="${new Date().toISOString().slice(0,10)}"></div>
+        <div class="fgrid">
+        <div class="fg"><label>Data de Início *</label><input id="nl-inicio" type="date" value="${new Date().toISOString().slice(0,10)}"></div>
+        <div class="fg"><label>Meta Trimestral (R$)</label><input id="nl-meta" type="number" value="3000000"></div>
         <div class="fg"><label>Valor da Licença</label><input value="R$ 100.000" readonly style="color:var(--muted)"></div>
         <div class="fg"><label>Parcelamento</label><input value="10x de R$ 10.000" readonly style="color:var(--muted)"></div>
-        <div class="fg"><label>Meta Trimestral (R$)</label><input type="number" value="3000000"></div></div>
+        </div>
       </div></div>
-      <div class="factions"><button class="btn btn-p" onclick="toast('Licenciado cadastrado!','ok');go('licenciados')">✓ Cadastrar</button><button class="btn btn-g" onclick="go('licenciados')">Cancelar</button></div>
+      <div class="card mb10"><div class="card-h"><span class="card-ht">Acesso ao Sistema</span></div><div class="card-b">
+        <div class="alert alert-i mb10"><div style="font-size:10px">Uma conta de acesso será criada com o e-mail informado acima. Defina a senha inicial do licenciado.</div></div>
+        <div class="fgrid">
+        <div class="fg"><label>Senha inicial *</label><input id="nl-senha" type="password" placeholder="Mínimo 8 caracteres"></div>
+        <div class="fg"><label>Confirmar senha *</label><input id="nl-senha2" type="password" placeholder="Repita a senha"></div>
+        </div>
+      </div></div>
+      <div class="factions"><button class="btn btn-p" id="nl-btn" onclick="salvarLicenciado()">✓ Cadastrar</button><button class="btn btn-g" onclick="go('licenciados')">Cancelar</button></div>
     </div>
     <div class="card"><div class="card-h"><span class="card-ht">Resumo da Licença</span></div><div class="card-b">
       <div class="cflow">
@@ -5275,6 +5297,49 @@ SCREENS['novo-lic']=()=>`<div class="page">
     </div></div>
   </div>
 </div>`;
+
+async function salvarLicenciado(){
+  const v=id=>document.getElementById(id)?.value?.trim();
+  const nome=v('nl-nome'),empresa=v('nl-empresa'),cnpj=v('nl-cnpj'),estado=v('nl-estado'),
+        email=v('nl-email'),tel=v('nl-tel'),pix=v('nl-pix'),banco=v('nl-banco'),
+        comHE=parseFloat(v('nl-comHE')||'1'),taxa=v('nl-taxa'),
+        inicio=v('nl-inicio'),meta=parseFloat(v('nl-meta')||'3000000'),
+        senha=v('nl-senha'),senha2=v('nl-senha2');
+  if(!nome||!empresa||!cnpj||!estado||!email||!tel){return toast('Preencha todos os campos obrigatórios.','e');}
+  if(!senha||senha.length<8){return toast('Senha mínima de 8 caracteres.','e');}
+  if(senha!==senha2){return toast('As senhas não coincidem.','e');}
+  const btn=document.getElementById('nl-btn');if(btn)btn.disabled=true;
+  const res=await API.post('/api/licenciados',{nome,empresa,cnpj,estado,email,tel,pix,banco,comHE,taxa,inicio,meta,senha});
+  if(btn)btn.disabled=false;
+  if(res){toast('Licenciado cadastrado com sucesso!','ok');go('licenciados');}
+}
+
+function exportarMetasCSV(){
+  const headers=['Nome','Empresa','Estado','Volume','Meta','%','Comissão','Taxa'];
+  const rows=(D.licenciados||[]).map(l=>[l.nome,l.empresa||'',l.estado||'',l.vol||0,l.meta||0,l.pct||0,l.com||0,l.taxa||'']);
+  const csv=[headers,...rows].map(r=>r.map(c=>'"'+(String(c).replace(/"/g,'""'))+'"').join(';')).join('\n');
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv);
+  a.download='metas-performance.csv';a.click();
+}
+
+function abrirNovoUsuario(){
+  openDrawer('Novo Usuário',`<div style="display:flex;flex-direction:column;gap:12px">
+    <div class="fg"><label>Nome *</label><input id="nu-nome" placeholder="Nome completo"></div>
+    <div class="fg"><label>E-mail *</label><input id="nu-email" type="email" placeholder="email@empresa.com"></div>
+    <div class="fg"><label>Perfil</label><select id="nu-role"><option value="ADMIN">Admin</option><option value="LIC">Licenciado</option></select></div>
+    <div class="fg"><label>Senha *</label><input id="nu-senha" type="password" placeholder="Mínimo 8 caracteres"></div>
+    <div class="fc g8 mt8"><button class="btn btn-p" onclick="salvarUsuario()">✓ Criar</button><button class="btn btn-g" onclick="closeDrawer()">Cancelar</button></div>
+  </div>`);
+}
+async function salvarUsuario(){
+  const v=id=>document.getElementById(id)?.value?.trim();
+  const name=v('nu-nome'),email=v('nu-email'),role=v('nu-role'),password=v('nu-senha');
+  if(!name||!email||!password){return toast('Preencha todos os campos.','e');}
+  if(password.length<8){return toast('Senha mínima 8 caracteres.','e');}
+  const res=await API.post('/api/usuarios',{name,email,role,password});
+  if(res){closeDrawer();toast('Usuário criado com sucesso!','ok');go('usuarios');}
+}
 
 // ══ CLIENTES ══
 SCREENS['clientes']=()=>{const lista=myClients();return `<div class="page">
@@ -6293,7 +6358,7 @@ function metasAdmin(){
   const sorted=[...D.licenciados].sort((a,b)=>b.pct-a.pct);
   return `<div class="page">
   <div class="ph"><div class="ph-l"><div class="pt">Metas & Performance</div><div class="ps">Ranking Q2/2026 · Dados completos de todos os licenciados</div></div>
-  <div class="pa"><button class="btn btn-s sm">⬇ Exportar</button></div></div>
+  <div class="pa"><button class="btn btn-s sm" onclick="exportarMetasCSV()">⬇ Exportar</button></div></div>
   <div class="g2 mb14">
     <div class="card"><div class="card-h"><span class="card-ht">Ranking Geral · Q2/2026</span></div>
       ${sorted.map((l,i)=>`<div class="fb" style="padding:10px 14px;border-bottom:1px solid var(--border);transition:background .12s;cursor:pointer" onclick="go('det-lic',{id:'${l.id}'})" onmouseenter="this.style.background='rgba(80,82,88,.02)'" onmouseleave="this.style.background=''">
@@ -6713,7 +6778,7 @@ document.addEventListener('DOMContentLoaded',()=>CFG.init());
 // ══ USUÁRIOS ══
 SCREENS['usuarios']=()=>S.role!=='admin'?`<div class="page"><div class="alert alert-e"><span class="ai" style="width:16px;height:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="var(--red)" stroke-width="1.5" stroke-linecap="round"><rect x="2" y="5" width="8" height="6" rx="1"/><path d="M4 5V4a2 2 0 0 1 4 0v1"/></svg></span><div>Acesso restrito.</div></div></div>`:`<div class="page">
   <div class="ph"><div class="ph-l"><div class="pt">Usuários</div><div class="ps">Equipe interna e acesso ao sistema</div></div>
-  <div class="pa"><button class="btn btn-p" onclick="toast('Usuário criado!','ok')">+ Novo Usuário</button></div></div>
+  <div class="pa"><button class="btn btn-p" onclick="abrirNovoUsuario()">+ Novo Usuário</button></div></div>
   <div class="tw"><table><thead><tr><th>Nome</th><th>E-mail</th><th>Perfil</th><th>Status</th><th>Último acesso</th><th>Ações</th></tr></thead>
   <tbody>${D.usuarios.map(u=>`<tr>
     <td><div class="fc g8"><div style="width:30px;height:30px;border-radius:50%;background:var(--dark);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--gold);flex-shrink:0">${u.nome[0]}</div><span class="td-n">${u.nome}</span></div></td>
