@@ -1,7 +1,9 @@
 const winston = require('winston');
+const fs = require('fs');
 
 // Na Vercel (production) o filesystem é read-only exceto /tmp
 const logDir = process.env.NODE_ENV === 'production' ? '/tmp/logs' : 'logs';
+try { fs.mkdirSync(logDir, { recursive: true }); } catch (_) {}
 
 const transports = [
   new winston.transports.File({ filename: `${logDir}/error.log`, level: 'error' }),

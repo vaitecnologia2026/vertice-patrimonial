@@ -4070,6 +4070,18 @@ window.apiLogin = async function(email, password) {
 };
 
 console.log('[Vértice] API Client carregado. Modo:', API_MODE ? 'CONECTADO (' + API_URL + ')' : 'LOCAL (localStorage)');
+
+// ══ TOAST ══
+function toast(msg, type='ok'){
+  const el=document.getElementById('toasts');if(!el)return;
+  const cls=type==='ok'?'toast-ok':type==='err'||type==='e'?'toast-err':'toast-w';
+  const t=document.createElement('div');t.className='toast '+cls;t.textContent=msg;
+  el.appendChild(t);setTimeout(()=>t.remove(),3500);
+}
+
+// ══ ESCAPE HTML ══
+function escapeHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
 </script>
 
 <script>
@@ -4841,8 +4853,18 @@ function doLogin(){
   })();
 }
 
+async function loadAppData(){
+  if(!API_MODE)return;
+  const endpoints={licenciados:'/api/licenciados',clientes:'/api/clientes',vendas:'/api/vendas',comissoes:'/api/comissoes',operacoes:'/api/operacoes',contratos:'/api/contratos',usuarios:'/api/usuarios',docs:'/api/documentos',logs:'/api/auditoria',consorcios:'/api/consorcios',metas:'/api/metas',kanban:'/api/kanban'};
+  const results=await Promise.allSettled(Object.entries(endpoints).map(async([key,path])=>{
+    const data=await API.get(path);
+    if(data&&Array.isArray(data))D[key]=data;
+    else if(data&&data.data&&Array.isArray(data.data))D[key]=data.data;
+  }));
+}
+
 function _loginContinue(btn, errEl){
-  setTimeout(()=>{
+  setTimeout(async()=>{
 
     // ── Sessão única: gera token e registra no localStorage ──
     var sessToken = Date.now().toString(36) + Math.random().toString(36).slice(2);
@@ -4871,6 +4893,7 @@ function _loginContinue(btn, errEl){
     document.getElementById('tb-date').textContent=new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'short',year:'numeric'});
     var geBtn=document.getElementById('tb-ge-btn'); if(geBtn) geBtn.style.display=S.role==='admin'?'':'none';
     if(typeof CFG!=='undefined'){const logo=CFG.getLogo();if(logo){const sb=document.getElementById('sb-logo-img');if(sb)sb.src=logo;}}
+    await loadAppData();
     buildNav();go('dashboard');
   },600);
 }
@@ -4891,7 +4914,7 @@ function closeDrawer(){document.getElementById('drawer').classList.remove('open'
 // ══ HELPERS ══
 const R=n=>typeof n==='number'?n.toLocaleString('pt-BR'):n;
 const RM=n=>'R$ '+R(n);
-const pct=(v,t)=>Math.min(100,Math.round(v/t*100));
+const pct=(v,t)=>t?Math.min(100,Math.round(v/t*100)):0;
 const fmtDate=d=>new Date(d).toLocaleDateString('pt-BR');
 const pctColor=p=>p>=100?'var(--sem-success)':p>=60?'var(--dark3)':'var(--red)';
 function bar(v,color='var(--dark)'){return `<div class="pbar"><div class="pfill" style="width:${Math.min(v||0,100)}%;background:${color}"></div></div>`;}
@@ -5341,6 +5364,30 @@ async function salvarUsuario(){
   if(res){closeDrawer();toast('Usuário criado com sucesso!','ok');go('usuarios');}
 }
 
+async function salvarCliente(){
+  const v=id=>document.getElementById(id)?.value?.trim();
+  const cpfEl=document.getElementById('cpf-in');
+  const cpf=cpfEl?cpfEl.value.trim():'';
+  const nome=v('nc-nome'),tel=v('nc-tel'),email=v('nc-email'),orig=v('nc-orig'),prod=v('nc-prod');
+  if(!nome||!cpf||!tel){return toast('Preencha nome, CPF e telefone.','e');}
+  const btn=document.getElementById('nc-btn');if(btn)btn.disabled=true;
+  const res=await API.post('/api/clientes',{nome,cpf,tel,email,orig,prod,end:v('cli-log')||''});
+  if(btn)btn.disabled=false;
+  if(res){toast('Cliente cadastrado com sucesso!','ok');go('clientes');}
+}
+
+async function salvarVenda(){
+  const v=id=>document.getElementById(id)?.value?.trim();
+  const cliId=v('vn-cli'),prod=v('prod-sel'),val=parseFloat(v('vn-val')||'0'),data=v('vn-data'),canal=v('vn-canal');
+  if(!cliId){return toast('Selecione um cliente.','e');}
+  if(!prod){return toast('Selecione um produto.','e');}
+  if(!val||val<=0){return toast('Informe um valor válido.','e');}
+  const btn=document.getElementById('vn-btn');if(btn)btn.disabled=true;
+  const res=await API.post('/api/vendas',{cliId,prod,val,data,canal});
+  if(btn)btn.disabled=false;
+  if(res){toast('Venda registrada com sucesso!','ok');go('vendas');}
+}
+
 // ══ CLIENTES ══
 SCREENS['clientes']=()=>{const lista=myClients();return `<div class="page">
   <div class="ph"><div class="ph-l"><div class="pt">${S.role==='lic'?'Meus Clientes':'Clientes'}</div><div class="ps">${lista.length} clientes${S.role==='lic'?' · Sua base individual':' · Base global'}</div></div>
@@ -5374,9 +5421,9 @@ SCREENS['novo-cli']=()=>`<div class="page">
       </div>
       <div id="cli-form" style="opacity:.35;pointer-events:none;transition:all .3s">
         <div class="card mb10"><div class="card-h"><span class="card-ht">Dados Pessoais</span></div><div class="card-b">
-          <div class="fgrid"><div class="fg s2"><label>Nome Completo *</label><input placeholder="Nome como no documento"></div>
-          <div class="fg"><label>Telefone *</label><input placeholder="(00) 00000-0000"></div>
-          <div class="fg"><label>E-mail *</label><input placeholder="email@cliente.com"></div>
+          <div class="fgrid"><div class="fg s2"><label>Nome Completo *</label><input id="nc-nome" placeholder="Nome como no documento"></div>
+          <div class="fg"><label>Telefone *</label><input id="nc-tel" placeholder="(00) 00000-0000"></div>
+          <div class="fg"><label>E-mail *</label><input id="nc-email" placeholder="email@cliente.com"></div>
           <div class="fg"><label>CEP *</label><input placeholder="00000-000" oninput="mockCEP(this)"></div>
           <div class="fg"><label>Logradouro</label><input id="cli-log" readonly placeholder="Via CEP"></div>
           <div class="fg"><label>Número *</label><input placeholder="123"></div>
@@ -5384,11 +5431,11 @@ SCREENS['novo-cli']=()=>`<div class="page">
           <div class="fg"><label>Cidade</label><input id="cli-cid" readonly></div></div>
         </div></div>
         <div class="card mb10"><div class="card-h"><span class="card-ht">Origem e Interesse</span></div><div class="card-b">
-          <div class="fgrid"><div class="fg"><label>Canal de Origem *</label><select><option>—</option><option>Indicação</option><option>Instagram</option><option>Google</option><option>Evento</option><option>WhatsApp</option></select></div>
-          <div class="fg"><label>Produto</label><select><option>—</option><option>Arrematação Individual</option><option>Home Equity</option><option>Revisão Contratual</option><option>Clube do Milhão</option></select></div>
-          <div class="fg s2"><label>Observações</label><textarea placeholder="Notas internas..."></textarea></div></div>
+          <div class="fgrid"><div class="fg"><label>Canal de Origem *</label><select id="nc-orig"><option value="">—</option><option value="Indicação">Indicação</option><option value="Instagram">Instagram</option><option value="Google">Google</option><option value="Evento">Evento</option><option value="WhatsApp">WhatsApp</option></select></div>
+          <div class="fg"><label>Produto</label><select id="nc-prod"><option value="">—</option><option value="Arrematação Individual">Arrematação Individual</option><option value="Home Equity">Home Equity</option><option value="Revisão Contratual">Revisão Contratual</option><option value="Clube do Milhão">Clube do Milhão</option></select></div>
+          <div class="fg s2"><label>Observações</label><textarea id="nc-obs" placeholder="Notas internas..."></textarea></div></div>
         </div></div>
-        <div class="factions"><button class="btn btn-p" onclick="toast('Cliente cadastrado!','ok');go('clientes')">✓ Salvar Cliente</button><button class="btn btn-g" onclick="go('clientes')">Cancelar</button></div>
+        <div class="factions"><button class="btn btn-p" id="nc-btn" onclick="salvarCliente()">✓ Salvar Cliente</button><button class="btn btn-g" onclick="go('clientes')">Cancelar</button></div>
       </div>
     </div>
     <div class="card"><div class="card-h"><span class="card-ht">CPF & Ownership</span></div><div class="card-b">
@@ -5400,6 +5447,7 @@ SCREENS['novo-cli']=()=>`<div class="page">
 // ══ DET-CLI ══
 SCREENS['det-cli']=()=>{
   const c=D.clientes.find(x=>x.id===(S.params.id||'C001'))||D.clientes[0];
+  if(!c)return '<div class="page"><div class="alert alert-i">Nenhum cliente encontrado.</div></div>';
   const ops=D.operacoes.filter(o=>o.cliId===c.id);
   return `<div class="page">
   <div class="ph"><div class="pa"><button class="btn btn-g" onclick="go('clientes')">← Voltar</button></div></div>
@@ -5720,13 +5768,13 @@ SCREENS['nova-venda']=()=>`<div class="page">
   <div class="split">
     <div>
       <div class="card mb10"><div class="card-h"><span class="card-ht">Identificação</span></div><div class="card-b">
-        <div class="fgrid"><div class="fg s2"><label>Cliente (CPF validado) *</label><input placeholder="Buscar por CPF ou nome..." value="${S.params.cli||''}"></div>
-        <div class="fg"><label>Produto *</label><select id="prod-sel" onchange="updateProdSelect()"><option value="">— Selecione</option><option value="arremata">Arrematação Individual</option><option value="homeequity">Home Equity</option><option value="revisao">Revisão Contratual</option><option value="clube">Clube do Milhão</option><option value="licenc">Licenciamento</option></select></div>
-        <div class="fg"><label>Canal</label><select><option>Licenciado</option><option>Interno</option></select></div></div>
+        <div class="fgrid"><div class="fg s2"><label>Cliente *</label><select id="vn-cli">${(D.clientes||[]).map(c=>`<option value="${c.id}">${escapeHtml(c.nome)} — ${c.cpf||''}</option>`).join('')}</select></div>
+        <div class="fg"><label>Produto *</label><select id="prod-sel" onchange="updateProdSelect()"><option value="">— Selecione</option><option value="Arrematação Individual">Arrematação Individual</option><option value="Home Equity">Home Equity</option><option value="Revisão Contratual">Revisão Contratual</option><option value="Clube do Milhão">Clube do Milhão</option><option value="Licenciamento">Licenciamento</option></select></div>
+        <div class="fg"><label>Canal</label><select id="vn-canal"><option value="Licenciado">Licenciado</option><option value="Interno">Interno</option></select></div></div>
       </div></div>
       <div class="card mb10"><div class="card-h"><span class="card-ht">Financeiro</span></div><div class="card-b">
         <div class="fgrid fgrid3"><div class="fg"><label>Valor (R$) *</label><input type="number" id="vn-val" placeholder="0" oninput="updateProdSelect()"></div>
-        <div class="fg"><label>Data *</label><input type="date" value="${new Date().toISOString().slice(0,10)}"></div>
+        <div class="fg"><label>Data *</label><input type="date" id="vn-data" value="${new Date().toISOString().slice(0,10)}"></div>
         <div class="fg"><label>Entrada (R$)</label><input type="number" placeholder="0"></div></div>
       </div></div>
       <div class="card mb10"><div class="card-h"><span class="card-ht">Responsáveis</span></div><div class="card-b">
@@ -5735,7 +5783,7 @@ SCREENS['nova-venda']=()=>`<div class="page">
         <div class="fg"><label>Analista</label><select><option>—</option><option>Ana Costa</option><option>Bruno Araújo</option></select></div>
         <div class="fg"><label>Observações</label><textarea placeholder="Notas..."></textarea></div></div>
       </div></div>
-      <div class="factions"><button class="btn btn-p" onclick="toast('Venda registrada! Comissão calculada.','ok');go('vendas')">✓ Registrar Venda</button>
+      <div class="factions"><button class="btn btn-p" id="vn-btn" onclick="salvarVenda()">✓ Registrar Venda</button>
       <button class="btn btn-s" onclick="go('int-contrato')">+ Intenção de Contrato</button>
       <button class="btn btn-g" onclick="go('vendas')">Cancelar</button></div>
     </div>
@@ -5747,6 +5795,7 @@ SCREENS['nova-venda']=()=>`<div class="page">
 // ══ DET-VENDA ══
 SCREENS['det-venda']=()=>{
   const vid=S.params.id||'VND-2026-0847';const v=D.vendas.find(x=>x.id===vid)||D.vendas[0];
+  if(!v)return '<div class="page"><div class="alert alert-i">Nenhuma venda encontrada.</div></div>';
   const op=D.operacoes.find(o=>o.id===v.opId);const c=calcCom(v.val,v.prod==='Arrematação Individual'?'arremata':v.prod==='Home Equity'?'homeequity':v.prod.includes('Revisão')?'revisao':'clube');
   return `<div class="page">
   <div class="ph"><div class="ph-l"><div class="pt">${v.id}</div><div class="ps">${v.prod} · ${v.cli}</div></div>
@@ -5968,7 +6017,8 @@ function renderOpFlow(fluxo,isAdmin){
 
 // ══ DET-OP (Avaliação da Operação) ══
 SCREENS['det-op']=()=>{
-  const op=D.operacoes.find(o=>o.id===(S.params.id||'OP002'))||D.operacoes[1];
+  const op=D.operacoes.find(o=>o.id===(S.params.id||'OP002'))||D.operacoes[0];
+  if(!op)return '<div class="page"><div class="alert alert-i">Nenhuma operação encontrada.</div></div>';
   const dcs=D.docs.filter(d=>d.cliId===op.cliId);
   return `<div class="page">
   <div class="ph"><div class="ph-l"><div class="pt">Avaliação da Operação</div><div class="ps">${op.id} · ${op.cli} · ${op.prod}</div></div>
@@ -6228,6 +6278,7 @@ function clubeLic(){
 // ══ DET-GRUPO ══
 SCREENS['det-grupo']=()=>{
   const g=D.grupos.find(x=>x.id===(S.params.id||'G001'))||D.grupos[0];
+  if(!g)return '<div class="page"><div class="alert alert-i">Nenhum grupo encontrado.</div></div>';
   const nomes=D['cotas_'+g.id]||[];
   const lics=D['cotas_'+g.id+'_lic']||[];
   return `<div class="page">
@@ -6387,9 +6438,11 @@ function metasAdmin(){
 </div>`;}
 
 function metasLic(){
-  const eu=D.licenciados[0];const p=eu.pct;
+  const eu=D.licenciados[0];
+  if(!eu)return '<div class="page"><div class="alert alert-i">Nenhum dado de metas disponível.</div></div>';
+  const p=eu.pct||0;
   const above=D.licenciados.filter(l=>l.vol>eu.vol).length+1;
-  const falta=D.licenciados.find(l=>l.rank===above-1)?.vol-eu.vol;
+  const falta=(D.licenciados.find(l=>l.rank===above-1)?.vol??0)-eu.vol;
   return `<div class="page">
   <div class="ph"><div class="ph-l"><div class="pt">Metas & Performance</div><div class="ps">Sua visão individual · Dados privados</div></div></div>
   <div class="alert alert-i mb12"><span class="ai" style="width:16px;height:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="var(--sem-info)" stroke-width="1.5" stroke-linecap="round"><circle cx="6" cy="6" r="5"/><line x1="6" y1="5.5" x2="6" y2="8.5"/><circle cx="6" cy="3.5" r=".5" fill="var(--sem-info)"/></svg></span><div style="font-size:10px">Você vê sua posição no ranking sem ver os dados dos outros licenciados. Apenas sua posição e o quanto você precisa para subir.</div></div>
@@ -6780,14 +6833,14 @@ SCREENS['usuarios']=()=>S.role!=='admin'?`<div class="page"><div class="alert al
   <div class="ph"><div class="ph-l"><div class="pt">Usuários</div><div class="ps">Equipe interna e acesso ao sistema</div></div>
   <div class="pa"><button class="btn btn-p" onclick="abrirNovoUsuario()">+ Novo Usuário</button></div></div>
   <div class="tw"><table><thead><tr><th>Nome</th><th>E-mail</th><th>Perfil</th><th>Status</th><th>Último acesso</th><th>Ações</th></tr></thead>
-  <tbody>${D.usuarios.map(u=>`<tr>
-    <td><div class="fc g8"><div style="width:30px;height:30px;border-radius:50%;background:var(--dark);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--gold);flex-shrink:0">${u.nome[0]}</div><span class="td-n">${u.nome}</span></div></td>
-    <td style="font-size:10px;color:var(--muted)">${u.email}</td>
-    <td><span class="badge badge-n">${u.perfil}</span></td>
-    <td>${chipStatus(u.status)}</td>
-    <td style="font-size:9.5px;color:var(--muted)">${u.last}</td>
+  <tbody>${(D.usuarios||[]).map(u=>{const nome=u.name||u.nome||'';const perfil=u.role||u.perfil||'';const status=u.ativo!==false?'ativo':'inativo';return `<tr>
+    <td><div class="fc g8"><div style="width:30px;height:30px;border-radius:50%;background:var(--dark);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--gold);flex-shrink:0">${nome[0]||'U'}</div><span class="td-n">${escapeHtml(nome)}</span></div></td>
+    <td style="font-size:10px;color:var(--muted)">${escapeHtml(u.email||'')}</td>
+    <td><span class="badge badge-n">${perfil}</span></td>
+    <td>${chipStatus(status)}</td>
+    <td style="font-size:9.5px;color:var(--muted)">${u.updatedAt?fmtDate(u.updatedAt):'—'}</td>
     <td><div class="td-a"><button class="btn btn-s xs" onclick="toast('Editando...','ok')"> Editar</button></div></td>
-  </tr>`).join('')}</tbody></table></div>
+  </tr>`;}).join('')}</tbody></table></div>
 </div>`;
 
 // ══ AUDITORIA ══
@@ -7021,7 +7074,7 @@ const GE = {
     const el = document.getElementById('ge-content');
     if(el) el.innerHTML = GE.renderPipeline();
     // Atualizar contadores nas tabs
-    GE.updateCounts();
+    GE.updateBadges();
     const col = ({captado:'Captado',em_analise:'Em Análise',juridico:'Jurídico',aprovado:'Aprovado',lance_feito:'Lance Feito',arrematado:'Arrematado',compra_direta:'Compra Direta'})[toCol] || toCol;
     if(typeof toast === 'function') toast('Movido para ' + col, 'ok');
   },
