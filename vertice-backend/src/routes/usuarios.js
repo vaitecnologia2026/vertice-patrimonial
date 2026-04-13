@@ -22,6 +22,13 @@ router.post('/', auth, adminOnly, async (req, res, next) => {
     if (!data.email || !data.name || !password) {
       return res.status(400).json({ error: 'name, email e password são obrigatórios.' });
     }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
+      return res.status(400).json({ error: 'E-mail inválido.' });
+    }
+    const VALID_ROLES = ['ADMIN', 'LIC'];
+    if (data.role && !VALID_ROLES.includes(data.role)) {
+      return res.status(400).json({ error: 'Perfil inválido. Valores: ' + VALID_ROLES.join(', ') });
+    }
     if (password.length < 8) {
       return res.status(400).json({ error: 'Senha mínima 8 caracteres.' });
     }

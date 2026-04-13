@@ -38,7 +38,15 @@ router.get('/:id', auth, async (req, res, next) => {
 router.post('/', auth, async (req, res, next) => {
   try {
     const data = pick(req.body, OP_FIELDS);
+    const VALID_TIPOS = ['ARREMATA', 'HOMEEQUITY', 'REVISAO', 'CLUBE'];
+    if (!data.tipo || !VALID_TIPOS.includes(data.tipo)) {
+      return res.status(400).json({ error: 'tipo é obrigatório e deve ser: ' + VALID_TIPOS.join(', ') });
+    }
+    if (!data.cliId) return res.status(400).json({ error: 'cliId é obrigatório.' });
     data.licId = req.user.role === 'LIC' ? req.user.licId : data.licId;
+    if (data.lance) data.lance = parseFloat(data.lance);
+    if (data.aval) data.aval = parseFloat(data.aval);
+    if (data.deb) data.deb = parseFloat(data.deb);
     if (data.leilao) data.leilao = new Date(data.leilao);
     if (data.dataContrato) data.dataContrato = new Date(data.dataContrato);
     if (data.assembleia) data.assembleia = new Date(data.assembleia);
@@ -65,6 +73,10 @@ router.put('/:id', auth, async (req, res, next) => {
 
 router.patch('/:id/status', auth, adminOnly, async (req, res, next) => {
   try {
+    const VALID_STATUS = ['em_analise', 'aprovado', 'reprovado', 'concluido', 'cancelado', 'pendente'];
+    if (!req.body.status || !VALID_STATUS.includes(req.body.status)) {
+      return res.status(400).json({ error: 'Status inválido. Valores: ' + VALID_STATUS.join(', ') });
+    }
     const op = await prisma.operacao.update({ where: { id: req.params.id }, data: { status: req.body.status } });
     await prisma.auditoria.create({ data: { userId: req.user.id, action: 'OPERACAO_STATUS', entityId: op.id, desc: `Status → ${op.status}`, ip: req.ip } });
     res.json(op);

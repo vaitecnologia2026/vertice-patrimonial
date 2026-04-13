@@ -63,7 +63,7 @@ function formatCNPJ(raw) {
  */
 const ALLOWED_FILE_EXTENSIONS = [
   '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.csv',
-  '.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg',
+  '.jpg', '.jpeg', '.png', '.gif', '.webp',
   '.txt', '.zip', '.rar',
 ];
 

@@ -62,6 +62,13 @@ router.post('/', auth, async (req, res, next) => {
     if (!data.licId || !data.cliId || !data.prod) {
       return res.status(400).json({ error: 'cliId, licId e prod são obrigatórios.' });
     }
+    // Verificar que o cliente pertence ao licenciado
+    if (req.user.role === 'LIC') {
+      const cli = await prisma.cliente.findUnique({ where: { id: data.cliId } });
+      if (!cli || cli.licId !== data.licId) {
+        return res.status(403).json({ error: 'Cliente não pertence a este licenciado.' });
+      }
+    }
     data.val = parseFloat(data.val);
     if (isNaN(data.val) || data.val <= 0) {
       return res.status(400).json({ error: 'Valor inválido.' });

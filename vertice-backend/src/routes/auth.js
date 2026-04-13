@@ -94,6 +94,16 @@ router.post('/refresh', async (req, res, next) => {
     }
 
     const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
+    // Validar que o token pertence ao user correto e que o user existe/está ativo
+    if (decoded.id !== stored.userId) {
+      await prisma.refreshToken.delete({ where: { token: refreshToken } }).catch(() => {});
+      return res.status(401).json({ error: 'Token inválido.' });
+    }
+    const user = await prisma.user.findUnique({ where: { id: decoded.id }, select: { id: true, ativo: true } });
+    if (!user || !user.ativo) {
+      await prisma.refreshToken.delete({ where: { token: refreshToken } }).catch(() => {});
+      return res.status(401).json({ error: 'Usuário inativo ou não encontrado.' });
+    }
     const { accessToken, refreshToken: newRefresh } = generateTokens(decoded.id);
 
     // Rotacionar refresh token
