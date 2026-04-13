@@ -4855,11 +4855,13 @@ function doLogin(){
 
 async function loadAppData(){
   if(!API_MODE)return;
-  const endpoints={licenciados:'/api/licenciados',clientes:'/api/clientes',vendas:'/api/vendas',comissoes:'/api/comissoes',operacoes:'/api/operacoes',contratos:'/api/contratos',usuarios:'/api/usuarios',docs:'/api/documentos',logs:'/api/auditoria',consorcios:'/api/consorcios',metas:'/api/metas',kanban:'/api/kanban'};
-  const results=await Promise.allSettled(Object.entries(endpoints).map(async([key,path])=>{
-    const data=await API.get(path);
-    if(data&&Array.isArray(data))D[key]=data;
-    else if(data&&data.data&&Array.isArray(data.data))D[key]=data.data;
+  const endpoints={licenciados:'/api/licenciados',clientes:'/api/clientes?limit=100',vendas:'/api/vendas?limit=100',comissoes:'/api/comissoes',operacoes:'/api/operacoes?limit=100',contratos:'/api/contratos',usuarios:'/api/usuarios',docs:'/api/documentos?limit=100',logs:'/api/auditoria',consorcios:'/api/consorcios',metas:'/api/metas',kanban:'/api/kanban'};
+  await Promise.allSettled(Object.entries(endpoints).map(async([key,path])=>{
+    const res=await API.get(path);
+    if(!res)return;
+    if(Array.isArray(res))D[key]=res;
+    else if(res.data&&Array.isArray(res.data))D[key]=res.data;
+    else if(typeof res==='object'&&!Array.isArray(res))D[key]=res;
   }));
 }
 
@@ -5020,7 +5022,7 @@ function valCPF(){
       // CPF matematicamente válido — verificar duplicata no sistema
       const dup=D.clientes.find(cl=>cl.cpf.replace(/\D/g,'')===v);
       if(dup){
-        st.innerHTML='<div class="alert alert-w"><div><b>CPF já cadastrado</b> no sistema para '+dup.nome+'</div></div>';
+        st.innerHTML='<div class="alert alert-w"><div><b>CPF já cadastrado</b> no sistema para '+escapeHtml(dup.nome)+'</div></div>';
         go('cpf-dup',{cpf:v,nome:dup.nome,id:dup.id});
       } else {
         st.innerHTML='<div class="alert alert-ok"><div><b>CPF válido.</b> Disponível para cadastro.</div></div>';
@@ -5048,7 +5050,7 @@ SCREENS['recuperar']=()=>`<div style="position:fixed;inset:0;background:var(--bg
 SCREENS['dashboard']=()=>S.role==='admin'?adminDash():licDash();
 
 function adminDash(){
-  const bars=[];const mx=bars.length?Math.max(...bars):1;
+  const bars=(()=>{const weeks=[];const now=new Date();for(let i=11;i>=0;i--){const d=new Date(now);d.setDate(d.getDate()-i*7);const wk=d.toISOString().slice(0,10);const vol=(D.vendas||[]).filter(v=>{const vd=new Date(v.data||v.createdAt);return Math.abs(vd-d)<7*24*3600*1000;}).reduce((s,v)=>s+(v.val||0),0);weeks.push(vol);}return weeks;})();const mx=bars.length?Math.max(...bars):1;
   const totalVol=D.licenciados.reduce((s,l)=>s+l.vol,0);const pctG=Math.round(totalVol/12000000*100);
   return `<div class="page">
   <div class="ph">
@@ -5680,7 +5682,7 @@ function renderOppCards(lista){
         <div class="opp-meta-item"><span class="opp-meta-lbl">Período</span><span class="opp-meta-val">${o.semana}</span></div>
       </div>
       <div class="opp-actions">
-        <button class="btn btn-p sm" style="flex:1;justify-content:center" onclick="registrarInteresse('${o.id}','${o.titulo}',this)">Tenho Interesse</button>
+        <button class="btn btn-p sm" style="flex:1;justify-content:center" onclick="registrarInteresse('${o.id}','${escapeHtml(o.titulo).replace(/'/g,"\\'")}',this)">Tenho Interesse</button>
         ${o.linkEstudo?`<a class="opp-link" href="${o.linkEstudo}" target="_blank" title="Abrir pasta da operação"> Ver estudo completo</a>`:`<span class="opp-link" style="opacity:.4;cursor:default"> Estudo indisponível</span>`}
       </div>
     </div>

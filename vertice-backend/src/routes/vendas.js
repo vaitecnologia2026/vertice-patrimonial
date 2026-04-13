@@ -21,16 +21,24 @@ router.get('/', auth, async (req, res, next) => {
       { cliente: { cpf: { contains: q } } },
     ];
 
-    const vendas = await prisma.venda.findMany({
-      where,
-      include: {
-        cliente: { select: { nome: true, cpf: true } },
-        licenciado: { select: { nome: true } },
-        comissoes: { select: { val: true, status: true } },
-      },
-      orderBy: { data: 'desc' },
-    });
-    res.json(vendas);
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 50));
+    const skip = (page - 1) * limit;
+    const [vendas, total] = await Promise.all([
+      prisma.venda.findMany({
+        where,
+        include: {
+          cliente: { select: { nome: true, cpf: true } },
+          licenciado: { select: { nome: true } },
+          comissoes: { select: { val: true, status: true } },
+        },
+        orderBy: { data: 'desc' },
+        skip,
+        take: limit,
+      }),
+      prisma.venda.count({ where }),
+    ]);
+    res.json({ data: vendas, total, page, pages: Math.ceil(total / limit) });
   } catch (err) { next(err); }
 });
 

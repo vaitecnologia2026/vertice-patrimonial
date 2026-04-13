@@ -46,13 +46,13 @@ if (rawCorsOrigin) {
   const origins = rawCorsOrigin.split(',').map(o => o.trim());
   corsOrigin = origins.length === 1 ? origins[0] : origins;
 } else {
-  corsOrigin = process.env.NODE_ENV === 'production' ? false : '*';
+  corsOrigin = process.env.NODE_ENV === 'production' ? false : 'http://localhost:3000';
 }
 app.use(cors({
   origin: corsOrigin,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true,
+  credentials: corsOrigin !== '*',
   maxAge: 600,
 }));
 

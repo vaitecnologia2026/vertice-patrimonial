@@ -20,8 +20,14 @@ router.get('/', auth, async (req, res, next) => {
     if (req.user.role === 'LIC') where.licId = req.user.licId;
     else if (req.query.licId) where.licId = req.query.licId;
     if (req.query.status) where.status = req.query.status;
-    const list = await prisma.operacao.findMany({ where, orderBy: { createdAt: 'desc' } });
-    res.json(list);
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 50));
+    const skip = (page - 1) * limit;
+    const [list, total] = await Promise.all([
+      prisma.operacao.findMany({ where, orderBy: { createdAt: 'desc' }, skip, take: limit }),
+      prisma.operacao.count({ where }),
+    ]);
+    res.json({ data: list, total, page, pages: Math.ceil(total / limit) });
   } catch (err) { next(err); }
 });
 

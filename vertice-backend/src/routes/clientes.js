@@ -21,15 +21,23 @@ router.get('/', auth, async (req, res, next) => {
       { email: { contains: q, mode: 'insensitive' } },
     ];
 
-    const clientes = await prisma.cliente.findMany({
-      where,
-      include: {
-        licenciado: { select: { nome: true } },
-        _count: { select: { vendas: true } },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
-    res.json(clientes);
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 50));
+    const skip = (page - 1) * limit;
+    const [clientes, total] = await Promise.all([
+      prisma.cliente.findMany({
+        where,
+        include: {
+          licenciado: { select: { nome: true } },
+          _count: { select: { vendas: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      prisma.cliente.count({ where }),
+    ]);
+    res.json({ data: clientes, total, page, pages: Math.ceil(total / limit) });
   } catch (err) { next(err); }
 });
 
@@ -53,6 +61,7 @@ router.post('/', auth, async (req, res, next) => {
     data.licId = req.user.role === 'LIC' ? req.user.licId : data.licId;
     if (!data.licId) return res.status(400).json({ error: 'licId é obrigatório.' });
     if (!data.nome) return res.status(400).json({ error: 'Nome é obrigatório.' });
+    if (!data.cpf) return res.status(400).json({ error: 'CPF é obrigatório.' });
     if (data.cpf) {
       const cpf = formatCPF(data.cpf);
       if (!cpf) return res.status(400).json({ error: 'CPF inválido.' });

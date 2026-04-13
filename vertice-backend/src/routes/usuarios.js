@@ -9,7 +9,7 @@ const router = express.Router();
 router.get('/', auth, adminOnly, async (req, res, next) => {
   try {
     res.json(await prisma.user.findMany({
-      select: { id: true, name: true, email: true, role: true, ativo: true, licId: true, createdAt: true },
+      select: { id: true, name: true, email: true, role: true, ativo: true, licId: true, createdAt: true, updatedAt: true },
       orderBy: { name: 'asc' },
     }));
   } catch (err) { next(err); }
@@ -41,16 +41,7 @@ router.post('/', auth, adminOnly, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-router.patch('/:id/status', auth, adminOnly, async (req, res, next) => {
-  try {
-    res.json(await prisma.user.update({
-      where: { id: req.params.id },
-      data: { ativo: !!req.body.ativo },
-      select: { id: true, name: true, email: true, role: true, ativo: true },
-    }));
-  } catch (err) { next(err); }
-});
-
+// IMPORTANT: /me/senha BEFORE /:id/status to avoid Express matching "me" as :id
 router.patch('/me/senha', auth, async (req, res, next) => {
   try {
     const { senhaAtual, novaSenha } = req.body;
@@ -62,6 +53,16 @@ router.patch('/me/senha', auth, async (req, res, next) => {
     }
     await prisma.user.update({ where: { id: req.user.id }, data: { password: await bcrypt.hash(novaSenha, 12) } });
     res.json({ message: 'Senha alterada com sucesso.' });
+  } catch (err) { next(err); }
+});
+
+router.patch('/:id/status', auth, adminOnly, async (req, res, next) => {
+  try {
+    res.json(await prisma.user.update({
+      where: { id: req.params.id },
+      data: { ativo: !!req.body.ativo },
+      select: { id: true, name: true, email: true, role: true, ativo: true },
+    }));
   } catch (err) { next(err); }
 });
 

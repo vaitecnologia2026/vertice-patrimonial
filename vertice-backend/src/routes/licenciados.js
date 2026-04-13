@@ -93,7 +93,11 @@ router.put('/:id', auth, adminOnly, async (req, res, next) => {
 
     if (senha && senha.length >= 8) {
       const hash = await bcrypt.hash(senha, 12);
-      await prisma.user.updateMany({ where: { licId: lic.id }, data: { password: hash } });
+      // Update only the first/primary user linked to this licenciado
+      const primaryUser = await prisma.user.findFirst({ where: { licId: lic.id }, orderBy: { createdAt: 'asc' } });
+      if (primaryUser) {
+        await prisma.user.update({ where: { id: primaryUser.id }, data: { password: hash } });
+      }
     }
 
     await prisma.auditoria.create({

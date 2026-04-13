@@ -28,7 +28,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({
   storage,
-  limits: { fileSize: (process.env.MAX_FILE_SIZE_MB || 10) * 1024 * 1024 },
+  limits: { fileSize: ((() => { const n = parseInt(process.env.MAX_FILE_SIZE_MB, 10); return isNaN(n) || n <= 0 ? 10 : n; })()) * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     if (!isAllowedFile(file.originalname)) {
       return cb(new Error('Tipo de arquivo não permitido.'), false);
@@ -43,8 +43,14 @@ router.get('/', auth, async (req, res, next) => {
     if (req.user.role === 'LIC') where.licId = req.user.licId;
     else if (req.query.licId) where.licId = req.query.licId;
     if (req.query.cliId) where.cliId = req.query.cliId;
-    const list = await prisma.documento.findMany({ where, orderBy: { data: 'desc' } });
-    res.json(list);
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 50));
+    const skip = (page - 1) * limit;
+    const [list, total] = await Promise.all([
+      prisma.documento.findMany({ where, orderBy: { data: 'desc' }, skip, take: limit }),
+      prisma.documento.count({ where }),
+    ]);
+    res.json({ data: list, total, page, pages: Math.ceil(total / limit) });
   } catch (err) { next(err); }
 });
 
