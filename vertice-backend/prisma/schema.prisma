@@ -1,12 +1,10 @@
 generator client {
-  provider      = "prisma-client-js"
-  binaryTargets = ["native", "rhel-openssl-1.0.x", "rhel-openssl-3.0.x", "linux-musl-openssl-3.0.x"]
+  provider = "prisma-client-js"
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 // ─── USUÁRIOS / AUTH ──────────────────────────────────────────
@@ -30,6 +28,8 @@ model User {
 enum Role {
   ADMIN
   LIC
+  JURIDICO
+  PESQUISA
 }
 
 model RefreshToken {
@@ -172,6 +172,21 @@ enum StatusCom {
   CANCELADO
 }
 
+// ─── ANEXOS (arquivos vinculados a uma Operação) ─────────────
+model Anexo {
+  id         String   @id @default(cuid())
+  opId       String
+  operacao   Operacao @relation(fields: [opId], references: [id], onDelete: Cascade)
+  nome       String   // nome original do arquivo
+  tipo       String   // mime type ou extensão (pdf, docx, ...)
+  tam        Int      // tamanho em bytes
+  url        String   // caminho do arquivo armazenado
+  categoria  String   @default("outro")  // "pesquisa", "juridico", "combinado", "outro"
+  uploadBy   String?  // userId que fez upload
+  ordem      Int      @default(0)
+  createdAt  DateTime @default(now())
+}
+
 // ─── OPERAÇÕES (Arrematação / Home Equity / etc) ─────────────
 model Operacao {
   id         String   @id @default(cuid())
@@ -179,6 +194,7 @@ model Operacao {
   cliId      String?
   licId      String?
   status     String   @default("em_analise")
+  anexos     Anexo[]
   // Arrematação
   end        String?
   bairro     String?

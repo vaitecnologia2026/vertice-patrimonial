@@ -91,16 +91,22 @@ npm install
 # Gerar o Prisma Client
 npx prisma generate
 
-# Aplicar o schema no banco
-npx prisma db push
+# Aplicar o schema no banco (cria enum JURIDICO/PESQUISA e tabela Anexo)
+npx prisma migrate deploy
+# (em dev, use: npx prisma migrate dev --name add_roles_and_anexos)
 
 # Popular com dados iniciais (opcional)
 npm run db:seed
 ```
 
-**Credenciais de acesso apos o seed:**
-- Admin: `admin@vertice.com.br` / `v@2026`
-- Licenciado: `joao@teste.com.br` / `123456`
+**Credenciais de acesso apos o seed (v3.1):**
+
+| Perfil      | Email                        | Senha            | Acesso                       |
+|-------------|------------------------------|------------------|------------------------------|
+| Admin       | admin@vertice.com.br         | v@2026admin      | Total                        |
+| Licenciado  | joao@teste.com.br            | vertice2026      | CRM, Vendas, Comissoes       |
+| Juridico    | juridico@vertice.com.br      | juridico2026     | Apenas Gestao de Equipe      |
+| Pesquisa    | pesquisa@vertice.com.br      | pesquisa2026     | Apenas Gestao de Equipe      |
 
 > **IMPORTANTE:** Troque as senhas padrao imediatamente apos o primeiro login.
 

@@ -21,24 +21,16 @@ router.get('/', auth, async (req, res, next) => {
       { cliente: { cpf: { contains: q } } },
     ];
 
-    const page = Math.max(1, parseInt(req.query.page) || 1);
-    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 50));
-    const skip = (page - 1) * limit;
-    const [vendas, total] = await Promise.all([
-      prisma.venda.findMany({
-        where,
-        include: {
-          cliente: { select: { nome: true, cpf: true } },
-          licenciado: { select: { nome: true } },
-          comissoes: { select: { val: true, status: true } },
-        },
-        orderBy: { data: 'desc' },
-        skip,
-        take: limit,
-      }),
-      prisma.venda.count({ where }),
-    ]);
-    res.json({ data: vendas, total, page, pages: Math.ceil(total / limit) });
+    const vendas = await prisma.venda.findMany({
+      where,
+      include: {
+        cliente: { select: { nome: true, cpf: true } },
+        licenciado: { select: { nome: true } },
+        comissoes: { select: { val: true, status: true } },
+      },
+      orderBy: { data: 'desc' },
+    });
+    res.json(vendas);
   } catch (err) { next(err); }
 });
 
@@ -69,13 +61,6 @@ router.post('/', auth, async (req, res, next) => {
     data.licId = req.user.role === 'LIC' ? req.user.licId : data.licId;
     if (!data.licId || !data.cliId || !data.prod) {
       return res.status(400).json({ error: 'cliId, licId e prod são obrigatórios.' });
-    }
-    // Verificar que o cliente pertence ao licenciado
-    if (req.user.role === 'LIC') {
-      const cli = await prisma.cliente.findUnique({ where: { id: data.cliId } });
-      if (!cli || cli.licId !== data.licId) {
-        return res.status(403).json({ error: 'Cliente não pertence a este licenciado.' });
-      }
     }
     data.val = parseFloat(data.val);
     if (isNaN(data.val) || data.val <= 0) {

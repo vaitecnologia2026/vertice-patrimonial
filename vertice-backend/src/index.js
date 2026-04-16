@@ -6,10 +6,10 @@ const compression = require('compression');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
 const path = require('path');
-const fs = require('fs');
 
 const logger = require('./utils/logger');
 const { errorHandler, notFound } = require('./middleware/errorHandler');
+const { auth, blockRestricted } = require('./middleware/auth');
 
 // Routes
 const authRoutes        = require('./routes/auth');
@@ -39,21 +39,14 @@ app.use(helmet({
   contentSecurityPolicy: false,
 }));
 
-// CORS — suporta múltiplas origens separadas por vírgula ou wildcard em dev
-const rawCorsOrigin = process.env.CORS_ORIGIN;
-let corsOrigin;
-if (rawCorsOrigin) {
-  const origins = rawCorsOrigin.split(',').map(o => o.trim());
-  corsOrigin = origins.length === 1 ? origins[0] : origins;
-} else {
-  corsOrigin = process.env.NODE_ENV === 'production' ? false : 'http://localhost:3000';
-}
+// CORS — rejeitar wildcard em produção
+const corsOrigin = process.env.CORS_ORIGIN || (process.env.NODE_ENV === 'production' ? false : '*');
 app.use(cors({
   origin: corsOrigin,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: corsOrigin !== '*',
-  maxAge: 600,
+  credentials: true,
+  maxAge: 600, // cache preflight por 10 min
 }));
 
 // Rate limiting global
@@ -86,7 +79,6 @@ app.use(express.urlencoded({ extended: true }));
 app.use(morgan('combined', { stream: { write: msg => logger.http(msg.trim()) } }));
 
 // Uploads estáticos — com headers de segurança
-// UPLOAD_DIR pode ser sobrescrito via env (ex: /tmp para Vercel)
 const uploadDir = process.env.UPLOAD_DIR
   ? path.resolve(process.env.UPLOAD_DIR)
   : path.join(__dirname, '../uploads');
@@ -107,35 +99,42 @@ app.get('/health', (req, res) => {
 });
 
 // ─── ROTAS ───────────────────────────────────────────────────
+// Rotas abertas (perfis Juridico/Pesquisa autenticados também chegam aqui):
 app.use('/api/auth',         loginLimiter, authRoutes);
-app.use('/api/licenciados',  licenciadosRoutes);
-app.use('/api/clientes',     clientesRoutes);
-app.use('/api/vendas',       vendasRoutes);
-app.use('/api/comissoes',    comissoesRoutes);
+
+// Operações → acesso liberado para ADMIN, LIC, JURIDICO, PESQUISA (controle fino por perfil nas próprias rotas)
 app.use('/api/operacoes',    operacoesRoutes);
-app.use('/api/contratos',    contratosRoutes);
+
+// Documentos/uploads → permitidos em Gestão de Equipe (Juridico e Pesquisa precisam anexar arquivos)
 app.use('/api/documentos',   uploadLimiter, documentosRoutes);
-app.use('/api/metas',        metasRoutes);
-app.use('/api/consorcios',   consorciRoutes);
-app.use('/api/cursos',       cursosRoutes);
-app.use('/api/config',       configRoutes);
-app.use('/api/auditoria',    auditoriaRoutes);
-app.use('/api/usuarios',     usuariosRoutes);
-app.use('/api/kanban',       kanbanRoutes);
-app.use('/api/dashboard',    dashboardRoutes);
+
+// Rotas que Juridico/Pesquisa NÃO podem acessar (bloqueadas no backend):
+app.use('/api/licenciados',  auth, blockRestricted, licenciadosRoutes);
+app.use('/api/clientes',     auth, blockRestricted, clientesRoutes);
+app.use('/api/vendas',       auth, blockRestricted, vendasRoutes);
+app.use('/api/comissoes',    auth, blockRestricted, comissoesRoutes);
+app.use('/api/contratos',    auth, blockRestricted, contratosRoutes);
+app.use('/api/metas',        auth, blockRestricted, metasRoutes);
+app.use('/api/consorcios',   auth, blockRestricted, consorciRoutes);
+app.use('/api/cursos',       auth, blockRestricted, cursosRoutes);
+app.use('/api/config',       auth, blockRestricted, configRoutes);
+app.use('/api/auditoria',    auth, blockRestricted, auditoriaRoutes);
+app.use('/api/usuarios',     auth, blockRestricted, usuariosRoutes);
+app.use('/api/kanban',       auth, blockRestricted, kanbanRoutes);
+app.use('/api/dashboard',    auth, blockRestricted, dashboardRoutes);
+
+// ─── ERROR HANDLERS ──────────────────────────────────────────
+app.use(notFound);
+app.use(errorHandler);
 
 // ─── FRONTEND SPA (catch-all para rotas não-API) ─────────────
-// Serve o HTML principal para qualquer rota que não seja /api, /uploads ou /health
+const fs = require('fs');
 const frontendPath = path.resolve(__dirname, '../../vertice-vai.html');
 if (fs.existsSync(frontendPath)) {
   app.get(/^(?!\/api|\/uploads|\/health).*$/, (req, res) => {
     res.sendFile(frontendPath);
   });
 }
-
-// ─── ERROR HANDLERS ──────────────────────────────────────────
-app.use(notFound);
-app.use(errorHandler);
 
 // ─── START (apenas quando rodando diretamente, não via Vercel) ─
 if (require.main === module) {

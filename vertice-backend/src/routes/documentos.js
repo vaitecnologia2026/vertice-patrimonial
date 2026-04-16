@@ -1,25 +1,14 @@
 const express = require('express');
 const multer = require('multer');
 const path = require('path');
-const fs = require('fs');
 const prisma = require('../utils/prisma');
 const { auth, adminOnly } = require('../middleware/auth');
 const { isAllowedFile } = require('../utils/sanitize');
 
 const router = express.Router();
 
-// Resolve diretório de upload: env UPLOAD_DIR (ex: /tmp no Vercel) ou ./uploads local
-const uploadDir = process.env.UPLOAD_DIR
-  ? path.resolve(process.env.UPLOAD_DIR)
-  : path.join(__dirname, '../../../uploads');
-
-// Garante que o diretório existe
-if (!fs.existsSync(uploadDir)) {
-  try { fs.mkdirSync(uploadDir, { recursive: true }); } catch (_) {}
-}
-
 const storage = multer.diskStorage({
-  destination: uploadDir,
+  destination: process.env.UPLOAD_DIR || './uploads',
   filename: (req, file, cb) => {
     const safe = file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_');
     cb(null, `${Date.now()}-${safe}`);
@@ -28,7 +17,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({
   storage,
-  limits: { fileSize: ((() => { const n = parseInt(process.env.MAX_FILE_SIZE_MB, 10); return isNaN(n) || n <= 0 ? 10 : n; })()) * 1024 * 1024 },
+  limits: { fileSize: (process.env.MAX_FILE_SIZE_MB || 10) * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     if (!isAllowedFile(file.originalname)) {
       return cb(new Error('Tipo de arquivo não permitido.'), false);
@@ -43,14 +32,8 @@ router.get('/', auth, async (req, res, next) => {
     if (req.user.role === 'LIC') where.licId = req.user.licId;
     else if (req.query.licId) where.licId = req.query.licId;
     if (req.query.cliId) where.cliId = req.query.cliId;
-    const page = Math.max(1, parseInt(req.query.page) || 1);
-    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 50));
-    const skip = (page - 1) * limit;
-    const [list, total] = await Promise.all([
-      prisma.documento.findMany({ where, orderBy: { data: 'desc' }, skip, take: limit }),
-      prisma.documento.count({ where }),
-    ]);
-    res.json({ data: list, total, page, pages: Math.ceil(total / limit) });
+    const list = await prisma.documento.findMany({ where, orderBy: { data: 'desc' } });
+    res.json(list);
   } catch (err) { next(err); }
 });
 

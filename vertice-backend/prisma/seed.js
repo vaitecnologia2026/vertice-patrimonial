@@ -28,8 +28,10 @@ async function main() {
   console.log('  Licenciados criados');
 
   // Credenciais alinhadas com o frontend
-  const adminHash = await bcrypt.hash('v@2026admin', 12);
-  const licHash   = await bcrypt.hash('vertice2026', 12);
+  const adminHash    = await bcrypt.hash('v@2026admin', 12);
+  const licHash      = await bcrypt.hash('vertice2026', 12);
+  const juridicoHash = await bcrypt.hash('juridico2026', 12);
+  const pesquisaHash = await bcrypt.hash('pesquisa2026', 12);
 
   await prisma.user.upsert({ where:{email:'admin@vertice.com.br'}, update:{password:adminHash}, create:{
     email:'admin@vertice.com.br', password:adminHash, name:'Ana Vertice', role:'ADMIN'
@@ -40,7 +42,15 @@ async function main() {
   await prisma.user.upsert({ where:{email:'roberto@lima.com.br'}, update:{password:licHash}, create:{
     email:'roberto@lima.com.br', password:licHash, name:'Roberto Lima', role:'LIC', licId:l3.id
   }});
-  console.log('  Usuarios criados');
+
+  // Novos perfis restritos — acesso SOMENTE a Gestão de Equipe
+  await prisma.user.upsert({ where:{email:'juridico@vertice.com.br'}, update:{password:juridicoHash, role:'JURIDICO'}, create:{
+    email:'juridico@vertice.com.br', password:juridicoHash, name:'Dra. Patricia Melo', role:'JURIDICO'
+  }});
+  await prisma.user.upsert({ where:{email:'pesquisa@vertice.com.br'}, update:{password:pesquisaHash, role:'PESQUISA'}, create:{
+    email:'pesquisa@vertice.com.br', password:pesquisaHash, name:'Ana Costa', role:'PESQUISA'
+  }});
+  console.log('  Usuarios criados (incluindo Juridico e Pesquisa)');
 
   const c1 = await prisma.cliente.upsert({ where:{cpf:'123.456.789-09'}, update:{}, create:{
     id:'C001',nome:'Carlos Mendes',cpf:'123.456.789-09',tel:'(11) 98765-4321',
@@ -115,7 +125,9 @@ async function main() {
 
   console.log('\nSeed concluido!\n');
   console.log('Credenciais de acesso:');
-  console.log('  Admin:       admin@vertice.com.br  /  v@2026admin');
-  console.log('  Licenciado:  joao@teste.com.br     /  vertice2026');
+  console.log('  Admin:       admin@vertice.com.br     /  v@2026admin');
+  console.log('  Licenciado:  joao@teste.com.br        /  vertice2026');
+  console.log('  Juridico:    juridico@vertice.com.br  /  juridico2026');
+  console.log('  Pesquisa:    pesquisa@vertice.com.br  /  pesquisa2026');
 }
 main().catch(e=>{console.error(e);process.exit(1);}).finally(()=>prisma.$disconnect());

@@ -20,8 +20,6 @@ router.post('/', auth, adminOnly, async (req, res, next) => {
     const data = pick(req.body, CONS_FIELDS);
     data.status = 'aprovado';
     if (!data.nome || !data.tipo) return res.status(400).json({ error: 'nome e tipo são obrigatórios.' });
-    if (!data.admin) return res.status(400).json({ error: 'admin é obrigatório.' });
-    if (!data.carta) return res.status(400).json({ error: 'carta é obrigatório.' });
     res.status(201).json(await prisma.consorcio.create({ data }));
   } catch (err) { next(err); }
 });
