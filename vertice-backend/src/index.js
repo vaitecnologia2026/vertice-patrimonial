@@ -39,8 +39,15 @@ app.use(helmet({
   contentSecurityPolicy: false,
 }));
 
-// CORS — rejeitar wildcard em produção
-const corsOrigin = process.env.CORS_ORIGIN || (process.env.NODE_ENV === 'production' ? false : '*');
+// CORS — suporta múltiplas origens separadas por vírgula
+const rawCorsOrigin = process.env.CORS_ORIGIN;
+let corsOrigin;
+if (rawCorsOrigin) {
+  const origins = rawCorsOrigin.split(',').map(o => o.trim()).filter(Boolean);
+  corsOrigin = origins.length === 1 ? origins[0] : origins;
+} else {
+  corsOrigin = process.env.NODE_ENV === 'production' ? false : 'http://localhost:3000';
+}
 app.use(cors({
   origin: corsOrigin,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],

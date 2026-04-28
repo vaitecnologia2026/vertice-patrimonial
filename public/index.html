@@ -5035,8 +5035,20 @@ function doLogin(){
   })();
 }
 
+async function loadAppData(){
+  if(!API_MODE)return;
+  const endpoints={licenciados:'/api/licenciados',clientes:'/api/clientes',vendas:'/api/vendas',comissoes:'/api/comissoes',operacoes:'/api/operacoes',contratos:'/api/contratos',usuarios:'/api/usuarios',docs:'/api/documentos',logs:'/api/auditoria',consorcios:'/api/consorcios',metas:'/api/metas',kanban:'/api/kanban'};
+  await Promise.allSettled(Object.entries(endpoints).map(async([key,path])=>{
+    const res=await API.get(path);
+    if(!res)return;
+    if(Array.isArray(res))D[key]=res;
+    else if(res.data&&Array.isArray(res.data))D[key]=res.data;
+    else if(typeof res==='object'&&!Array.isArray(res))D[key]=res;
+  }));
+}
+
 function _loginContinue(btn, errEl){
-  setTimeout(()=>{
+  setTimeout(async()=>{
 
     // ── Sessão única: gera token e registra no localStorage ──
     var sessToken = Date.now().toString(36) + Math.random().toString(36).slice(2);
@@ -5074,6 +5086,7 @@ function _loginContinue(btn, errEl){
     var amBtn=document.getElementById('tb-am-btn'); if(amBtn) amBtn.style.display = (S.role==='juridico'||S.role==='pesquisa')?'none':'';
     if(typeof CFG!=='undefined'){const logo=CFG.getLogo();if(logo){const sb=document.getElementById('sb-logo-img');if(sb)sb.src=logo;}}
     buildNav();
+    await loadAppData();
     // Redirect por perfil: restritos vão direto para Gestão de Equipe
     var initial = (S.role==='juridico' || S.role==='pesquisa') ? 'ge-home' : 'dashboard';
     go(initial);
@@ -5304,7 +5317,9 @@ function adminDash(){
 }
 
 function licDash(){
-  const eu=D.licenciados[0];const p=eu.pct;const r=42;const circ=2*Math.PI*r;
+  const eu=D.licenciados[0];
+  if(!eu)return '<div class="page"><div class="alert alert-i">Nenhum dado disponível ainda. Aguarde o sincronismo ou cadastre licenciados.</div></div>';
+  const p=eu.pct||0;const r=42;const circ=2*Math.PI*r;
   const minhasVendas=myVendas();const minhasComs=myComs();
   return `<div class="page">
   <div style="padding:14px 18px;background:var(--dark);border-radius:var(--r);margin-bottom:14px;display:flex;align-items:center;gap:12px;box-shadow:var(--sh2)">
@@ -5401,6 +5416,7 @@ SCREENS['licenciados']=()=>`<div class="page">
 // ══ DET-LIC ══
 SCREENS['det-lic']=()=>{
   const l=D.licenciados.find(x=>x.id===(S.params.id||'L001'))||D.licenciados[0];
+  if(!l)return '<div class="page"><div class="alert alert-i">Licenciado não encontrado.</div></div>';
   return `<div class="page">
   <div class="ph"><div class="ph-l"><div class="pt">${l.nome}</div><div class="ps">${l.empresa} · ${l.estado}</div></div>
   <div class="pa"><button class="btn btn-g" onclick="go('licenciados')">← Voltar</button>${S.role==='admin'?`<button class="btn btn-d sm" onclick="toast('Confirme','w')">⏻ Suspender</button>`:''}</div></div>
@@ -5450,22 +5466,24 @@ SCREENS['novo-lic']=()=>`<div class="page">
   <div class="split">
     <div>
       <div class="card mb10"><div class="card-h"><span class="card-ht">Dados Pessoais e Empresa</span></div><div class="card-b">
-        <div class="fgrid"><div class="fg s2"><label>Razão Social / Nome *</label><input placeholder="Nome completo"></div>
-        <div class="fg"><label>CNPJ / CPF *</label><input placeholder="00.000.000/0001-00"></div>
-        <div class="fg"><label>Estado *</label><select><option>SP</option><option>RJ</option><option>MG</option><option>PR</option><option>RS</option></select></div>
-        <div class="fg"><label>E-mail *</label><input type="email" placeholder="email@empresa.com"></div>
-        <div class="fg"><label>WhatsApp *</label><input placeholder="(00) 00000-0000"></div>
-        <div class="fg"><label>PIX *</label><input placeholder="CPF, CNPJ ou e-mail"></div>
-        <div class="fg"><label>Banco *</label><input placeholder="341 - Itaú · Ag 0000 · CC 00000-0"></div>
-        <div class="fg"><label>% Home Equity (config.)</label><input type="number" value="1" step="0.5"></div></div>
+        <div class="fgrid"><div class="fg s2"><label>Razão Social / Nome *</label><input id="nl-nome" placeholder="Nome completo"></div>
+        <div class="fg"><label>Empresa *</label><input id="nl-empresa" placeholder="Razão social"></div>
+        <div class="fg"><label>CNPJ / CPF *</label><input id="nl-cnpj" placeholder="00.000.000/0001-00"></div>
+        <div class="fg"><label>Estado *</label><select id="nl-estado"><option>SP</option><option>RJ</option><option>MG</option><option>PR</option><option>RS</option><option>SC</option><option>BA</option><option>GO</option><option>PE</option><option>CE</option></select></div>
+        <div class="fg"><label>E-mail *</label><input id="nl-email" type="email" placeholder="email@empresa.com"></div>
+        <div class="fg"><label>WhatsApp *</label><input id="nl-tel" placeholder="(00) 00000-0000"></div>
+        <div class="fg"><label>PIX *</label><input id="nl-pix" placeholder="CPF, CNPJ ou e-mail"></div>
+        <div class="fg"><label>Banco *</label><input id="nl-banco" placeholder="341 - Itaú · Ag 0000 · CC 00000-0"></div>
+        <div class="fg"><label>% Home Equity (config.)</label><input id="nl-comHE" type="number" value="1" step="0.5"></div>
+        <div class="fg"><label>Cobrança de taxa</label><select id="nl-taxa"><option value="cobrado">Cobrado (padrão)</option><option value="isento">Isento</option></select></div></div>
       </div></div>
       <div class="card mb10"><div class="card-h"><span class="card-ht">Configuração da Licença</span></div><div class="card-b">
-        <div class="fgrid"><div class="fg"><label>Data de Início *</label><input type="date" value="${new Date().toISOString().slice(0,10)}"></div>
-        <div class="fg"><label>Valor da Licença</label><input value="R$ 100.000" readonly style="color:var(--muted)"></div>
-        <div class="fg"><label>Parcelamento</label><input value="10x de R$ 10.000" readonly style="color:var(--muted)"></div>
-        <div class="fg"><label>Meta Trimestral (R$)</label><input type="number" value="3000000"></div></div>
+        <div class="fgrid"><div class="fg"><label>Data de Início *</label><input id="nl-inicio" type="date" value="${new Date().toISOString().slice(0,10)}"></div>
+        <div class="fg"><label>Meta Trimestral (R$)</label><input id="nl-meta" type="number" value="3000000"></div>
+        <div class="fg"><label>Senha de acesso *</label><input id="nl-senha" type="password" placeholder="Mínimo 8 caracteres"></div>
+        <div class="fg"><label>Confirmar senha *</label><input id="nl-senha2" type="password" placeholder="Repita a senha"></div></div>
       </div></div>
-      <div class="factions"><button class="btn btn-p" onclick="toast('Licenciado cadastrado!','ok');go('licenciados')">✓ Cadastrar</button><button class="btn btn-g" onclick="go('licenciados')">Cancelar</button></div>
+      <div class="factions"><button class="btn btn-p" id="nl-btn" onclick="salvarLicenciado()">✓ Cadastrar</button><button class="btn btn-g" onclick="go('licenciados')">Cancelar</button></div>
     </div>
     <div class="card"><div class="card-h"><span class="card-ht">Resumo da Licença</span></div><div class="card-b">
       <div class="cflow">
@@ -5513,9 +5531,9 @@ SCREENS['novo-cli']=()=>`<div class="page">
       </div>
       <div id="cli-form" style="opacity:.35;pointer-events:none;transition:all .3s">
         <div class="card mb10"><div class="card-h"><span class="card-ht">Dados Pessoais</span></div><div class="card-b">
-          <div class="fgrid"><div class="fg s2"><label>Nome Completo *</label><input placeholder="Nome como no documento"></div>
-          <div class="fg"><label>Telefone *</label><input placeholder="(00) 00000-0000"></div>
-          <div class="fg"><label>E-mail *</label><input placeholder="email@cliente.com"></div>
+          <div class="fgrid"><div class="fg s2"><label>Nome Completo *</label><input id="nc-nome" placeholder="Nome como no documento"></div>
+          <div class="fg"><label>Telefone *</label><input id="nc-tel" placeholder="(00) 00000-0000"></div>
+          <div class="fg"><label>E-mail *</label><input id="nc-email" placeholder="email@cliente.com"></div>
           <div class="fg"><label>CEP *</label><input placeholder="00000-000" oninput="mockCEP(this)"></div>
           <div class="fg"><label>Logradouro</label><input id="cli-log" readonly placeholder="Via CEP"></div>
           <div class="fg"><label>Número *</label><input placeholder="123"></div>
@@ -5523,11 +5541,11 @@ SCREENS['novo-cli']=()=>`<div class="page">
           <div class="fg"><label>Cidade</label><input id="cli-cid" readonly></div></div>
         </div></div>
         <div class="card mb10"><div class="card-h"><span class="card-ht">Origem e Interesse</span></div><div class="card-b">
-          <div class="fgrid"><div class="fg"><label>Canal de Origem *</label><select><option>—</option><option>Indicação</option><option>Instagram</option><option>Google</option><option>Evento</option><option>WhatsApp</option></select></div>
-          <div class="fg"><label>Produto</label><select><option>—</option><option>Arrematação Individual</option><option>Home Equity</option><option>Revisão Contratual</option><option>Clube do Milhão</option></select></div>
-          <div class="fg s2"><label>Observações</label><textarea placeholder="Notas internas..."></textarea></div></div>
+          <div class="fgrid"><div class="fg"><label>Canal de Origem *</label><select id="nc-orig"><option value="">—</option><option value="Indicação">Indicação</option><option value="Instagram">Instagram</option><option value="Google">Google</option><option value="Evento">Evento</option><option value="WhatsApp">WhatsApp</option></select></div>
+          <div class="fg"><label>Produto</label><select id="nc-prod"><option value="">—</option><option value="Arrematação Individual">Arrematação Individual</option><option value="Home Equity">Home Equity</option><option value="Revisão Contratual">Revisão Contratual</option><option value="Clube do Milhão">Clube do Milhão</option></select></div>
+          <div class="fg s2"><label>Observações</label><textarea id="nc-obs" placeholder="Notas internas..."></textarea></div></div>
         </div></div>
-        <div class="factions"><button class="btn btn-p" onclick="toast('Cliente cadastrado!','ok');go('clientes')">✓ Salvar Cliente</button><button class="btn btn-g" onclick="go('clientes')">Cancelar</button></div>
+        <div class="factions"><button class="btn btn-p" id="nc-btn" onclick="salvarCliente()">✓ Salvar Cliente</button><button class="btn btn-g" onclick="go('clientes')">Cancelar</button></div>
       </div>
     </div>
     <div class="card"><div class="card-h"><span class="card-ht">CPF & Ownership</span></div><div class="card-b">
@@ -5539,6 +5557,7 @@ SCREENS['novo-cli']=()=>`<div class="page">
 // ══ DET-CLI ══
 SCREENS['det-cli']=()=>{
   const c=D.clientes.find(x=>x.id===(S.params.id||'C001'))||D.clientes[0];
+  if(!c)return '<div class="page"><div class="alert alert-i">Cliente não encontrado.</div></div>';
   const ops=D.operacoes.filter(o=>o.cliId===c.id);
   return `<div class="page">
   <div class="ph"><div class="pa"><button class="btn btn-g" onclick="go('clientes')">← Voltar</button></div></div>
@@ -5859,13 +5878,13 @@ SCREENS['nova-venda']=()=>`<div class="page">
   <div class="split">
     <div>
       <div class="card mb10"><div class="card-h"><span class="card-ht">Identificação</span></div><div class="card-b">
-        <div class="fgrid"><div class="fg s2"><label>Cliente (CPF validado) *</label><input placeholder="Buscar por CPF ou nome..." value="${S.params.cli||''}"></div>
-        <div class="fg"><label>Produto *</label><select id="prod-sel" onchange="updateProdSelect()"><option value="">— Selecione</option><option value="arremata">Arrematação Individual</option><option value="homeequity">Home Equity</option><option value="revisao">Revisão Contratual</option><option value="clube">Clube do Milhão</option><option value="licenc">Licenciamento</option></select></div>
-        <div class="fg"><label>Canal</label><select><option>Licenciado</option><option>Interno</option></select></div></div>
+        <div class="fgrid"><div class="fg s2"><label>Cliente *</label><select id="vn-cli">${(D.clientes||[]).map(c=>`<option value="${c.id}">${escapeHtml(c.nome||'')} — ${c.cpf||''}</option>`).join('')}</select></div>
+        <div class="fg"><label>Produto *</label><select id="prod-sel" onchange="updateProdSelect()"><option value="">— Selecione</option><option value="Arrematação Individual">Arrematação Individual</option><option value="Home Equity">Home Equity</option><option value="Revisão Contratual">Revisão Contratual</option><option value="Clube do Milhão">Clube do Milhão</option><option value="Licenciamento">Licenciamento</option></select></div>
+        <div class="fg"><label>Canal</label><select id="vn-canal"><option value="Licenciado">Licenciado</option><option value="Interno">Interno</option></select></div></div>
       </div></div>
       <div class="card mb10"><div class="card-h"><span class="card-ht">Financeiro</span></div><div class="card-b">
         <div class="fgrid fgrid3"><div class="fg"><label>Valor (R$) *</label><input type="number" id="vn-val" placeholder="0" oninput="updateProdSelect()"></div>
-        <div class="fg"><label>Data *</label><input type="date" value="${new Date().toISOString().slice(0,10)}"></div>
+        <div class="fg"><label>Data *</label><input type="date" id="vn-data" value="${new Date().toISOString().slice(0,10)}"></div>
         <div class="fg"><label>Entrada (R$)</label><input type="number" placeholder="0"></div></div>
       </div></div>
       <div class="card mb10"><div class="card-h"><span class="card-ht">Responsáveis</span></div><div class="card-b">
@@ -5874,7 +5893,7 @@ SCREENS['nova-venda']=()=>`<div class="page">
         <div class="fg"><label>Analista</label><select><option>—</option><option>Ana Costa</option><option>Bruno Araújo</option></select></div>
         <div class="fg"><label>Observações</label><textarea placeholder="Notas..."></textarea></div></div>
       </div></div>
-      <div class="factions"><button class="btn btn-p" onclick="toast('Venda registrada! Comissão calculada.','ok');go('vendas')">✓ Registrar Venda</button>
+      <div class="factions"><button class="btn btn-p" id="vn-btn" onclick="salvarVenda()">✓ Registrar Venda</button>
       <button class="btn btn-s" onclick="go('int-contrato')">+ Intenção de Contrato</button>
       <button class="btn btn-g" onclick="go('vendas')">Cancelar</button></div>
     </div>
@@ -5886,6 +5905,7 @@ SCREENS['nova-venda']=()=>`<div class="page">
 // ══ DET-VENDA ══
 SCREENS['det-venda']=()=>{
   const vid=S.params.id||'VND-2026-0847';const v=D.vendas.find(x=>x.id===vid)||D.vendas[0];
+  if(!v)return '<div class="page"><div class="alert alert-i">Venda não encontrada.</div></div>';
   const op=D.operacoes.find(o=>o.id===v.opId);const c=calcCom(v.val,v.prod==='Arrematação Individual'?'arremata':v.prod==='Home Equity'?'homeequity':v.prod.includes('Revisão')?'revisao':'clube');
   return `<div class="page">
   <div class="ph"><div class="ph-l"><div class="pt">${v.id}</div><div class="ps">${v.prod} · ${v.cli}</div></div>
@@ -6106,8 +6126,9 @@ function renderOpFlow(fluxo,isAdmin){
 
 // ══ DET-OP (Avaliação da Operação) ══
 SCREENS['det-op']=()=>{
-  const op=D.operacoes.find(o=>o.id===(S.params.id||'OP002'))||D.operacoes[1];
-  const dcs=D.docs.filter(d=>d.cliId===op.cliId);
+  const op=D.operacoes.find(o=>o.id===(S.params.id||'OP002'))||D.operacoes[0];
+  if(!op)return '<div class="page"><div class="alert alert-i">Operação não encontrada.</div></div>';
+  const dcs=(D.docs||[]).filter(d=>d.cliId===op.cliId);
   return `<div class="page">
   <div class="ph"><div class="ph-l"><div class="pt">Avaliação da Operação</div><div class="ps">${op.id} · ${op.cli} · ${op.prod}</div></div>
   <div class="pa"><button class="btn btn-g" onclick="go('vendas')">← Voltar</button>${(S.role==='admin')?`<button class="btn btn-s sm" onclick="openDrawer('Atualizar Etapa',tarefaDrawer('${op.id}'))">+ Atualizar Etapa</button>`:''}</div></div>
@@ -6525,9 +6546,11 @@ function metasAdmin(){
 </div>`;}
 
 function metasLic(){
-  const eu=D.licenciados[0];const p=eu.pct;
+  const eu=D.licenciados[0];
+  if(!eu)return '<div class="page"><div class="alert alert-i">Nenhum dado de metas disponível.</div></div>';
+  const p=eu.pct||0;
   const above=D.licenciados.filter(l=>l.vol>eu.vol).length+1;
-  const falta=D.licenciados.find(l=>l.rank===above-1)?.vol-eu.vol;
+  const falta=(D.licenciados.find(l=>l.rank===above-1)?.vol??0)-eu.vol;
   return `<div class="page">
   <div class="ph"><div class="ph-l"><div class="pt">Metas & Performance</div><div class="ps">Sua visão individual · Dados privados</div></div></div>
   <div class="alert alert-i mb12"><span class="ai" style="width:16px;height:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="var(--sem-info)" stroke-width="1.5" stroke-linecap="round"><circle cx="6" cy="6" r="5"/><line x1="6" y1="5.5" x2="6" y2="8.5"/><circle cx="6" cy="3.5" r=".5" fill="var(--sem-info)"/></svg></span><div style="font-size:10px">Você vê sua posição no ranking sem ver os dados dos outros licenciados. Apenas sua posição e o quanto você precisa para subir.</div></div>
@@ -6991,6 +7014,50 @@ async function recarregarUsuarios(){
   const lista=await API.get('/api/usuarios');
   if(Array.isArray(lista))D.usuarios=lista;
   else if(lista&&lista.data)D.usuarios=lista.data;
+}
+
+// ══ SALVAR CLIENTE / VENDA / LICENCIADO ══
+async function salvarCliente(){
+  const v=id=>document.getElementById(id)?.value?.trim();
+  const cpfEl=document.getElementById('cpf-in');
+  const cpf=cpfEl?cpfEl.value.trim():'';
+  const nome=v('nc-nome'),tel=v('nc-tel'),email=v('nc-email'),orig=v('nc-orig'),prod=v('nc-prod');
+  if(!nome||!cpf||!tel){return toast('Preencha nome, CPF e telefone.','e');}
+  const btn=document.getElementById('nc-btn');if(btn)btn.disabled=true;
+  const res=await API.post('/api/clientes',{nome,cpf,tel,email,orig,prod,end:v('cli-log')||''});
+  if(btn)btn.disabled=false;
+  if(res&&!res.error){toast('Cliente cadastrado!','ok');await loadAppData();go('clientes');}
+  else if(res&&res.error){toast(res.error,'e');}
+}
+
+async function salvarVenda(){
+  const v=id=>document.getElementById(id)?.value?.trim();
+  const cliId=v('vn-cli'),prod=v('prod-sel'),val=parseFloat(v('vn-val')||'0'),data=v('vn-data'),canal=v('vn-canal');
+  if(!cliId){return toast('Selecione um cliente.','e');}
+  if(!prod){return toast('Selecione um produto.','e');}
+  if(!val||val<=0){return toast('Informe um valor válido.','e');}
+  const btn=document.getElementById('vn-btn');if(btn)btn.disabled=true;
+  const res=await API.post('/api/vendas',{cliId,prod,val,data,canal});
+  if(btn)btn.disabled=false;
+  if(res&&!res.error){toast('Venda registrada!','ok');await loadAppData();go('vendas');}
+  else if(res&&res.error){toast(res.error,'e');}
+}
+
+async function salvarLicenciado(){
+  const v=id=>document.getElementById(id)?.value?.trim();
+  const nome=v('nl-nome'),empresa=v('nl-empresa'),cnpj=v('nl-cnpj'),estado=v('nl-estado'),
+        email=v('nl-email'),tel=v('nl-tel'),pix=v('nl-pix'),banco=v('nl-banco'),
+        comHE=parseFloat(v('nl-comHE')||'1'),taxa=v('nl-taxa'),
+        inicio=v('nl-inicio'),meta=parseFloat(v('nl-meta')||'3000000'),
+        senha=v('nl-senha'),senha2=v('nl-senha2');
+  if(!nome||!empresa||!cnpj||!estado||!email||!tel){return toast('Preencha todos os campos obrigatórios.','e');}
+  if(!senha||senha.length<8){return toast('Senha mínima de 8 caracteres.','e');}
+  if(senha!==senha2){return toast('As senhas não coincidem.','e');}
+  const btn=document.getElementById('nl-btn');if(btn)btn.disabled=true;
+  const res=await API.post('/api/licenciados',{nome,empresa,cnpj,estado,email,tel,pix,banco,comHE,taxa,inicio,meta,senha});
+  if(btn)btn.disabled=false;
+  if(res&&!res.error){toast('Licenciado cadastrado!','ok');await loadAppData();go('licenciados');}
+  else if(res&&res.error){toast(res.error,'e');}
 }
 
 // ══ AUDITORIA ══
