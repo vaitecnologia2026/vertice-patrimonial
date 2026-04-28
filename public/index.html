@@ -5483,20 +5483,45 @@ SCREENS['novo-lic']=()=>`<div class="page">
         <div class="fg"><label>Senha de acesso *</label><input id="nl-senha" type="password" placeholder="Mínimo 8 caracteres"></div>
         <div class="fg"><label>Confirmar senha *</label><input id="nl-senha2" type="password" placeholder="Repita a senha"></div></div>
       </div></div>
+      <div class="card mb10"><div class="card-h"><span class="card-ht">Pagamento da Licença</span></div><div class="card-b">
+        <div class="fgrid">
+          <div class="fg"><label>Valor da Licença (R$) *</label><input id="nl-valor" type="number" value="100000" min="0" step="1000" oninput="recalcResumoLic()"></div>
+          <div class="fg"><label>Nº de Parcelas *</label><input id="nl-parcelas" type="number" value="10" min="1" max="60" oninput="recalcResumoLic()"></div>
+          <div class="fg"><label>Carência (meses)</label><input id="nl-carencia" type="number" value="2" min="0" max="12" oninput="recalcResumoLic()"></div>
+          <div class="fg"><label>Taxa manutenção (R$/mês)</label><input id="nl-taxaManut" type="number" value="5000" min="0" step="100" oninput="recalcResumoLic()"></div>
+          <div class="fg"><label>Início da taxa (mês nº)</label><input id="nl-mesInicioTaxa" type="number" value="13" min="1" max="24" oninput="recalcResumoLic()"></div>
+          <div class="fg"><label><input type="checkbox" id="nl-isencao" checked onchange="recalcResumoLic()"> Isenção total no Ano 1</label></div>
+        </div>
+      </div></div>
       <div class="factions"><button class="btn btn-p" id="nl-btn" onclick="salvarLicenciado()">✓ Cadastrar</button><button class="btn btn-g" onclick="go('licenciados')">Cancelar</button></div>
     </div>
     <div class="card"><div class="card-h"><span class="card-ht">Resumo da Licença</span></div><div class="card-b">
-      <div class="cflow">
-        <div class="crow total"><span class="crow-l">Valor</span><span class="crow-v">R$ 100.000</span></div>
-        <div class="crow"><span class="crow-l">Parcelamento</span><span class="crow-v" style="font-size:11px">10x R$ 10.000</span></div>
-        <div class="crow"><span class="crow-l">Carência</span><span class="crow-v" style="font-size:11px;color:var(--muted)">Meses 11–12</span></div>
-        <div class="crow"><span class="crow-l">Taxa manutenção</span><span class="crow-v" style="font-size:11px">R$ 5.000/mês</span></div>
-        <div class="crow"><span class="crow-l">Início taxa</span><span class="crow-v" style="font-size:11px">13º mês (se abaixo da meta)</span></div>
-        <div class="crow net"><span class="crow-l">Isenção Ano 1</span><span class="crow-v g">Total ✓</span></div>
+      <div class="cflow" id="nl-resumo">
+        <div class="crow total"><span class="crow-l">Valor</span><span class="crow-v" id="rs-valor">R$ 100.000</span></div>
+        <div class="crow"><span class="crow-l">Parcelamento</span><span class="crow-v" style="font-size:11px" id="rs-parcelas">10x R$ 10.000</span></div>
+        <div class="crow"><span class="crow-l">Carência</span><span class="crow-v" style="font-size:11px;color:var(--muted)" id="rs-carencia">Meses 11–12</span></div>
+        <div class="crow"><span class="crow-l">Taxa manutenção</span><span class="crow-v" style="font-size:11px" id="rs-taxa">R$ 5.000/mês</span></div>
+        <div class="crow"><span class="crow-l">Início taxa</span><span class="crow-v" style="font-size:11px" id="rs-inicioTaxa">13º mês (se abaixo da meta)</span></div>
+        <div class="crow net"><span class="crow-l">Isenção Ano 1</span><span class="crow-v g" id="rs-isencao">Total ✓</span></div>
       </div>
     </div></div>
   </div>
 </div>`;
+
+function recalcResumoLic(){
+  const v=id=>parseFloat(document.getElementById(id)?.value||'0');
+  const valor=v('nl-valor')||0,parcelas=v('nl-parcelas')||1,carencia=v('nl-carencia')||0,taxaManut=v('nl-taxaManut')||0,mesInicioTaxa=v('nl-mesInicioTaxa')||13;
+  const isencao=document.getElementById('nl-isencao')?.checked!==false;
+  const valorParcela=parcelas>0?valor/parcelas:valor;
+  const carenciaIni=parcelas+1,carenciaFim=parcelas+carencia;
+  const set=(id,txt)=>{const el=document.getElementById(id);if(el)el.textContent=txt;};
+  set('rs-valor',RM(valor));
+  set('rs-parcelas',`${parcelas}x ${RM(valorParcela)}`);
+  set('rs-carencia',carencia>0?`Meses ${carenciaIni}–${carenciaFim}`:'Sem carência');
+  set('rs-taxa',`${RM(taxaManut)}/mês`);
+  set('rs-inicioTaxa',`${mesInicioTaxa}º mês (se abaixo da meta)`);
+  set('rs-isencao',isencao?'Total ✓':'Não');
+}
 
 // ══ CLIENTES ══
 SCREENS['clientes']=()=>{const lista=myClients();return `<div class="page">
