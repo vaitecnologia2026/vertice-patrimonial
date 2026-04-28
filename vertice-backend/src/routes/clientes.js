@@ -1,6 +1,6 @@
 const express = require('express');
 const prisma = require('../utils/prisma');
-const { auth } = require('../middleware/auth');
+const { auth, adminOnly } = require('../middleware/auth');
 const { pick, formatCPF } = require('../utils/sanitize');
 
 const router = express.Router();
@@ -83,6 +83,40 @@ router.put('/:id', auth, async (req, res, next) => {
     if (data.data) data.data = new Date(data.data);
     const cli = await prisma.cliente.update({ where: { id: req.params.id }, data });
     res.json(cli);
+  } catch (err) { next(err); }
+});
+
+// POST /api/clientes/:id/transferir — Admin transfere ownership do cliente para outro Licenciado
+router.post('/:id/transferir', auth, adminOnly, async (req, res, next) => {
+  try {
+    const { licId, justificativa } = req.body;
+    if (!licId) return res.status(400).json({ error: 'licId destino é obrigatório.' });
+    if (!justificativa || justificativa.trim().length < 10) {
+      return res.status(400).json({ error: 'Justificativa é obrigatória (mínimo 10 caracteres).' });
+    }
+    const cli = await prisma.cliente.findUnique({ where: { id: req.params.id } });
+    if (!cli) return res.status(404).json({ error: 'Cliente não encontrado.' });
+    const destino = await prisma.licenciado.findUnique({ where: { id: licId } });
+    if (!destino) return res.status(400).json({ error: 'Licenciado destino inválido.' });
+    if (cli.licId === licId) {
+      return res.status(400).json({ error: 'Cliente já pertence a este licenciado.' });
+    }
+    const ownerOrigem = cli.licId;
+    const updated = await prisma.cliente.update({
+      where: { id: cli.id },
+      data: { licId },
+    });
+    await prisma.auditoria.create({
+      data: {
+        userId: req.user.id,
+        action: 'CLIENTE_TRANSFER',
+        entity: 'Cliente',
+        entityId: cli.id,
+        desc: `Cliente ${cli.nome} (CPF ${cli.cpf}) transferido de ${ownerOrigem} para ${licId}. Motivo: ${justificativa.trim()}`,
+        ip: req.ip,
+      },
+    });
+    res.json(updated);
   } catch (err) { next(err); }
 });
 

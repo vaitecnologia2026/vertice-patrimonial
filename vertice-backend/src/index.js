@@ -28,6 +28,8 @@ const auditoriaRoutes   = require('./routes/auditoria');
 const usuariosRoutes    = require('./routes/usuarios');
 const kanbanRoutes      = require('./routes/kanban');
 const dashboardRoutes   = require('./routes/dashboard');
+const contasRoutes      = require('./routes/contas');
+const clubeRoutes       = require('./routes/clube');
 
 const app = express();
 
@@ -129,6 +131,8 @@ app.use('/api/auditoria',    auth, blockRestricted, auditoriaRoutes);
 app.use('/api/usuarios',     auth, blockRestricted, usuariosRoutes);
 app.use('/api/kanban',       auth, blockRestricted, kanbanRoutes);
 app.use('/api/dashboard',    auth, blockRestricted, dashboardRoutes);
+app.use('/api/contas',       auth, blockRestricted, contasRoutes);
+app.use('/api/clube',        auth, blockRestricted, clubeRoutes);
 
 // ─── ERROR HANDLERS ──────────────────────────────────────────
 app.use(notFound);

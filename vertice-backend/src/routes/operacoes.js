@@ -120,6 +120,58 @@ router.patch('/:id/status', auth, adminOnly, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
+// PATCH /api/operacoes/:id/fluxo — atualiza estado do fluxo bifurcado da Arrematação
+// Body: { etapa?: string, valor?: 'ok'|'andamento'|'pendente'|null, fluxo?: object, fluxoIndividual?: boolean }
+router.patch('/:id/fluxo', auth, async (req, res, next) => {
+  try {
+    const op = await prisma.operacao.findUnique({ where: { id: req.params.id } });
+    if (!op) return res.status(404).json({ error: 'Operação não encontrada.' });
+
+    // LIC só edita o próprio
+    if (req.user.role === 'LIC' && op.licId !== req.user.licId) {
+      return res.status(403).json({ error: 'Acesso negado.' });
+    }
+
+    const update = {};
+    const desc = [];
+
+    // Substituição completa do fluxo
+    if (req.body.fluxo && typeof req.body.fluxo === 'object') {
+      update.fluxo = req.body.fluxo;
+      desc.push('fluxo completo atualizado');
+    }
+    // Patch parcial: { etapa: 'lanceRealizado', valor: 'ok' }
+    if (req.body.etapa) {
+      const fluxoAtual = (op.fluxo && typeof op.fluxo === 'object') ? op.fluxo : {};
+      fluxoAtual[req.body.etapa] = req.body.valor;
+      update.fluxo = fluxoAtual;
+      desc.push(`${req.body.etapa} → ${req.body.valor}`);
+    }
+    // Toggle do "fluxo individual"
+    if (typeof req.body.fluxoIndividual === 'boolean') {
+      update.fluxoIndividual = req.body.fluxoIndividual;
+      desc.push(`fluxoIndividual=${req.body.fluxoIndividual}`);
+    }
+
+    if (!Object.keys(update).length) {
+      return res.status(400).json({ error: 'Nada a atualizar (envie fluxo, etapa+valor ou fluxoIndividual).' });
+    }
+
+    const updated = await prisma.operacao.update({ where: { id: op.id }, data: update });
+    await prisma.auditoria.create({
+      data: {
+        userId: req.user.id,
+        action: 'OPERACAO_FLUXO',
+        entity: 'Operacao',
+        entityId: op.id,
+        desc: `Fluxo: ${desc.join('; ')}`,
+        ip: req.ip,
+      },
+    });
+    res.json(updated);
+  } catch (err) { next(err); }
+});
+
 // ═══════════════════════════════════════════════════════════════
 // ANEXOS — Upload, listar, baixar, excluir
 // Escopo: ADMIN + JURIDICO + PESQUISA (LIC não gerencia anexos internos)

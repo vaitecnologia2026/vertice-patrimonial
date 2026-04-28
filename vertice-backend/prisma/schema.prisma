@@ -9,17 +9,17 @@ datasource db {
 
 // ─── USUÁRIOS / AUTH ──────────────────────────────────────────
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  password  String
-  name      String
-  role      Role     @default(LIC)
-  avatar    String?
-  ativo     Boolean  @default(true)
-  licId     String?
+  id         String      @id @default(cuid())
+  email      String      @unique
+  password   String
+  name       String
+  role       Role        @default(LIC)
+  avatar     String?
+  ativo      Boolean     @default(true)
+  licId      String?
   licenciado Licenciado? @relation(fields: [licId], references: [id])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
 
   refreshTokens RefreshToken[]
   auditoria     Auditoria[]
@@ -43,29 +43,30 @@ model RefreshToken {
 
 // ─── LICENCIADOS ──────────────────────────────────────────────
 model Licenciado {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   nome      String
   empresa   String
-  cnpj      String   @unique
+  cnpj      String    @unique
   estado    String
-  email     String   @unique
+  email     String    @unique
   tel       String
   pix       String?
   banco     String?
   status    StatusLic @default(ATIVO)
-  meta      Float    @default(3000000)
+  meta      Float     @default(3000000)
   inicio    DateTime
-  ano       Int      @default(1)
-  taxa      String   @default("cobrado")
-  comHE     Float    @default(1.0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  ano       Int       @default(1)
+  taxa      String    @default("cobrado")
+  comHE     Float     @default(1.0)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 
-  users      User[]
-  clientes   Cliente[]
-  vendas     Venda[]
-  comissoes  Comissao[]
-  metas      Meta[]
+  users     User[]
+  clientes  Cliente[]
+  vendas    Venda[]
+  comissoes Comissao[]
+  metas     Meta[]
+  contas    Conta[]
 }
 
 enum StatusLic {
@@ -76,22 +77,22 @@ enum StatusLic {
 
 // ─── CLIENTES ────────────────────────────────────────────────
 model Cliente {
-  id        String   @id @default(cuid())
-  nome      String
-  cpf       String   @unique
-  tel       String?
-  email     String?
-  orig      String?
-  end       String?
-  status    StatusCli @default(ATIVO)
-  prod      String?
-  data      DateTime @default(now())
-  licId     String
+  id         String     @id @default(cuid())
+  nome       String
+  cpf        String     @unique
+  tel        String?
+  email      String?
+  orig       String?
+  end        String?
+  status     StatusCli  @default(ATIVO)
+  prod       String?
+  data       DateTime   @default(now())
+  licId      String
   licenciado Licenciado @relation(fields: [licId], references: [id])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
 
-  vendas     Venda[]
+  vendas      Venda[]
   kanbanCards KanbanCard[]
 }
 
@@ -117,23 +118,23 @@ model KanbanCard {
 
 // ─── VENDAS ──────────────────────────────────────────────────
 model Venda {
-  id        String   @id @default(cuid())
-  cliId     String
-  cliente   Cliente  @relation(fields: [cliId], references: [id])
-  licId     String
-  licenciado Licenciado @relation(fields: [licId], references: [id])
-  prod      String
-  val       Float
-  canal     String   @default("Licenciado")
-  status    StatusVenda @default(ABERTA)
-  comStatus String   @default("pendente")
-  opId      String?
-  data      DateTime @default(now())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id         String      @id @default(cuid())
+  cliId      String
+  cliente    Cliente     @relation(fields: [cliId], references: [id])
+  licId      String
+  licenciado Licenciado  @relation(fields: [licId], references: [id])
+  prod       String
+  val        Float
+  canal      String      @default("Licenciado")
+  status     StatusVenda @default(ABERTA)
+  comStatus  String      @default("pendente")
+  opId       String?
+  data       DateTime    @default(now())
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
 
-  comissoes  Comissao[]
-  contrato   Contrato?
+  comissoes Comissao[]
+  contrato  Contrato?
 }
 
 enum StatusVenda {
@@ -144,9 +145,9 @@ enum StatusVenda {
 
 // ─── COMISSÕES ───────────────────────────────────────────────
 model Comissao {
-  id          String   @id @default(cuid())
+  id          String     @id @default(cuid())
   vendaId     String
-  venda       Venda    @relation(fields: [vendaId], references: [id])
+  venda       Venda      @relation(fields: [vendaId], references: [id])
   licId       String
   licenciado  Licenciado @relation(fields: [licId], references: [id])
   prod        String
@@ -154,16 +155,16 @@ model Comissao {
   regra       String?
   comEmpresa  Float
   val         Float
-  comAdv      Float    @default(0)
-  comAna      Float    @default(0)
+  comAdv      Float      @default(0)
+  comAna      Float      @default(0)
   netEmpresa  Float
-  papel       String   @default("Licenciado")
-  status      StatusCom @default(PENDENTE)
-  recorrente  Boolean  @default(false)
+  papel       String     @default("Licenciado")
+  status      StatusCom  @default(PENDENTE)
+  recorrente  Boolean    @default(false)
   totalFuturo Float?
-  data        DateTime @default(now())
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  data        DateTime   @default(now())
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
 }
 
 enum StatusCom {
@@ -174,62 +175,64 @@ enum StatusCom {
 
 // ─── ANEXOS (arquivos vinculados a uma Operação) ─────────────
 model Anexo {
-  id         String   @id @default(cuid())
-  opId       String
-  operacao   Operacao @relation(fields: [opId], references: [id], onDelete: Cascade)
-  nome       String   // nome original do arquivo
-  tipo       String   // mime type ou extensão (pdf, docx, ...)
-  tam        Int      // tamanho em bytes
-  url        String   // caminho do arquivo armazenado
-  categoria  String   @default("outro")  // "pesquisa", "juridico", "combinado", "outro"
-  uploadBy   String?  // userId que fez upload
-  ordem      Int      @default(0)
-  createdAt  DateTime @default(now())
+  id        String   @id @default(cuid())
+  opId      String
+  operacao  Operacao @relation(fields: [opId], references: [id], onDelete: Cascade)
+  nome      String // nome original do arquivo
+  tipo      String // mime type ou extensão (pdf, docx, ...)
+  tam       Int // tamanho em bytes
+  url       String // caminho do arquivo armazenado
+  categoria String   @default("outro") // "pesquisa", "juridico", "combinado", "outro"
+  uploadBy  String? // userId que fez upload
+  ordem     Int      @default(0)
+  createdAt DateTime @default(now())
 }
 
 // ─── OPERAÇÕES (Arrematação / Home Equity / etc) ─────────────
 model Operacao {
-  id         String   @id @default(cuid())
-  tipo       TipoOp
-  cliId      String?
-  licId      String?
-  status     String   @default("em_analise")
-  anexos     Anexo[]
+  id              String    @id @default(cuid())
+  tipo            TipoOp
+  cliId           String?
+  licId           String?
+  status          String    @default("em_analise")
+  fluxo           Json? // estado do fluxo bifurcado de Arrematação (etapas, cartaTipo, posseTipo, reforma, etc)
+  fluxoIndividual Boolean   @default(false) // toggle: usar fluxo individual customizado
+  anexos          Anexo[]
   // Arrematação
-  end        String?
-  bairro     String?
-  cidade     String?
-  tipo_imovel String?
-  modalidade String?
-  leilao     DateTime?
-  lance      Float?
-  aval       Float?
-  deb        Float?
-  ref        Float?
-  mes        String?
+  end             String?
+  bairro          String?
+  cidade          String?
+  tipo_imovel     String?
+  modalidade      String?
+  leilao          DateTime?
+  lance           Float?
+  aval            Float?
+  deb             Float?
+  ref             Float?
+  mes             String?
   // Home Equity
-  valImovel  Float?
-  valSolicit Float?
-  prazo      Int?
-  taxa       Float?
+  valImovel       Float?
+  valSolicit      Float?
+  prazo           Int?
+  taxa            Float?
   // Revisão Contratual
-  banco      String?
-  contratoCodigo String?
-  dataContrato DateTime?
-  motivo     String?
-  economia   Float?
+  banco           String?
+  contratoCodigo  String?
+  dataContrato    DateTime?
+  motivo          String?
+  economia        Float?
   // Clube do Milhão
-  grupo      Int?
-  cota       Int?
-  parcelas   Int?
-  parcelaPagas Int?
-  valorMensal Float?
-  assembleia DateTime?
-  cl         Json?
-  msgs       Json?
-  resp       String?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  grupo           Int?
+  cota            Int?
+  parcelas        Int?
+  parcelaPagas    Int?
+  valorMensal     Float?
+  assembleia      DateTime?
+  cl              Json?
+  msgs            Json?
+  resp            String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 }
 
 enum TipoOp {
@@ -241,18 +244,18 @@ enum TipoOp {
 
 // ─── CONTRATOS ───────────────────────────────────────────────
 model Contrato {
-  id        String   @id @default(cuid())
-  vendaId   String   @unique
-  venda     Venda    @relation(fields: [vendaId], references: [id])
-  numero    String   @unique
+  id        String         @id @default(cuid())
+  vendaId   String         @unique
+  venda     Venda          @relation(fields: [vendaId], references: [id])
+  numero    String         @unique
   tipo      String
   status    StatusContrato @default(RASCUNHO)
   hash      String?
   hashPrev  String?
   dataAss   DateTime?
   pdf       String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
 }
 
 enum StatusContrato {
@@ -263,7 +266,7 @@ enum StatusContrato {
 
 // ─── DOCUMENTOS ──────────────────────────────────────────────
 model Documento {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   nome      String
   tipo      String
   tam       String?
@@ -271,9 +274,9 @@ model Documento {
   url       String?
   cliId     String?
   licId     String?
-  data      DateTime @default(now())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  data      DateTime  @default(now())
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 }
 
 enum StatusDoc {
@@ -284,20 +287,60 @@ enum StatusDoc {
 
 // ─── METAS ───────────────────────────────────────────────────
 model Meta {
-  id        String   @id @default(cuid())
-  licId     String
+  id         String     @id @default(cuid())
+  licId      String
   licenciado Licenciado @relation(fields: [licId], references: [id])
-  periodo   String   // "Q2/2026"
-  meta      Float
-  realizado Float    @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  periodo    String // "Q2/2026"
+  meta       Float
+  realizado  Float      @default(0)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+}
+
+// ─── CONTAS A RECEBER ────────────────────────────────────────
+model Conta {
+  id            String      @id @default(cuid())
+  licId         String
+  licenciado    Licenciado  @relation(fields: [licId], references: [id])
+  descricao     String // "Parcela 4/10 · Licença", "Taxa de Manutenção · Abr/26", etc
+  valor         Float
+  vencimento    DateTime
+  status        StatusConta @default(EM_DIA)
+  dataPagamento DateTime?
+  dataCobranca  DateTime?
+  obs           String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
+enum StatusConta {
+  EM_DIA
+  FUTURO
+  EM_ATRASO
+  INADIMPLENTE
+  COBRANCA
+  PAGO
+}
+
+// ─── CLUBE DO MILHÃO ─────────────────────────────────────────
+model GrupoClube {
+  id             String    @id @default(cuid())
+  codigo         String    @unique // "G001", "G002", ...
+  nomeAdmin      String // Nome da administradora
+  totalCotas     Int       @default(50)
+  parcelaMensal  Float
+  prazoMeses     Int       @default(48)
+  dataInicio     DateTime
+  proxAssembleia DateTime?
+  status         String    @default("ativo") // ativo, encerrado, suspenso
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 }
 
 // ─── CONSÓRCIOS ──────────────────────────────────────────────
 model Consorcio {
   id        String   @id @default(cuid())
-  tipo      String   // imovel, veiculo, servico, outros
+  tipo      String // imovel, veiculo, servico, outros
   nome      String
   admin     String
   carta     String
@@ -323,7 +366,7 @@ model Curso {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  modulos   Modulo[]
+  modulos Modulo[]
 }
 
 model Modulo {
@@ -334,7 +377,7 @@ model Modulo {
   ordem     Int      @default(0)
   createdAt DateTime @default(now())
 
-  aulas     Aula[]
+  aulas Aula[]
 }
 
 model Aula {
@@ -351,14 +394,14 @@ model Aula {
 
 // ─── CONFIGURAÇÃO DA LICENÇA ─────────────────────────────────
 model Configuracao {
-  id         String  @id @default("singleton")
-  nomeEmpresa String @default("Vértice")
-  corPrimaria String @default("#F87131")
-  corSidebar  String @default("#FDFEFF")
-  corBG       String @default("#F4F6F9")
-  corCard     String @default("#FFFFFF")
+  id          String   @id @default("singleton")
+  nomeEmpresa String   @default("Vértice")
+  corPrimaria String   @default("#F87131")
+  corSidebar  String   @default("#FDFEFF")
+  corBG       String   @default("#F4F6F9")
+  corCard     String   @default("#FFFFFF")
   logo        String?
-  updatedAt  DateTime @updatedAt
+  updatedAt   DateTime @updatedAt
 }
 
 // ─── AUDITORIA ───────────────────────────────────────────────

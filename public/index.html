@@ -5038,7 +5038,7 @@ function doLogin(){
 
 async function loadAppData(){
   if(!API_MODE)return;
-  const endpoints={licenciados:'/api/licenciados',clientes:'/api/clientes',vendas:'/api/vendas',comissoes:'/api/comissoes',operacoes:'/api/operacoes',contratos:'/api/contratos',usuarios:'/api/usuarios',docs:'/api/documentos',logs:'/api/auditoria',consorcios:'/api/consorcios',metas:'/api/metas',kanban:'/api/kanban'};
+  const endpoints={licenciados:'/api/licenciados',clientes:'/api/clientes',vendas:'/api/vendas',comissoes:'/api/comissoes',operacoes:'/api/operacoes',contratos:'/api/contratos',usuarios:'/api/usuarios',docs:'/api/documentos',logs:'/api/auditoria',consorcios:'/api/consorcios',metas:'/api/metas',kanban:'/api/kanban',contas:'/api/contas',grupos:'/api/clube/grupos'};
   await Promise.allSettled(Object.entries(endpoints).map(async([key,path])=>{
     const res=await API.get(path);
     if(!res)return;
@@ -5168,6 +5168,47 @@ function myVendas(){return S.role==='lic'?D.vendas.filter(v=>v.licId===S.user.li
 function myComs(){return S.role==='lic'?D.comissoes.filter(c=>c.bene===S.user.name):D.comissoes;}
 function myOps(){return S.role==='lic'?D.operacoes.filter(o=>o.lic===S.user.licId):D.operacoes;}
 function myContratos(){return S.role==='lic'?D.contratos.filter(c=>c.lic===S.user.name):D.contratos;}
+
+// ══ FILTROS DE TABELA (client-side, sem re-render) ══
+function _tblFilter(tblId, predicate){
+  const tbody=document.querySelector('#'+tblId+' tbody');
+  if(!tbody)return;
+  let visible=0;
+  tbody.querySelectorAll('tr[data-row]').forEach(tr=>{
+    const ok=predicate(tr);
+    tr.style.display=ok?'':'none';
+    if(ok)visible++;
+  });
+  const cnt=document.getElementById(tblId+'-cnt');
+  if(cnt)cnt.textContent=visible;
+}
+function filtroLic(){
+  const q=(document.getElementById('flt-lic-q')?.value||'').toLowerCase().trim();
+  const est=document.getElementById('flt-lic-est')?.value||'';
+  _tblFilter('tbl-lic', tr=>{
+    const matchQ=!q||(tr.dataset.search||'').includes(q);
+    const matchEst=!est||tr.dataset.estado===est;
+    return matchQ&&matchEst;
+  });
+}
+function filtroCli(){
+  const q=(document.getElementById('flt-cli-q')?.value||'').toLowerCase().trim();
+  const prod=document.getElementById('flt-cli-prod')?.value||'';
+  _tblFilter('tbl-cli', tr=>{
+    const matchQ=!q||(tr.dataset.search||'').includes(q);
+    const matchProd=!prod||tr.dataset.prod===prod;
+    return matchQ&&matchProd;
+  });
+}
+function filtroVnd(){
+  const q=(document.getElementById('flt-vnd-q')?.value||'').toLowerCase().trim();
+  const status=document.getElementById('flt-vnd-status')?.value||'';
+  _tblFilter('tbl-vnd', tr=>{
+    const matchQ=!q||(tr.dataset.search||'').includes(q);
+    const matchSt=!status||(tr.dataset.status||'').toLowerCase()===status.toLowerCase();
+    return matchQ&&matchSt;
+  });
+}
 
 // Helpers de form
 function maskCPF(i){let v=i.value.replace(/\D/g,'');if(v.length>3)v=v.slice(0,3)+'.'+v.slice(3);if(v.length>7)v=v.slice(0,7)+'.'+v.slice(7);if(v.length>11)v=v.slice(0,11)+'-'+v.slice(11);i.value=v.slice(0,14);}
@@ -5395,13 +5436,17 @@ function licDash(){
 }
 
 // ══ LICENCIADOS ══
-SCREENS['licenciados']=()=>`<div class="page">
-  <div class="ph"><div class="ph-l"><div class="pt">Licenciados</div><div class="ps">${D.licenciados.length} parceiros · ${D.licenciados.filter(l=>l.status==='ativo').length} ativos</div></div>
-  <div class="pa"><input type="text" placeholder="Buscar..." style="width:160px;font-size:11px">
-  <select style="font-size:10px;border-radius:4px;padding:5px 10px;background:var(--clarity);border:1.5px solid var(--border);color:var(--dark);font-family:var(--fm)"><option>Todos os estados</option><option>SP</option><option>RJ</option><option>MG</option><option>PR</option></select>
+SCREENS['licenciados']=()=>{
+  const estados=[...new Set(D.licenciados.map(l=>l.estado).filter(Boolean))].sort();
+  return `<div class="page">
+  <div class="ph"><div class="ph-l"><div class="pt">Licenciados</div><div class="ps"><span id="tbl-lic-cnt">${D.licenciados.length}</span> parceiros · ${D.licenciados.filter(l=>l.status==='ativo').length} ativos</div></div>
+  <div class="pa"><input id="flt-lic-q" type="text" placeholder="Buscar nome, empresa, CNPJ..." style="width:200px;font-size:11px" oninput="filtroLic()">
+  <select id="flt-lic-est" style="font-size:10px;border-radius:4px;padding:5px 10px;background:var(--clarity);border:1.5px solid var(--border);color:var(--dark);font-family:var(--fm)" onchange="filtroLic()"><option value="">Todos os estados</option>${estados.map(e=>`<option value="${e}">${e}</option>`).join('')}</select>
   <button class="btn btn-p" onclick="go('novo-lic')">+ Novo Licenciado</button></div></div>
-  <div class="tw"><table><thead><tr><th>#</th><th>Licenciado</th><th>Estado</th><th>Status</th><th>Vendas</th><th>Volume Q2</th><th>Meta</th><th>Progresso</th><th>Taxa</th><th>Comissão</th><th>Ações</th></tr></thead>
-  <tbody>${[...D.licenciados].sort((a,b)=>b.pct-a.pct).map((l,i)=>`<tr style="${l.status==='suspenso'?'opacity:.6':''}">
+  <div class="tw"><table id="tbl-lic"><thead><tr><th>#</th><th>Licenciado</th><th>Estado</th><th>Status</th><th>Vendas</th><th>Volume Q2</th><th>Meta</th><th>Progresso</th><th>Taxa</th><th>Comissão</th><th>Ações</th></tr></thead>
+  <tbody>${[...D.licenciados].sort((a,b)=>b.pct-a.pct).map((l,i)=>{
+    const search=[l.nome,l.empresa,l.cnpj,l.email].join(' ').toLowerCase();
+    return `<tr data-row data-search="${escapeHtml(search)}" data-estado="${l.estado||''}" style="${l.status==='suspenso'?'opacity:.6':''}">
     <td><div class="rank-badge rank-${i<3?i+1:'n'}">${i+1}</div></td>
     <td><div class="td-n">${l.nome}</div><div style="font-size:9px;color:var(--muted)">${l.empresa}</div></td>
     <td><span class="badge badge-n">${l.estado}</span></td>
@@ -5413,8 +5458,8 @@ SCREENS['licenciados']=()=>`<div class="page">
     <td>${statusBadge(l.taxa)}</td>
     <td class="mono" style="font-size:10.5px">${RM(l.com)}</td>
     <td><div class="td-a"><button class="btn btn-s xs" onclick="go('det-lic',{id:'${l.id}'})">Ver</button></div></td>
-  </tr>`).join('')}</tbody></table></div>
-</div>`;
+  </tr>`;}).join('')}</tbody></table></div>
+</div>`;};
 
 // ══ DET-LIC ══
 SCREENS['det-lic']=()=>{
@@ -5528,12 +5573,14 @@ function recalcResumoLic(){
 
 // ══ CLIENTES ══
 SCREENS['clientes']=()=>{const lista=myClients();return `<div class="page">
-  <div class="ph"><div class="ph-l"><div class="pt">${S.role==='lic'?'Meus Clientes':'Clientes'}</div><div class="ps">${lista.length} clientes${S.role==='lic'?' · Sua base individual':' · Base global'}</div></div>
-  <div class="pa"><input type="text" placeholder="Nome ou CPF..." style="width:180px;font-size:11px">
-  <select style="font-size:10px;border-radius:4px;padding:5px 10px;background:var(--clarity);border:1.5px solid var(--border);color:var(--dark);font-family:var(--fm)"><option>Todos os produtos</option>${['Arrematação Individual','Home Equity','Revisão Contratual','Clube do Milhão'].map(p=>`<option>${p}</option>`).join('')}</select>
+  <div class="ph"><div class="ph-l"><div class="pt">${S.role==='lic'?'Meus Clientes':'Clientes'}</div><div class="ps"><span id="tbl-cli-cnt">${lista.length}</span> clientes${S.role==='lic'?' · Sua base individual':' · Base global'}</div></div>
+  <div class="pa"><input id="flt-cli-q" type="text" placeholder="Nome, CPF, e-mail..." style="width:200px;font-size:11px" oninput="filtroCli()">
+  <select id="flt-cli-prod" style="font-size:10px;border-radius:4px;padding:5px 10px;background:var(--clarity);border:1.5px solid var(--border);color:var(--dark);font-family:var(--fm)" onchange="filtroCli()"><option value="">Todos os produtos</option>${['Arrematação Individual','Home Equity','Revisão Contratual','Clube do Milhão'].map(p=>`<option value="${p}">${p}</option>`).join('')}</select>
   <button class="btn btn-p" onclick="go('novo-cli')">+ Novo Cliente</button></div></div>
-  <div class="tw"><table><thead><tr><th>Nome</th><th>CPF</th><th>Produto</th><th>Licenciado</th><th>Origem</th><th>Status</th><th>Cadastro</th><th>Ações</th></tr></thead>
-  <tbody>${lista.map(c=>`<tr>
+  <div class="tw"><table id="tbl-cli"><thead><tr><th>Nome</th><th>CPF</th><th>Produto</th><th>Licenciado</th><th>Origem</th><th>Status</th><th>Cadastro</th><th>Ações</th></tr></thead>
+  <tbody>${lista.map(c=>{
+    const search=[c.nome,c.cpf,c.email,c.tel,c.ownerNome].filter(Boolean).join(' ').toLowerCase();
+    return `<tr data-row data-search="${escapeHtml(search)}" data-prod="${c.prod||''}">
     <td class="td-n">${c.nome}</td>
     <td class="td-m" style="font-size:9px">${c.cpf}</td>
     <td style="font-size:10.5px">${c.prod}</td>
@@ -5542,7 +5589,7 @@ SCREENS['clientes']=()=>{const lista=myClients();return `<div class="page">
     <td>${chipStatus(c.status)}</td>
     <td class="td-m" style="font-size:9px">${c.data}</td>
     <td><div class="td-a"><button class="btn btn-s xs" onclick="go('det-cli',{id:'${c.id}'})">Ver</button><button class="btn btn-g xs" onclick="go('nova-venda',{cli:'${c.nome}'})">+ Venda</button></div></td>
-  </tr>`).join('')}</tbody></table></div>
+  </tr>`;}).join('')}</tbody></table></div>
 </div>`;};
 
 // ══ NOVO CLIENTE ══
@@ -5611,24 +5658,64 @@ SCREENS['det-cli']=()=>{
 };
 
 // ══ CPF-DUP ══
-SCREENS['cpf-dup']=()=>`<div class="page">
-  <div class="ph"><div class="ph-l"><div class="pt">Validação de CPF Duplicado</div><div class="ps">Decisão exclusiva do Admin Master · Registrada em auditoria imutável</div></div></div>
-  <div class="alert alert-e mb12"><span class="ai" style="width:16px;height:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="10" height="10" viewBox="0 0 10 10" fill="var(--red)"><circle cx="5" cy="5" r="5"/></svg></span><div><b>CONFLITO DE OWNERSHIP:</b> CPF 456.789.012-34 já cadastrado. Tentativa bloqueada automaticamente. Admin Master notificado.</div></div>
+SCREENS['cpf-dup']=()=>{
+  // Aceita params: cliId (do registro existente), nomeNovo, licNovoNome, justSolicitante
+  const cli = S.params.cliId ? D.clientes.find(c=>c.id===S.params.cliId) : null;
+  const ownerAtual = cli ? D.licenciados.find(l=>l.id===(cli.owner||cli.licId)) : null;
+  const ownerNomeAtual = ownerAtual?.nome || cli?.ownerNome || '—';
+  const cpfMostrado = cli?.cpf || S.params.cpf || '—';
+  const nomeMascarado = cli ? cli.nome.split(' ').map((p,i)=>i===0?p.slice(0,3)+'**':p.slice(0,2)+'***').join(' ') : (S.params.nomeNovo || '—');
+  return `<div class="page">
+  <div class="ph"><div class="ph-l"><div class="pt">Validação de CPF Duplicado</div><div class="ps">Decisão exclusiva do Admin Master · Registrada em auditoria imutável</div></div><div class="pa"><button class="btn btn-g" onclick="go('clientes')">← Voltar</button></div></div>
+  <div class="alert alert-e mb12"><span class="ai" style="width:16px;height:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="10" height="10" viewBox="0 0 10 10" fill="var(--red)"><circle cx="5" cy="5" r="5"/></svg></span><div><b>CONFLITO DE OWNERSHIP:</b> CPF ${cpfMostrado} já cadastrado. Tentativa bloqueada automaticamente. Admin Master notificado.</div></div>
   <div class="g2 mb12">
     <div class="card" style="border-color:var(--sem-success-border)"><div class="card-h" style="background:var(--sem-success-bg)"><span class="card-ht" style="color:var(--sem-success)">✓ Registro Existente — Dono Atual</span></div><div class="card-b">
-      ${[['Nome','Bea**** Nu***'],['Owner','João Silva (L001)'],['Cadastrado','28/03/2026'],['Status','Contrato Vigente ✓']].map(([k,v])=>`<div class="fb" style="padding:5px 0;border-bottom:1px solid var(--border)"><span style="font-size:8px;color:var(--muted);min-width:100px;font-family:var(--fm);text-transform:uppercase">${k}</span><span style="font-size:10.5px;color:var(--soft)">${v}</span></div>`).join('')}
+      ${[['Nome',nomeMascarado],['Owner',ownerNomeAtual],['Cadastrado',cli?.data||'—'],['Status',cli?.status==='ativo'?'Cliente Ativo ✓':(cli?.status||'—')]].map(([k,v])=>`<div class="fb" style="padding:5px 0;border-bottom:1px solid var(--border)"><span style="font-size:8px;color:var(--muted);min-width:100px;font-family:var(--fm);text-transform:uppercase">${k}</span><span style="font-size:10.5px;color:var(--soft)">${v}</span></div>`).join('')}
     </div></div>
     <div class="card" style="border-color:var(--gold5)"><div class="card-h" style="background:var(--gold3)"><span class="card-ht">⚠ Tentativa de Duplicação</span></div><div class="card-b">
-      ${[['Solicitante','Maria Costa (L002)'],['Data/Hora','04/04/2026 · 14:18'],['Produto pretendido','Arrematação Individual']].map(([k,v])=>`<div class="fb" style="padding:5px 0;border-bottom:1px solid var(--border)"><span style="font-size:8px;color:var(--muted);min-width:130px;font-family:var(--fm);text-transform:uppercase">${k}</span><span style="font-size:10.5px;color:var(--soft)">${v}</span></div>`).join('')}
-      <div class="fg mt10"><label>Justificativa</label><textarea readonly style="min-height:52px">Cliente entrou em contato comigo via WhatsApp há 3 semanas antes do cadastro.</textarea></div>
+      ${[['Solicitante',S.params.licNovoNome||'—'],['Data/Hora',new Date().toLocaleString('pt-BR')],['Produto pretendido',S.params.prodNovo||'—']].map(([k,v])=>`<div class="fb" style="padding:5px 0;border-bottom:1px solid var(--border)"><span style="font-size:8px;color:var(--muted);min-width:130px;font-family:var(--fm);text-transform:uppercase">${k}</span><span style="font-size:10.5px;color:var(--soft)">${v}</span></div>`).join('')}
+      <div class="fg mt10"><label>Justificativa do Solicitante</label><textarea readonly style="min-height:52px">${S.params.justSolicitante||'—'}</textarea></div>
     </div></div>
   </div>
   ${S.role==='admin'?`<div class="card" style="border-color:var(--border2)"><div class="card-h"><span class="card-ht">Decisão — Admin Master</span></div><div class="card-b">
-    <div class="fg mb12"><label>Justificativa Obrigatória *</label><textarea placeholder="Descreva o motivo completo para o log de auditoria..."></textarea></div>
-    <div class="fc g7"><button class="btn btn-d" onclick="toast('Ownership mantido com João Silva.','ok');go('dashboard')">Manter Owner (João Silva)</button>
-    <button class="btn btn-ok" onclick="toast('Ownership transferido.','ok');go('dashboard')"> Transferir para Maria Costa</button></div>
-  </div></div>`:''}`
-;
+    <div class="fgrid mb10">
+      <div class="fg s2"><label>Transferir para (novo licenciado) *</label><select id="cpfdup-lic"><option value="">— Selecione</option>${D.licenciados.filter(l=>l.id!==(cli?.owner||cli?.licId)).map(l=>`<option value="${l.id}">${escapeHtml(l.nome)} (${l.id})</option>`).join('')}</select></div>
+    </div>
+    <div class="fg mb12"><label>Justificativa Obrigatória * (mínimo 10 caracteres)</label><textarea id="cpfdup-just" placeholder="Descreva o motivo completo para o log de auditoria..." style="min-height:80px"></textarea></div>
+    <div class="fc g7">
+      <button class="btn btn-d" onclick="manterOwnerCPF('${cli?.id||''}','${escapeHtml(ownerNomeAtual)}')">Manter Owner (${escapeHtml(ownerNomeAtual)})</button>
+      <button class="btn btn-ok" id="cpfdup-btn" onclick="transferirOwnerCPF('${cli?.id||''}')">Transferir Ownership</button>
+    </div>
+  </div></div>`:''}
+</div>`;};
+
+async function manterOwnerCPF(cliId,owner){
+  if(!confirm('Confirma manter o ownership atual com '+owner+'? Esta decisão será registrada em auditoria.'))return;
+  toast('Ownership mantido com '+owner+'.','ok');
+  go('clientes');
+}
+async function transferirOwnerCPF(cliId){
+  if(!cliId){toast('ID do cliente não fornecido.','e');return;}
+  const licId=document.getElementById('cpfdup-lic')?.value;
+  const just=(document.getElementById('cpfdup-just')?.value||'').trim();
+  if(!licId)return toast('Selecione o licenciado destino.','e');
+  if(just.length<10)return toast('Justificativa precisa de no mínimo 10 caracteres.','e');
+  if(!confirm('Confirma a transferência de ownership? Esta ação é registrada em auditoria imutável.'))return;
+  const btn=document.getElementById('cpfdup-btn');if(btn)btn.disabled=true;
+  if(typeof API_MODE!=='undefined' && API_MODE){
+    const res=await API.post('/api/clientes/'+cliId+'/transferir',{licId,justificativa:just});
+    if(btn)btn.disabled=false;
+    if(res&&res.error)return toast(res.error,'e');
+    if(!res)return toast('Falha ao transferir.','e');
+    toast('Ownership transferido com sucesso!','ok');
+    await loadAppData();
+    go('clientes');
+  }else{
+    if(btn)btn.disabled=false;
+    toast('Ownership transferido (modo demo).','ok');
+    go('clientes');
+  }
+}
 // ══ CRM ══
 SCREENS['crm']=()=>{
   const cols=['Prospecção','Qualificado','Proposta','Negociação','Fechado','Perdido'];
@@ -5882,11 +5969,18 @@ function clearOppFilters(){['opp-prod','opp-estado','opp-periodo','opp-vmin','op
 
 // ══ VENDAS ══
 SCREENS['vendas']=()=>{const lista=myVendas();
+  const statusList=[...new Set(lista.map(v=>v.status).filter(Boolean))];
   return `<div class="page">
-  <div class="ph"><div class="ph-l"><div class="pt">${S.role==='lic'?'Minhas Vendas':'Vendas'}</div><div class="ps">${lista.length} vendas · ${RM(lista.reduce((s,v)=>s+v.val,0))}</div></div>
-  <div class="pa"><button class="btn btn-p" onclick="go('nova-venda')">+ Nova Venda</button></div></div>
-  <div class="tw"><table><thead><tr><th>ID</th><th>Cliente</th><th>Produto</th><th>Licenciado</th><th>Valor</th><th>Data</th><th>Status</th><th>Comissão</th><th>Ações</th></tr></thead>
-  <tbody>${lista.map(v=>`<tr>
+  <div class="ph"><div class="ph-l"><div class="pt">${S.role==='lic'?'Minhas Vendas':'Vendas'}</div><div class="ps"><span id="tbl-vnd-cnt">${lista.length}</span> vendas · ${RM(lista.reduce((s,v)=>s+v.val,0))}</div></div>
+  <div class="pa">
+    <input id="flt-vnd-q" type="text" placeholder="Cliente, CPF, ID..." style="width:200px;font-size:11px" oninput="filtroVnd()">
+    <select id="flt-vnd-status" style="font-size:10px;border-radius:4px;padding:5px 10px;background:var(--clarity);border:1.5px solid var(--border);color:var(--dark);font-family:var(--fm)" onchange="filtroVnd()"><option value="">Todos os status</option>${statusList.map(s=>`<option value="${s}">${s}</option>`).join('')}</select>
+    <button class="btn btn-p" onclick="go('nova-venda')">+ Nova Venda</button>
+  </div></div>
+  <div class="tw"><table id="tbl-vnd"><thead><tr><th>ID</th><th>Cliente</th><th>Produto</th><th>Licenciado</th><th>Valor</th><th>Data</th><th>Status</th><th>Comissão</th><th>Ações</th></tr></thead>
+  <tbody>${lista.map(v=>{
+    const search=[v.id,v.cli,v.cpf,v.prod,v.lic].filter(Boolean).join(' ').toLowerCase();
+    return `<tr data-row data-search="${escapeHtml(search)}" data-status="${v.status||''}">
     <td class="td-m" style="font-size:8.5px;color:var(--dark3);cursor:pointer" onclick="go('det-venda',{id:'${v.id}'})">${v.id.slice(-5)}</td>
     <td><div class="td-n">${v.cli}</div><div class="td-m" style="font-size:8px;color:var(--muted)">${v.cpf}</div></td>
     <td style="font-size:10.5px">${v.prod}</td>
@@ -5896,7 +5990,7 @@ SCREENS['vendas']=()=>{const lista=myVendas();
     <td>${statusBadge(v.status)}</td>
     <td>${statusBadge(v.comStatus)}</td>
     <td><div class="td-a"><button class="btn btn-s xs" onclick="go('det-venda',{id:'${v.id}'})">Ver</button></div></td>
-  </tr>`).join('')}</tbody></table></div>
+  </tr>`;}).join('')}</tbody></table></div>
 </div>`;};
 
 // ══ NOVA VENDA ══
@@ -6030,33 +6124,100 @@ SCREENS['financeiro']=()=>S.role!=='admin'?`<div class="page"><div class="alert 
 </div>`;
 
 // ══ CONTAS A RECEBER ══
-SCREENS['contas']=()=>`<div class="page">
-  <div class="ph"><div class="ph-l"><div class="pt">Contas a Receber</div><div class="ps">10x R$10.000 · Taxa de manutenção a partir do 13º mês</div></div><div class="pa"><button class="btn btn-s sm">⬇ Exportar</button></div></div>
+function _contaNorm(c){
+  // Normaliza conta vinda do backend (status UPPER) ou mock (status lower)
+  const st=(c.status||'').toLowerCase();
+  return {
+    id: c.id || null,
+    licNome: c.licenciado?.nome || c.licNome || '—',
+    desc: c.descricao || c.desc || '—',
+    venc: c.vencimento ? new Date(c.vencimento).toLocaleDateString('pt-BR') : (c.venc||'—'),
+    val: c.valor != null ? c.valor : (c.val||0),
+    status: st,
+  };
+}
+SCREENS['contas']=()=>{
+  const fonte = (Array.isArray(D.contas) && D.contas.length) ? D.contas : (D.parcelas||[]);
+  const lista = fonte.map(_contaNorm);
+  const totalAReceber = lista.filter(c=>['em_dia','em_atraso','inadimplente','cobranca','futuro'].includes(c.status)).reduce((s,c)=>s+c.val,0);
+  const totalAtraso = lista.filter(c=>['em_atraso','inadimplente'].includes(c.status)).reduce((s,c)=>s+c.val,0);
+  const totalPago = lista.filter(c=>c.status==='pago').reduce((s,c)=>s+c.val,0);
+  return `<div class="page">
+  <div class="ph"><div class="ph-l"><div class="pt">Contas a Receber</div><div class="ps">${lista.length} contas · ${RM(totalAReceber)} a receber</div></div><div class="pa">${S.role==='admin'?`<button class="btn btn-p sm" onclick="abrirNovaConta()">+ Nova Conta</button>`:''}<button class="btn btn-s sm" onclick="toast('Exportação em CSV em desenvolvimento.','i')">⬇ Exportar</button></div></div>
   <div class="alert alert-ok mb12"><span class="ai" style="width:16px;height:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="var(--sem-success)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg></span><div style="font-size:10px"><b>Parcelamento correto (v3):</b> 10x R$10.000 (meses 1–10) · Carência: meses 11–12 · Taxa R$5.000/mês a partir do 13º mês somente se meta não atingida.</div></div>
   <div class="kpi-grid kpi-g3 mb14">
-    <div class="kpi"><div class="kpi-lbl">A Receber (mês)</div><div class="kpi-val" style="color:var(--dark3)">R$ 30.000</div></div>
-    <div class="kpi"><div class="kpi-lbl">Em Atraso</div><div class="kpi-val red">R$ 15.000</div></div>
-    <div class="kpi"><div class="kpi-lbl">Recebido (mês)</div><div class="kpi-val green">R$ 10.000</div></div>
+    <div class="kpi"><div class="kpi-lbl">A Receber</div><div class="kpi-val" style="color:var(--dark3)">${RM(totalAReceber)}</div></div>
+    <div class="kpi"><div class="kpi-lbl">Em Atraso</div><div class="kpi-val red">${RM(totalAtraso)}</div></div>
+    <div class="kpi"><div class="kpi-lbl">Recebido</div><div class="kpi-val green">${RM(totalPago)}</div></div>
   </div>
   <div class="tw"><table><thead><tr><th>Licenciado</th><th>Descrição</th><th>Vencimento</th><th>Valor</th><th>Status</th><th>Ações</th></tr></thead>
-  <tbody>${D.parcelas.map(p=>`<tr style="${p.status==='inadimplente'?'background:rgba(192,57,43,.03)':p.status==='em_atraso'?'background:rgba(249,232,178,.08)':''}">
-    <td class="td-n">${p.licNome}</td><td style="font-size:10px;color:var(--muted)">${p.desc}</td>
+  <tbody>${lista.map(p=>`<tr style="${p.status==='inadimplente'?'background:rgba(192,57,43,.03)':p.status==='em_atraso'?'background:rgba(249,232,178,.08)':''}">
+    <td class="td-n">${escapeHtml(p.licNome)}</td><td style="font-size:10px;color:var(--muted)">${escapeHtml(p.desc)}</td>
     <td class="td-m" style="font-size:9.5px">${p.venc}</td>
     <td class="mono" style="color:var(--dark3)">${RM(p.val)}</td>
     <td>${statusBadge(p.status)}</td>
-    <td><div class="td-a">${p.status!=='em_dia'&&p.status!=='futuro'&&p.status!=='pago'?`<button class="btn btn-ok xs" onclick="toast('Pago!','ok')">✓ Pago</button>`:''}
-    <button class="btn btn-g xs" onclick="toast('Cobrança enviada!','ok')"></button></div></td>
-  </tr>`).join('')}</tbody></table></div>
-</div>`;
+    <td><div class="td-a">
+      ${p.id && S.role==='admin' && p.status!=='pago'?`<button class="btn btn-ok xs" onclick="marcarContaPaga('${p.id}')">✓ Pago</button>`:''}
+      ${p.id && S.role==='admin' && !['pago','em_dia','futuro'].includes(p.status)?`<button class="btn btn-g xs" onclick="enviarCobrancaConta('${p.id}')">Cobrança</button>`:''}
+    </div></td>
+  </tr>`).join('')||'<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--muted);font-size:11px">Nenhuma conta cadastrada.</td></tr>'}</tbody></table></div>
+</div>`;};
+
+async function marcarContaPaga(id){
+  if(!confirm('Confirma o recebimento desta conta?'))return;
+  if(typeof API_MODE==='undefined' || !API_MODE){toast('Marcado como pago (modo demo).','ok');return;}
+  const res=await API.patch('/api/contas/'+id+'/pagar',{});
+  if(res&&res.error)return toast(res.error,'e');
+  if(!res)return toast('Falha ao marcar como pago.','e');
+  toast('Conta marcada como paga!','ok');
+  await loadAppData();go('contas');
+}
+async function enviarCobrancaConta(id){
+  const canal=prompt('Canal de cobrança (email, whatsapp, sms):','email');
+  if(canal===null)return;
+  if(typeof API_MODE==='undefined' || !API_MODE){toast('Cobrança enviada (modo demo).','ok');return;}
+  const res=await API.patch('/api/contas/'+id+'/cobranca',{canal:canal||'email'});
+  if(res&&res.error)return toast(res.error,'e');
+  if(!res)return toast('Falha ao registrar cobrança.','e');
+  toast('Cobrança registrada!','ok');
+  await loadAppData();go('contas');
+}
+function abrirNovaConta(){
+  openDrawer('Nova Conta a Receber',`<div style="display:flex;flex-direction:column;gap:10px">
+    <div class="fg"><label>Licenciado *</label><select id="nc-lic"><option value="">— Selecione</option>${(D.licenciados||[]).map(l=>`<option value="${l.id}">${escapeHtml(l.nome)}</option>`).join('')}</select></div>
+    <div class="fg"><label>Descrição *</label><input id="nc-desc" placeholder="Ex: Parcela 5/10 · Licença"></div>
+    <div class="fg"><label>Valor (R$) *</label><input id="nc-valor" type="number" step="0.01" placeholder="0,00"></div>
+    <div class="fg"><label>Vencimento *</label><input id="nc-venc" type="date" value="${new Date().toISOString().slice(0,10)}"></div>
+    <div class="fg"><label>Status</label><select id="nc-status"><option value="EM_DIA">Em dia</option><option value="FUTURO">Futuro</option><option value="EM_ATRASO">Em atraso</option><option value="INADIMPLENTE">Inadimplente</option></select></div>
+    <div class="fg"><label>Observações</label><textarea id="nc-obs" placeholder="Opcional"></textarea></div>
+    <div style="display:flex;gap:8px;margin-top:6px"><button class="btn btn-p" onclick="salvarNovaConta()">✓ Salvar</button><button class="btn btn-g" onclick="closeDrawer()">Cancelar</button></div>
+  </div>`);
+}
+async function salvarNovaConta(){
+  const v=k=>document.getElementById(k)?.value?.trim();
+  const licId=v('nc-lic'),descricao=v('nc-desc'),valor=parseFloat(v('nc-valor')||'0'),vencimento=v('nc-venc'),status=v('nc-status'),obs=v('nc-obs');
+  if(!licId)return toast('Selecione o licenciado.','e');
+  if(!descricao)return toast('Informe a descrição.','e');
+  if(!valor||valor<=0)return toast('Informe um valor válido.','e');
+  if(!vencimento)return toast('Informe o vencimento.','e');
+  if(typeof API_MODE==='undefined' || !API_MODE){toast('Conta salva (modo demo).','ok');closeDrawer();return;}
+  const res=await API.post('/api/contas',{licId,descricao,valor,vencimento,status,obs});
+  if(res&&res.error)return toast(res.error,'e');
+  if(!res)return toast('Falha ao salvar conta.','e');
+  toast('Conta cadastrada!','ok');
+  closeDrawer();await loadAppData();go('contas');
+}
 // ══ FLUXO OPERACIONAL VISUAL (bifurcado) ══
-function renderOpFlow(fluxo,isAdmin){
+function renderOpFlow(fluxo,isAdmin,opId){
   if(!fluxo)return'';
   const st=s=>s==='ok'?'done':s==='andamento'?'active':'';
   const ico=s=>s==='ok'?'✓':s==='andamento'?'⏳':'○';
-  const node=(n,label,status,resp)=>{
+  const editable=isAdmin && opId;
+  const cycleClick=(etapa)=>editable?`onclick="cicloEtapaFluxo('${opId}','${etapa}','${fluxo[etapa]||''}')" style="cursor:pointer" title="Clique p/ alternar pendente → andamento → concluído"`:'';
+  const node=(n,label,status,resp,etapa)=>{
     const cls=st(status);
     return `<div class="of-step" title="${resp?'Resp: '+resp:''}">
-      <div class="of-box ${cls}">
+      <div class="of-box ${cls}" ${etapa?cycleClick(etapa):''}>
         <div class="of-n">${n}</div>
         <div class="of-label">${label}</div>
         ${status==='ok'?'<div class="of-status" style="color:var(--sem-success)">✓ concluído</div>':status==='andamento'?'<div class="of-status" style="color:var(--dark3)">⏳ em andamento</div>':'<div class="of-status" style="color:var(--muted)">pendente</div>'}
@@ -6064,6 +6225,7 @@ function renderOpFlow(fluxo,isAdmin){
       </div>
     </div>`;
   };
+  const setVal=(etapa,val)=>editable?`onclick="setFluxoValor('${opId}','${etapa}','${val}')"`:`onclick="toast('Apenas admin altera o fluxo.','i')"`;
   const arrow='<div style="display:flex;align-items:center;padding:0 2px;color:var(--dim);font-size:16px;margin-top:8px">→</div>';
   const arrowDown='<div style="display:flex;justify-content:center;margin:6px 0;color:var(--dim);font-size:16px">↓</div>';
   return `
@@ -6072,15 +6234,15 @@ function renderOpFlow(fluxo,isAdmin){
   <div style="font-family:var(--fm);font-size:8px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Fluxo Operacional</div>
   <div style="overflow-x:auto;padding-bottom:8px">
   <div class="of-row" style="flex-wrap:nowrap;gap:18px;min-width:max-content">
-    ${node('01','Leilão identificado',fluxo.leilaoId,'Licenciado')}
+    ${node('01','Leilão identificado',fluxo.leilaoId,'Licenciado','leilaoId')}
     ${arrow}
-    ${node('02','Lance realizado',fluxo.lanceRealizado,'Licenciado')}
+    ${node('02','Lance realizado',fluxo.lanceRealizado,'Licenciado','lanceRealizado')}
     ${arrow}
-    ${node('03','Imóvel arrematado',fluxo.arrematado,'Licenciado')}
+    ${node('03','Imóvel arrematado',fluxo.arrematado,'Licenciado','arrematado')}
     ${arrow}
-    ${node('04','Pagamento do lance',fluxo.pagamentoLance,'Adm.')}
+    ${node('04','Pagamento do lance',fluxo.pagamentoLance,'Adm.','pagamentoLance')}
     ${arrow}
-    ${node('05','Carta de arrematação',fluxo.carta,'Jurídico')}
+    ${node('05','Carta de arrematação',fluxo.carta,'Jurídico','carta')}
   </div>
   </div>
 
@@ -6088,18 +6250,18 @@ function renderOpFlow(fluxo,isAdmin){
   <div style="margin:10px 0 6px;display:flex;align-items:center;gap:8px">
     <span style="font-family:var(--fm);font-size:8px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted)">Tipo de carta</span>
     <div style="display:flex;gap:6px">
-      <span style="padding:2px 9px;border-radius:3px;font-size:8.5px;font-family:var(--fm);border:1.5px solid ${fluxo.cartaTipo==='judicial'?'var(--dark)':'var(--border)'};background:${fluxo.cartaTipo==='judicial'?'var(--dark)':'var(--clarity)'};color:${fluxo.cartaTipo==='judicial'?'var(--gold)':'var(--muted)'};cursor:pointer" onclick="toast('Tipo: Judicial','ok')">Judicial (juiz)</span>
-      <span style="padding:2px 9px;border-radius:3px;font-size:8.5px;font-family:var(--fm);border:1.5px solid ${fluxo.cartaTipo==='extrajudicial'?'var(--dark)':'var(--border)'};background:${fluxo.cartaTipo==='extrajudicial'?'var(--dark)':'var(--clarity)'};color:${fluxo.cartaTipo==='extrajudicial'?'var(--gold)':'var(--muted)'};cursor:pointer" onclick="toast('Tipo: Extrajudicial','ok')">Extrajudicial (banco)</span>
+      <span style="padding:2px 9px;border-radius:3px;font-size:8.5px;font-family:var(--fm);border:1.5px solid ${fluxo.cartaTipo==='judicial'?'var(--dark)':'var(--border)'};background:${fluxo.cartaTipo==='judicial'?'var(--dark)':'var(--clarity)'};color:${fluxo.cartaTipo==='judicial'?'var(--gold)':'var(--muted)'};cursor:pointer" ${setVal('cartaTipo','judicial')}>Judicial (juiz)</span>
+      <span style="padding:2px 9px;border-radius:3px;font-size:8.5px;font-family:var(--fm);border:1.5px solid ${fluxo.cartaTipo==='extrajudicial'?'var(--dark)':'var(--border)'};background:${fluxo.cartaTipo==='extrajudicial'?'var(--dark)':'var(--clarity)'};color:${fluxo.cartaTipo==='extrajudicial'?'var(--gold)':'var(--muted)'};cursor:pointer" ${setVal('cartaTipo','extrajudicial')}>Extrajudicial (banco)</span>
     </div>
     <span style="font-size:9.5px;color:var(--muted)">Atual: <b style="color:var(--dark)">${fluxo.cartaTipo==='judicial'?'Judicial':'Extrajudicial'}</b></span>
   </div>
 
   <!-- LINHA 2: ITBI + Escritura (opcional) -->
   <div class="of-row" style="flex-wrap:nowrap;gap:18px;min-width:max-content;overflow-x:auto">
-    ${node('06','ITBI',fluxo.itbi,'Jurídico')}
+    ${node('06','ITBI',fluxo.itbi,'Jurídico','itbi')}
     ${arrow}
     <div class="of-step">
-      <div class="of-box ${st(fluxo.escritura)}" style="${fluxo.escritura===null?'border-style:dashed;opacity:.5':''}">
+      <div class="of-box ${st(fluxo.escritura)}" style="${fluxo.escritura===null?'border-style:dashed;opacity:.5':''}" ${editable?cycleClick('escritura'):''}>
         <div class="of-n">07</div>
         <div class="of-label">Escritura</div>
         <div class="of-status" style="color:${fluxo.escritura==='pulou'?'var(--muted)':fluxo.escritura==='ok'?'var(--sem-success)':'var(--muted)'}">${fluxo.escritura==='pulou'?'⊘ opcional/pulou':fluxo.escritura==='ok'?'✓ lavrada':'pendente'}</div>
@@ -6107,15 +6269,15 @@ function renderOpFlow(fluxo,isAdmin){
       </div>
     </div>
     ${arrow}
-    ${node('08','Posse',fluxo.posse,'Adm.')}
+    ${node('08','Posse',fluxo.posse,'Adm.','posse')}
   </div>
 
   <!-- BIFURCAÇÃO: Posse Mansa / Judicial -->
   <div style="margin:10px 0 6px;display:flex;align-items:center;gap:8px">
     <span style="font-family:var(--fm);font-size:8px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted)">Tipo de posse</span>
     <div style="display:flex;gap:6px">
-      <span style="padding:2px 9px;border-radius:3px;font-size:8.5px;font-family:var(--fm);border:1.5px solid ${fluxo.posseTipo==='mansa'?'var(--dark)':'var(--border)'};background:${fluxo.posseTipo==='mansa'?'var(--dark)':'var(--clarity)'};color:${fluxo.posseTipo==='mansa'?'var(--gold)':'var(--muted)'};cursor:pointer" onclick="toast('Posse Mansa','ok')">Posse mansa</span>
-      <span style="padding:2px 9px;border-radius:3px;font-size:8.5px;font-family:var(--fm);border:1.5px solid ${fluxo.posseTipo==='judicial'?'var(--dark)':'var(--border)'};background:${fluxo.posseTipo==='judicial'?'var(--dark)':'var(--clarity)'};color:${fluxo.posseTipo==='judicial'?'var(--gold)':'var(--muted)'};cursor:pointer" onclick="toast('Posse Judicial','ok')">Ação judicial</span>
+      <span style="padding:2px 9px;border-radius:3px;font-size:8.5px;font-family:var(--fm);border:1.5px solid ${fluxo.posseTipo==='mansa'?'var(--dark)':'var(--border)'};background:${fluxo.posseTipo==='mansa'?'var(--dark)':'var(--clarity)'};color:${fluxo.posseTipo==='mansa'?'var(--gold)':'var(--muted)'};cursor:pointer" ${setVal('posseTipo','mansa')}>Posse mansa</span>
+      <span style="padding:2px 9px;border-radius:3px;font-size:8.5px;font-family:var(--fm);border:1.5px solid ${fluxo.posseTipo==='judicial'?'var(--dark)':'var(--border)'};background:${fluxo.posseTipo==='judicial'?'var(--dark)':'var(--clarity)'};color:${fluxo.posseTipo==='judicial'?'var(--gold)':'var(--muted)'};cursor:pointer" ${setVal('posseTipo','judicial')}>Ação judicial</span>
       <span style="padding:2px 9px;border-radius:3px;font-size:8.5px;font-family:var(--fm);border:1.5px dashed var(--border);color:var(--muted)">Não definido</span>
     </div>
     ${fluxo.posseTipo?`<span style="font-size:9.5px;color:var(--muted)">Atual: <b style="color:var(--dark)">${fluxo.posseTipo==='mansa'?'Posse mansa':'Ação judicial'}</b></span>`:''}
@@ -6123,15 +6285,15 @@ function renderOpFlow(fluxo,isAdmin){
 
   <!-- LINHA 3: Cartório + Reforma -->
   <div class="of-row" style="flex-wrap:nowrap;gap:18px;min-width:max-content;overflow-x:auto">
-    ${node('09','Registro em cartório',fluxo.cartorio,'Adm.')}
+    ${node('09','Registro em cartório',fluxo.cartorio,'Adm.','cartorio')}
     ${arrow}
     <div class="of-step">
       <div class="of-box ${st(fluxo.reforma)}">
         <div class="of-n">10</div>
         <div class="of-label">Reforma</div>
         <div style="display:flex;gap:4px;margin-top:4px">
-          <span style="font-size:7.5px;padding:1px 5px;border-radius:2px;background:${fluxo.reforma==='sim'?'var(--dark)':'var(--bg3)'};color:${fluxo.reforma==='sim'?'var(--gold)':'var(--muted)'};font-family:var(--fm);cursor:pointer" onclick="toast('Com reforma','ok')">Com reforma</span>
-          <span style="font-size:7.5px;padding:1px 5px;border-radius:2px;background:${fluxo.reforma==='nao'?'var(--dark)':'var(--bg3)'};color:${fluxo.reforma==='nao'?'var(--gold)':'var(--muted)'};font-family:var(--fm);cursor:pointer" onclick="toast('Sem reforma','ok')">Sem reforma</span>
+          <span style="font-size:7.5px;padding:1px 5px;border-radius:2px;background:${fluxo.reforma==='sim'?'var(--dark)':'var(--bg3)'};color:${fluxo.reforma==='sim'?'var(--gold)':'var(--muted)'};font-family:var(--fm);cursor:pointer" ${setVal('reforma','sim')}>Com reforma</span>
+          <span style="font-size:7.5px;padding:1px 5px;border-radius:2px;background:${fluxo.reforma==='nao'?'var(--dark)':'var(--bg3)'};color:${fluxo.reforma==='nao'?'var(--gold)':'var(--muted)'};font-family:var(--fm);cursor:pointer" ${setVal('reforma','nao')}>Sem reforma</span>
         </div>
         <div class="of-resp">Equipe Reforma</div>
       </div>
@@ -6143,7 +6305,7 @@ function renderOpFlow(fluxo,isAdmin){
         <div class="of-n">11</div>
         <div class="of-label">Desfecho</div>
         <div style="display:flex;flex-direction:column;gap:3px;margin-top:4px">
-          ${['venda','locacao','devolucao'].map(d=>`<span style="font-size:7.5px;padding:1px 6px;border-radius:2px;background:${fluxo.desfecho===d?'var(--sem-success-bg)':'var(--bg3)'};color:${fluxo.desfecho===d?'var(--sem-success)':'var(--muted)'};border:1px solid ${fluxo.desfecho===d?'var(--sem-success-border)':'var(--border)'};font-family:var(--fm);cursor:pointer" onclick="toast('Desfecho: ${d}','ok')">${d==='venda'?'Venda':d==='locacao'?'Locação':'↩ Devolução'}</span>`).join('')}
+          ${['venda','locacao','devolucao'].map(d=>`<span style="font-size:7.5px;padding:1px 6px;border-radius:2px;background:${fluxo.desfecho===d?'var(--sem-success-bg)':'var(--bg3)'};color:${fluxo.desfecho===d?'var(--sem-success)':'var(--muted)'};border:1px solid ${fluxo.desfecho===d?'var(--sem-success-border)':'var(--border)'};font-family:var(--fm);cursor:pointer" ${setVal('desfecho',d)}>${d==='venda'?'Venda':d==='locacao'?'Locação':'↩ Devolução'}</span>`).join('')}
         </div>
         <div class="of-resp">Equipe Comercial</div>
       </div>
@@ -6168,13 +6330,14 @@ SCREENS['det-op']=()=>{
 
   ${op.prod==='Arrematação Individual'&&op.fluxo?`
   <!-- FLUXO VISUAL BIFURCADO -->
-  <div class="card mb14"><div class="card-h"><span class="card-ht">Fluxo Operacional — Cronologia Real</span>
+  <div class="card mb14"><div class="card-h"><span class="card-ht">Fluxo Operacional — Cronologia Real ${op.fluxoIndividual?'<span class="badge badge-g" style="margin-left:6px">Individual</span>':''}</span>
     <div class="fc g6">
       <span class="badge badge-ok">✓ Correto</span>
+      ${S.role==='admin'?`<button class="btn btn-s xs" onclick="toggleFluxoIndividual('${op.id}',${!!op.fluxoIndividual})">${op.fluxoIndividual?'⟲ Voltar ao padrão':'⚙ Fluxo individual'}</button>`:''}
       <button class="btn btn-g xs" onclick="openDrawer('Adicionar Tarefa',tarefaDrawer('${op.id}'))">+ Tarefa</button>
     </div>
   </div>
-  <div class="card-b">${renderOpFlow(op.fluxo,S.role==='admin')}</div>
+  <div class="card-b">${renderOpFlow(op.fluxo,S.role==='admin',op.id)}</div>
   
   <!-- TAREFAS POR ETAPA -->
   ${op.tarefas&&op.tarefas.length>0?`<div class="card-h" style="border-top:1px solid var(--border)"><span class="card-ht">Tarefas Vinculadas</span></div>
@@ -6332,6 +6495,32 @@ async function salvarStatusOperacao(opId){
   else if(res&&res.error){toast(res.error,'e');}
 }
 
+// ══ FLUXO ARREMATAÇÃO — atualiza etapa do fluxo via API ══
+async function setFluxoValor(opId,etapa,valor){
+  if(!opId||!etapa)return;
+  if(typeof API_MODE==='undefined' || !API_MODE){toast(etapa+' = '+valor+' (modo demo)','ok');return;}
+  const res=await API.patch('/api/operacoes/'+opId+'/fluxo',{etapa,valor});
+  if(res&&res.error)return toast(res.error,'e');
+  if(!res)return toast('Falha ao atualizar fluxo.','e');
+  toast('Fluxo atualizado!','ok');
+  await loadAppData();go('det-op',{id:opId});
+}
+async function cicloEtapaFluxo(opId,etapa,atual){
+  // pendente/null → andamento → ok → pendente
+  const next = atual==='ok' ? null : atual==='andamento' ? 'ok' : 'andamento';
+  return setFluxoValor(opId,etapa,next);
+}
+async function toggleFluxoIndividual(opId,atual){
+  const next = !atual;
+  if(!confirm(next?'Ativar fluxo individualizado para esta operação?':'Desativar fluxo individualizado e voltar ao padrão?'))return;
+  if(typeof API_MODE==='undefined' || !API_MODE){toast('Toggle aplicado (modo demo).','ok');return;}
+  const res=await API.patch('/api/operacoes/'+opId+'/fluxo',{fluxoIndividual:next});
+  if(res&&res.error)return toast(res.error,'e');
+  if(!res)return toast('Falha ao alternar fluxo.','e');
+  toast(next?'Fluxo individual ativado.':'Fluxo padrão restaurado.','ok');
+  await loadAppData();go('det-op',{id:opId});
+}
+
 // ══ ARREMATAÇÃO INDIVIDUAL ══
 SCREENS['arremata']=()=>`<div class="page">
   <div class="ph"><div class="ph-l"><div class="pt">Arrematação Individual</div><div class="ps">Fluxo bifurcado real · Carta judicial/extrajudicial · Posse mansa/judicial · Reforma opcional</div></div>
@@ -6429,39 +6618,102 @@ SCREENS['revisao']=()=>`<div class="page">
 // ══ CLUBE DO MILHÃO ══
 SCREENS['clube']=()=>S.role==='admin'?clubeAdmin():clubeLic();
 
-function clubeAdmin(){return `<div class="page">
+function clubeAdmin(){
+  // Fonte: D.grupos da API ou mock
+  const fonte = (Array.isArray(D.grupos)?D.grupos:[]);
+  const totalGrupos = fonte.length;
+  const totalCotas = fonte.reduce((s,g)=>s+(g.totalCotas||g.cotas||0),0);
+  const totalOcup = fonte.reduce((s,g)=>s+(g.cotasVendidas||g.ocup||0),0);
+  const receitaMes = fonte.reduce((s,g)=>s+((g.cotasVendidas||g.ocup||0)*(g.parcelaMensal||g.val||0)),0);
+  return `<div class="page">
   <div class="ph"><div class="ph-l"><div class="pt">Clube do Milhão</div><div class="ps">Consórcio de arrematação · Gestão de grupos e cotas</div></div>
-  <div class="pa"><button class="btn btn-p" onclick="toast('Novo grupo criado!','ok')">+ Criar Grupo</button></div></div>
+  <div class="pa"><button class="btn btn-p" onclick="abrirNovoGrupoClube()">+ Criar Grupo</button></div></div>
   <div class="kpi-grid kpi-g4 mb14">
-    <div class="kpi"><div class="kpi-lbl">Grupos Ativos</div><div class="kpi-val" style="color:var(--dark3)">4</div></div>
-    <div class="kpi"><div class="kpi-lbl">Total de Cotas</div><div class="kpi-val">74/80</div></div>
-    <div class="kpi"><div class="kpi-lbl">Receita/Mês</div><div class="kpi-val">${RM(74*3300)}</div></div>
-    <div class="kpi"><div class="kpi-lbl">Vagas Abertas</div><div class="kpi-val green">16</div></div>
+    <div class="kpi"><div class="kpi-lbl">Grupos Ativos</div><div class="kpi-val" style="color:var(--dark3)">${totalGrupos}</div></div>
+    <div class="kpi"><div class="kpi-lbl">Total de Cotas</div><div class="kpi-val">${totalOcup}/${totalCotas}</div></div>
+    <div class="kpi"><div class="kpi-lbl">Receita/Mês</div><div class="kpi-val">${RM(receitaMes)}</div></div>
+    <div class="kpi"><div class="kpi-lbl">Vagas Abertas</div><div class="kpi-val green">${Math.max(0,totalCotas-totalOcup)}</div></div>
   </div>
-  ${D.grupos.map(g=>`
-  <div class="card mb10">
+  ${fonte.map(g=>{
+    const codigo = g.codigo||g.id;
+    const nome = g.nome || (g.codigo?'Grupo '+g.codigo:codigo);
+    const cotas = g.totalCotas || g.cotas || 0;
+    const ocup = g.cotasVendidas || g.ocup || 0;
+    const parcela = g.parcelaMensal || g.val || 0;
+    const status = g.status || 'ativo';
+    const proxArrem = g.proxAssembleia ? new Date(g.proxAssembleia).toLocaleDateString('pt-BR') : (g.proxArrem||'—');
+    return `<div class="card mb10">
     <div class="card-h">
-      <div><div class="card-ht">${g.nome}</div><div style="font-size:9.5px;color:var(--muted);margin-top:2px">Próxima arrematação: ${g.proxArrem}</div></div>
-      <div class="fc g8">${statusBadge(g.status)}<span class="mono" style="color:var(--dark3)">${RM(g.val)}/mês</span></div>
+      <div><div class="card-ht">${escapeHtml(codigo)} · ${escapeHtml(nome)}</div><div style="font-size:9.5px;color:var(--muted);margin-top:2px">Próxima assembleia: ${proxArrem}${g.nomeAdmin?` · Admin: ${escapeHtml(g.nomeAdmin)}`:''}</div></div>
+      <div class="fc g8">${statusBadge(status)}<span class="mono" style="color:var(--dark3)">${RM(parcela)}/mês</span></div>
     </div>
     <div class="card-b">
       <div class="g2 mb10">
-        <div><div class="fc g8 mb6"><span style="font-size:10.5px;color:var(--soft)">Cotas: <b style="color:var(--dark)">${g.ocup}/${g.cotas}</b></span><span class="badge ${g.status==='completo'?'badge-ok':'badge-n'}">${g.status==='completo'?'Lotado':'Abertas: '+(g.cotas-g.ocup)}</span></div>
-        <div class="pbar pbar-lg mb8"><div class="pfill" style="width:${Math.round(g.ocup/g.cotas*100)}%;background:var(--dark)"></div></div>
-        <div style="font-size:9.5px;color:var(--muted)">Receita mensal: <b>${RM(g.ocup*g.val)}</b> · Prazo: ${g.prazo} meses</div></div>
-        <div><div class="mini-kpi"><div class="mini-kpi-l">Comissão Licenciados/Mês</div><div class="mini-kpi-v">${RM(g.ocup*150)}</div></div></div>
+        <div><div class="fc g8 mb6"><span style="font-size:10.5px;color:var(--soft)">Cotas: <b style="color:var(--dark)">${ocup}/${cotas}</b></span><span class="badge ${ocup>=cotas?'badge-ok':'badge-n'}">${ocup>=cotas?'Lotado':'Abertas: '+(cotas-ocup)}</span></div>
+        <div class="pbar pbar-lg mb8"><div class="pfill" style="width:${cotas?Math.round(ocup/cotas*100):0}%;background:var(--dark)"></div></div>
+        <div style="font-size:9.5px;color:var(--muted)">Receita mensal: <b>${RM(ocup*parcela)}</b> · Prazo: ${g.prazoMeses||g.prazo||48} meses</div></div>
+        <div><div class="mini-kpi"><div class="mini-kpi-l">Comissão Licenciados/Mês</div><div class="mini-kpi-v">${RM(ocup*150)}</div></div></div>
       </div>
-      ${g.id==='G001'?`<div class="mb8">
-        <div style="font-family:var(--fm);font-size:8px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Cotas · ${g.nome}</div>
-        <div class="qgrid">${D['cotas_'+g.id].map((nome,i)=>`<div class="qcell qf" title="Cota ${i+1} · ${nome}" onclick="toast('Cota '+(${i}+1)+': ${nome}','ok')"><span style="font-size:7px">${i+1}</span></div>`).join('')}${Array.from({length:g.cotas-D['cotas_'+g.id].length}).map((_,i)=>`<div class="qcell qe" title="Vaga disponível" onclick="toast('Vaga disponível!','ok')"></div>`).join('')}</div>
-        <div class="fc g8 mt6" style="font-size:9.5px;color:var(--muted)"><span> Ocupada: ${D['cotas_'+g.id].length}</span><span>⬜ Livre: ${g.cotas-D['cotas_'+g.id].length}</span></div>
-      </div>`:''}
-      <div class="fc g6"><button class="btn btn-s sm" onclick="go('det-grupo',{id:'${g.id}'})">Ver detalhes</button>
-      ${g.status!=='completo'?`<button class="btn btn-ok xs" onclick="toast('Cota adicionada!','ok')">+ Cota</button>`:''}
-      <button class="btn btn-g xs" onclick="toast('Exportando...','ok')">⬇ Exportar</button></div>
+      <div class="fc g6">
+        ${g.id?`<button class="btn btn-s sm" onclick="go('det-grupo',{id:'${g.id}'})">Ver detalhes</button>`:''}
+        ${ocup<cotas?`<button class="btn btn-ok xs" onclick="abrirNovaCotaClube('${codigo}')">+ Cota</button>`:''}
+        <button class="btn btn-g xs" onclick="toast('Exportando...','i')">⬇ Exportar</button>
+      </div>
     </div>
-  </div>`).join('')}
+  </div>`;}).join('')||'<div class="card"><div class="card-b" style="text-align:center;padding:30px;color:var(--muted)">Nenhum grupo cadastrado. Clique em <b>+ Criar Grupo</b> para começar.</div></div>'}
 </div>`;}
+
+function abrirNovoGrupoClube(){
+  openDrawer('Novo Grupo · Clube do Milhão',`<div style="display:flex;flex-direction:column;gap:10px">
+    <div class="fg"><label>Código *</label><input id="ng-cod" placeholder="Ex: G005" style="text-transform:uppercase"></div>
+    <div class="fg"><label>Administradora *</label><input id="ng-adm" placeholder="Nome da administradora"></div>
+    <div class="fgrid"><div class="fg"><label>Total de Cotas *</label><input id="ng-cotas" type="number" value="50" min="1"></div>
+    <div class="fg"><label>Parcela Mensal (R$) *</label><input id="ng-parc" type="number" step="0.01" value="3300"></div>
+    <div class="fg"><label>Prazo (meses)</label><input id="ng-prazo" type="number" value="48" min="1"></div>
+    <div class="fg"><label>Data de Início *</label><input id="ng-ini" type="date" value="${new Date().toISOString().slice(0,10)}"></div>
+    <div class="fg"><label>Próxima Assembleia</label><input id="ng-asse" type="date"></div>
+    <div class="fg"><label>Status</label><select id="ng-st"><option value="ativo">Ativo</option><option value="suspenso">Suspenso</option><option value="encerrado">Encerrado</option></select></div></div>
+    <div style="display:flex;gap:8px;margin-top:6px"><button class="btn btn-p" onclick="salvarNovoGrupoClube()">✓ Criar Grupo</button><button class="btn btn-g" onclick="closeDrawer()">Cancelar</button></div>
+  </div>`);
+}
+async function salvarNovoGrupoClube(){
+  const v=k=>document.getElementById(k)?.value?.trim();
+  const codigo=(v('ng-cod')||'').toUpperCase(), nomeAdmin=v('ng-adm'), totalCotas=parseInt(v('ng-cotas')||'0'), parcelaMensal=parseFloat(v('ng-parc')||'0'), prazoMeses=parseInt(v('ng-prazo')||'48'), dataInicio=v('ng-ini'), proxAssembleia=v('ng-asse'), status=v('ng-st')||'ativo';
+  if(!codigo)return toast('Informe o código.','e');
+  if(!nomeAdmin)return toast('Informe a administradora.','e');
+  if(!totalCotas||totalCotas<1)return toast('Total de cotas inválido.','e');
+  if(!parcelaMensal||parcelaMensal<=0)return toast('Parcela mensal inválida.','e');
+  if(!dataInicio)return toast('Informe a data de início.','e');
+  if(typeof API_MODE==='undefined' || !API_MODE){toast('Grupo criado (modo demo).','ok');closeDrawer();return;}
+  const res=await API.post('/api/clube/grupos',{codigo,nomeAdmin,totalCotas,parcelaMensal,prazoMeses,dataInicio,proxAssembleia:proxAssembleia||null,status});
+  if(res&&res.error)return toast(res.error,'e');
+  if(!res)return toast('Falha ao criar grupo.','e');
+  toast('Grupo criado!','ok');closeDrawer();await loadAppData();go('clube');
+}
+function abrirNovaCotaClube(grupoCodigo){
+  openDrawer('Nova Cota · '+grupoCodigo,`<div style="display:flex;flex-direction:column;gap:10px">
+    <div class="fg"><label>Cliente *</label><select id="nq-cli"><option value="">— Selecione</option>${(D.clientes||[]).map(c=>`<option value="${c.id}">${escapeHtml(c.nome)} — ${c.cpf||''}</option>`).join('')}</select></div>
+    <div class="fg"><label>Licenciado</label><select id="nq-lic"><option value="">— Auto (do cliente)</option>${(D.licenciados||[]).map(l=>`<option value="${l.id}">${escapeHtml(l.nome)}</option>`).join('')}</select></div>
+    <div class="fgrid"><div class="fg"><label>Número da Cota *</label><input id="nq-cota" type="number" min="1" placeholder="Ex: 23"></div>
+    <div class="fg"><label>Parcelas</label><input id="nq-parc" type="number" value="48" min="1"></div>
+    <div class="fg"><label>Já Pagas</label><input id="nq-pgs" type="number" value="0" min="0"></div>
+    <div class="fg"><label>Valor Mensal (R$)</label><input id="nq-val" type="number" step="0.01" value="3300"></div></div>
+    <div style="display:flex;gap:8px;margin-top:6px"><button class="btn btn-p" onclick="salvarNovaCotaClube('${grupoCodigo}')">✓ Adicionar Cota</button><button class="btn btn-g" onclick="closeDrawer()">Cancelar</button></div>
+  </div>`);
+}
+async function salvarNovaCotaClube(grupoCodigo){
+  const v=k=>document.getElementById(k)?.value?.trim();
+  const cliId=v('nq-cli'),licId=v('nq-lic'),cota=parseInt(v('nq-cota')||'0'),parcelas=parseInt(v('nq-parc')||'48'),parcelaPagas=parseInt(v('nq-pgs')||'0'),valorMensal=parseFloat(v('nq-val')||'0');
+  if(!cliId)return toast('Selecione o cliente.','e');
+  if(!cota||cota<1)return toast('Número da cota inválido.','e');
+  if(typeof API_MODE==='undefined' || !API_MODE){toast('Cota adicionada (modo demo).','ok');closeDrawer();return;}
+  const cliente=(D.clientes||[]).find(c=>c.id===cliId);
+  const licDestino=licId||cliente?.licId||cliente?.owner;
+  const res=await API.post('/api/clube/cotas',{grupoCodigo,cota,cliId,licId:licDestino,parcelas,parcelaPagas,valorMensal});
+  if(res&&res.error)return toast(res.error,'e');
+  if(!res)return toast('Falha ao adicionar cota.','e');
+  toast('Cota adicionada!','ok');closeDrawer();await loadAppData();go('clube');
+}
 
 function clubeLic(){
   // Licenciado vê apenas cotas dele e ganhos dele
