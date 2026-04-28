@@ -3933,7 +3933,16 @@ a:focus-visible { outline: 2px solid var(--v-ink) !important; outline-offset: 2p
 //  Se API_URL não estiver definida, o sistema opera em modo local (localStorage)
 // ══════════════════════════════════════════════════════════════
 const API_URL = window.__VERTICE_API__ || '';  // Ex: 'https://api.seudominio.com.br'
-const API_MODE = !!API_URL; // true = conectado ao backend, false = localStorage
+const API_MODE = !window.__VERTICE_LOCAL_MODE__; // true = usa backend (mesmo domínio funciona com '')
+
+// ══ TOAST ══
+function toast(msg, type='ok'){
+  const el=document.getElementById('toasts');if(!el)return;
+  const cls=type==='ok'?'toast-ok':type==='err'||type==='e'?'toast-err':'toast-w';
+  const t=document.createElement('div');t.className='toast '+cls;t.textContent=msg;
+  el.appendChild(t);setTimeout(()=>t.remove(),3500);
+}
+function escapeHtml(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 
 const API = {
   _tokens: {
@@ -6907,17 +6916,82 @@ document.addEventListener('DOMContentLoaded',()=>CFG.init());
 // ══ USUÁRIOS ══
 SCREENS['usuarios']=()=>S.role!=='admin'?`<div class="page"><div class="alert alert-e"><span class="ai" style="width:16px;height:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="var(--red)" stroke-width="1.5" stroke-linecap="round"><rect x="2" y="5" width="8" height="6" rx="1"/><path d="M4 5V4a2 2 0 0 1 4 0v1"/></svg></span><div>Acesso restrito.</div></div></div>`:`<div class="page">
   <div class="ph"><div class="ph-l"><div class="pt">Usuários</div><div class="ps">Equipe interna e acesso ao sistema</div></div>
-  <div class="pa"><button class="btn btn-p" onclick="toast('Usuário criado!','ok')">+ Novo Usuário</button></div></div>
+  <div class="pa"><button class="btn btn-p" onclick="abrirNovoUsuario()">+ Novo Usuário</button></div></div>
   <div class="tw"><table><thead><tr><th>Nome</th><th>E-mail</th><th>Perfil</th><th>Status</th><th>Último acesso</th><th>Ações</th></tr></thead>
-  <tbody>${D.usuarios.map(u=>`<tr>
-    <td><div class="fc g8"><div style="width:30px;height:30px;border-radius:50%;background:var(--dark);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--gold);flex-shrink:0">${u.nome[0]}</div><span class="td-n">${u.nome}</span></div></td>
-    <td style="font-size:10px;color:var(--muted)">${u.email}</td>
-    <td><span class="badge badge-n">${u.perfil}</span></td>
-    <td>${chipStatus(u.status)}</td>
-    <td style="font-size:9.5px;color:var(--muted)">${u.last}</td>
-    <td><div class="td-a"><button class="btn btn-s xs" onclick="toast('Editando...','ok')"> Editar</button></div></td>
-  </tr>`).join('')}</tbody></table></div>
+  <tbody>${(D.usuarios||[]).map(u=>{const nome=u.name||u.nome||'';const perfil=u.role||u.perfil||'';const ativo=u.ativo!==false;return `<tr>
+    <td><div class="fc g8"><div style="width:30px;height:30px;border-radius:50%;background:var(--dark);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--gold);flex-shrink:0">${(nome[0]||'U').toUpperCase()}</div><span class="td-n">${escapeHtml(nome)}</span></div></td>
+    <td style="font-size:10px;color:var(--muted)">${escapeHtml(u.email||'')}</td>
+    <td><span class="badge badge-n">${perfil}</span></td>
+    <td>${chipStatus(ativo?'ativo':'inativo')}</td>
+    <td style="font-size:9.5px;color:var(--muted)">${u.updatedAt?new Date(u.updatedAt).toLocaleDateString('pt-BR'):'—'}</td>
+    <td><div class="td-a"><button class="btn btn-s xs" onclick="editarUsuario('${u.id}')">Editar</button>${ativo?`<button class="btn btn-g xs" onclick="alternarStatusUsuario('${u.id}',false)">Desativar</button>`:`<button class="btn btn-ok xs" onclick="alternarStatusUsuario('${u.id}',true)">Ativar</button>`}</div></td>
+  </tr>`;}).join('')}</tbody></table></div>
 </div>`;
+
+function abrirNovoUsuario(){
+  openDrawer('Novo Usuário',`<div style="display:flex;flex-direction:column;gap:12px">
+    <div class="fg"><label>Nome *</label><input id="nu-nome" placeholder="Nome completo"></div>
+    <div class="fg"><label>E-mail *</label><input id="nu-email" type="email" placeholder="email@empresa.com"></div>
+    <div class="fg"><label>Perfil</label><select id="nu-role"><option value="ADMIN">Admin</option><option value="LIC">Licenciado</option><option value="JURIDICO">Jurídico</option><option value="PESQUISA">Pesquisa</option></select></div>
+    <div class="fg"><label>Senha *</label><input id="nu-senha" type="password" placeholder="Mínimo 8 caracteres"></div>
+    <div class="fc g8 mt8"><button class="btn btn-p" id="nu-btn" onclick="salvarUsuario()">✓ Criar</button><button class="btn btn-g" onclick="closeDrawer()">Cancelar</button></div>
+  </div>`);
+}
+async function salvarUsuario(){
+  const v=id=>document.getElementById(id)?.value?.trim();
+  const name=v('nu-nome'),email=v('nu-email'),role=v('nu-role'),password=v('nu-senha');
+  if(!name||!email||!password){return toast('Preencha todos os campos.','e');}
+  if(password.length<8){return toast('Senha mínima 8 caracteres.','e');}
+  const btn=document.getElementById('nu-btn');if(btn)btn.disabled=true;
+  const res=await API.post('/api/usuarios',{name,email,role,password});
+  if(btn)btn.disabled=false;
+  if(res&&!res.error){closeDrawer();toast('Usuário criado!','ok');await recarregarUsuarios();go('usuarios');}
+  else if(res&&res.error){toast(res.error,'e');}
+}
+
+async function editarUsuario(id){
+  const u=(D.usuarios||[]).find(x=>x.id===id);
+  if(!u){return toast('Usuário não encontrado.','e');}
+  const nome=u.name||u.nome||'';const perfil=u.role||u.perfil||'LIC';
+  openDrawer('Editar Usuário',`<div style="display:flex;flex-direction:column;gap:12px">
+    <div class="fg"><label>Nome *</label><input id="eu-nome" value="${escapeHtml(nome)}"></div>
+    <div class="fg"><label>E-mail *</label><input id="eu-email" type="email" value="${escapeHtml(u.email||'')}"></div>
+    <div class="fg"><label>Perfil</label><select id="eu-role">
+      <option value="ADMIN" ${perfil==='ADMIN'?'selected':''}>Admin</option>
+      <option value="LIC" ${perfil==='LIC'?'selected':''}>Licenciado</option>
+      <option value="JURIDICO" ${perfil==='JURIDICO'?'selected':''}>Jurídico</option>
+      <option value="PESQUISA" ${perfil==='PESQUISA'?'selected':''}>Pesquisa</option>
+    </select></div>
+    <div class="fg"><label>Nova senha <span style="color:var(--muted);font-weight:400">(opcional · mínimo 8)</span></label><input id="eu-senha" type="password" placeholder="Deixe em branco para manter"></div>
+    <div class="fg"><label><input type="checkbox" id="eu-ativo" ${u.ativo!==false?'checked':''}> Usuário ativo</label></div>
+    <div class="fc g8 mt8"><button class="btn btn-p" id="eu-btn" onclick="salvarEdicaoUsuario('${u.id}')">✓ Salvar</button><button class="btn btn-g" onclick="closeDrawer()">Cancelar</button></div>
+  </div>`);
+}
+async function salvarEdicaoUsuario(id){
+  const v=k=>document.getElementById(k)?.value?.trim();
+  const name=v('eu-nome'),email=v('eu-email'),role=v('eu-role'),password=v('eu-senha');
+  const ativo=document.getElementById('eu-ativo')?.checked!==false;
+  if(!name||!email){return toast('Nome e e-mail são obrigatórios.','e');}
+  if(password&&password.length<8){return toast('Nova senha mínima 8 caracteres.','e');}
+  const payload={name,email,role,ativo};
+  if(password)payload.password=password;
+  const btn=document.getElementById('eu-btn');if(btn)btn.disabled=true;
+  const res=await API.put('/api/usuarios/'+id,payload);
+  if(btn)btn.disabled=false;
+  if(res&&!res.error){closeDrawer();toast('Usuário atualizado!','ok');await recarregarUsuarios();go('usuarios');}
+  else if(res&&res.error){toast(res.error,'e');}
+}
+async function alternarStatusUsuario(id,ativo){
+  const res=await API.patch('/api/usuarios/'+id+'/status',{ativo});
+  if(res&&!res.error){toast(ativo?'Usuário ativado.':'Usuário desativado.','ok');await recarregarUsuarios();go('usuarios');}
+  else if(res&&res.error){toast(res.error,'e');}
+}
+async function recarregarUsuarios(){
+  if(!API_MODE)return;
+  const lista=await API.get('/api/usuarios');
+  if(Array.isArray(lista))D.usuarios=lista;
+  else if(lista&&lista.data)D.usuarios=lista.data;
+}
 
 // ══ AUDITORIA ══
 SCREENS['auditoria']=()=>S.role!=='admin'?`<div class="page"><div class="alert alert-e"><span class="ai" style="width:16px;height:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="var(--red)" stroke-width="1.5" stroke-linecap="round"><rect x="2" y="5" width="8" height="6" rx="1"/><path d="M4 5V4a2 2 0 0 1 4 0v1"/></svg></span><div>Acesso restrito.</div></div></div>`:`<div class="page">
