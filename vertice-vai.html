@@ -5419,7 +5419,7 @@ SCREENS['det-lic']=()=>{
   if(!l)return '<div class="page"><div class="alert alert-i">Licenciado não encontrado.</div></div>';
   return `<div class="page">
   <div class="ph"><div class="ph-l"><div class="pt">${l.nome}</div><div class="ps">${l.empresa} · ${l.estado}</div></div>
-  <div class="pa"><button class="btn btn-g" onclick="go('licenciados')">← Voltar</button>${S.role==='admin'?`<button class="btn btn-d sm" onclick="toast('Confirme','w')">⏻ Suspender</button>`:''}</div></div>
+  <div class="pa"><button class="btn btn-g" onclick="go('licenciados')">← Voltar</button>${S.role==='admin'?`<button class="btn btn-s sm" onclick="editarLicenciado('${l.id}')">Editar</button><button class="btn btn-d sm" onclick="alternarStatusLicenciado('${l.id}','${l.status||'ATIVO'}')">⏻ ${l.status==='SUSPENSO'||l.status==='suspenso'?'Reativar':'Suspender'}</button>`:''}</div></div>
   <div class="detail-h"><div class="dav"></div>
     <div style="flex:1"><div class="dn">${l.nome}</div><div class="ds">${l.empresa} · CNPJ: ${l.cnpj}</div>
     <div class="dc">${chipStatus(l.status)}<span class="badge ${l.taxa==='isento'?'badge-ok':'badge-err'}">${l.taxa==='isento'?'Isento':'Taxa devida'}</span><span class="badge badge-n">Ano ${l.ano}</span><div class="rank-badge rank-${l.rank}" style="width:22px;height:22px;font-size:10px">${l.rank}º</div></div></div>
@@ -5589,7 +5589,7 @@ SCREENS['det-cli']=()=>{
   <div class="detail-h"><div class="dav"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="var(--dourado)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="7" r="4"/><path d="M3 18c0-3.87 3.13-7 7-7s7 3.13 7 7"/></svg></div>
     <div style="flex:1"><div class="dn">${c.nome}</div><div class="ds">CPF: ${c.cpf} · ${c.email}</div>
     <div class="dc"><span class="badge badge-ok">CPF Validado ✓</span><span class="badge badge-n">Owner: ${S.role==='lic'?'Você':c.ownerNome}</span><span class="badge badge-n">${c.orig}</span>${ops.length>1?`<span class="badge badge-b">${ops.length} operações</span>`:''}</div></div>
-    <div class="fc g6"><button class="btn btn-p sm" onclick="go('nova-venda',{cli:'${c.nome}'})">+ Venda</button><button class="btn btn-s sm" onclick="go('crm')">CRM</button></div>
+    <div class="fc g6"><button class="btn btn-p sm" onclick="go('nova-venda',{cli:'${c.nome}'})">+ Venda</button><button class="btn btn-s sm" onclick="editarCliente('${c.id}')">Editar</button><button class="btn btn-s sm" onclick="go('crm')">CRM</button></div>
   </div>
   <div class="g2">
     <div class="card"><div class="card-h"><span class="card-ht">Dados</span></div><div class="card-b">
@@ -5934,7 +5934,7 @@ SCREENS['det-venda']=()=>{
   const op=D.operacoes.find(o=>o.id===v.opId);const c=calcCom(v.val,v.prod==='Arrematação Individual'?'arremata':v.prod==='Home Equity'?'homeequity':v.prod.includes('Revisão')?'revisao':'clube');
   return `<div class="page">
   <div class="ph"><div class="ph-l"><div class="pt">${v.id}</div><div class="ps">${v.prod} · ${v.cli}</div></div>
-  <div class="pa"><button class="btn btn-g" onclick="go('vendas')">← Voltar</button>${op?`<button class="btn btn-s sm" onclick="go('det-op',{id:'${op.id}'})"> Operação</button>`:''}</div></div>
+  <div class="pa"><button class="btn btn-g" onclick="go('vendas')">← Voltar</button>${op?`<button class="btn btn-s sm" onclick="go('det-op',{id:'${op.id}'})"> Operação</button>`:''}${S.role==='admin'?`<button class="btn btn-s sm" onclick="mudarStatusVenda('${v.id}','${v.status||'ABERTA'}')">Status: ${v.status||'ABERTA'}</button>`:''}</div></div>
   <div class="g2">
     <div class="card"><div class="card-h"><span class="card-ht">Detalhes</span></div><div class="card-b">
       ${[['Produto',v.prod],['Cliente',v.cli],['CPF',v.cpf],['Canal',v.canal],['Licenciado',v.lic],['Data',v.data]].map(([k,val])=>`<div class="fb" style="padding:5px 0;border-bottom:1px solid var(--border)"><span style="font-size:8px;color:var(--muted);min-width:90px;font-family:var(--fm);text-transform:uppercase">${k}</span><span style="font-size:10.5px;color:var(--soft)">${val}</span></div>`).join('')}
@@ -5950,7 +5950,7 @@ SCREENS['det-venda']=()=>{
 SCREENS['comissoes']=()=>S.role==='admin'?comAdmin():comLic();
 function comAdmin(){return `<div class="page">
   <div class="ph"><div class="ph-l"><div class="pt">Comissões</div><div class="ps">Motor v3 · Regras corrigidas por produto</div></div>
-  <div class="pa"><button class="btn btn-ok" onclick="toast('Todas aprovadas!','ok')">✓ Aprovar Pendentes</button></div></div>
+  <div class="pa"><button class="btn btn-ok" onclick="aprovarTodasComissoes()">✓ Aprovar Pendentes</button></div></div>
   <div class="kpi-grid kpi-g4 mb14">
     <div class="kpi"><div class="kpi-lbl">Pendente</div><div class="kpi-val red">R$ 32,9k</div></div>
     <div class="kpi"><div class="kpi-lbl">Aprovado</div><div class="kpi-val" style="color:var(--dark3)">R$ 28,8k</div></div>
@@ -5970,7 +5970,7 @@ function comAdmin(){return `<div class="page">
     <td class="mono green" style="font-size:10px">${c.netEmpresa?RM(c.netEmpresa):'—'}</td>
     <td style="font-size:10.5px">${c.bene}</td>
     <td>${statusBadge(c.status)}</td>
-    <td><div class="td-a">${c.status==='pendente'?`<button class="btn btn-ok xs" onclick="toast('${c.id} aprovada!','ok')">✓</button>`:''}</div></td>
+    <td><div class="td-a">${c.status==='pendente'?`<button class="btn btn-ok xs" onclick="aprovarComissao('${c.id}')" title="Aprovar e marcar como paga">✓</button>`:''}</div></td>
   </tr>`).join('')}</tbody></table></div>
 </div>`;}
 
@@ -6519,7 +6519,7 @@ SCREENS['documentos']=()=>{const lista=S.role==='lic'?D.docs.filter(d=>d.licId==
   const byLic=lista.reduce((m,d)=>{(m[d.lic]=m[d.lic]||[]).push(d);return m;},{});
   return `<div class="page">
   <div class="ph"><div class="ph-l"><div class="pt">Documentos</div><div class="ps">${S.role==='lic'?'Seus documentos organizados':'Organizado por licenciado → cliente → tipo'}</div></div>
-  <div class="pa"><button class="btn btn-p" onclick="toast('Upload em breve!','ok')">+ Enviar Documento</button></div></div>
+  <div class="pa"><button class="btn btn-p" onclick="abrirUploadDocumento()">+ Enviar Documento</button></div></div>
   ${Object.entries(byLic).map(([lic,docs])=>{
     const byCli=docs.reduce((m,d)=>{(m[d.cli]=m[d.cli]||[]).push(d);return m;},{});
     return `<div class="card mb10">
@@ -6529,7 +6529,7 @@ SCREENS['documentos']=()=>{const lista=S.role==='lic'?D.docs.filter(d=>d.licId==
         ${cdocs.map(d=>`<div class="fc g10" style="padding:7px 20px;border-bottom:1px solid var(--border)">
           <div style="width:32px;height:32px;border-radius:8px;background:rgba(201,168,76,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0">${d.tipo.includes('Cont')?'<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#c9a84c" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V6z"/><path d="M9 2v4h4"/><line x1="5" y1="9" x2="11" y2="9"/><line x1="5" y1="12" x2="9" y2="12"/></svg>':d.tipo.includes('Pess')?'<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#c9a84c" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="6" r="3"/><path d="M1 14s1-5 7-5 7 5 7 5"/></svg>':d.tipo.includes('Im')?'<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#c9a84c" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8L8 2l6 6v6a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1z"/></svg>':'<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#c9a84c" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 7V4l-3-3H3a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-1"/><path d="M10 1v3h3"/></svg>'}</div>
           <div style="flex:1"><div style="font-size:10.5px;color:var(--dark)">${d.nome}</div><div style="font-size:8.5px;color:var(--muted)">${d.tipo} · ${d.tam} · ${d.data}</div></div>
-          <div class="fc g5">${statusBadge(d.status)}<button class="btn btn-g xs" onclick="toast('Baixando...','ok')">⬇</button></div>
+          <div class="fc g5">${statusBadge(d.status)}<a class="btn btn-g xs" href="${d.url||'#'}" download target="_blank">⬇</a></div>
         </div>`).join('')}
       </div>`).join('')}
     </div>`;}).join('')}
@@ -7085,6 +7085,132 @@ async function salvarLicenciado(){
   else if(res&&res.error){toast(res.error,'e');}
 }
 
+// ══ EDITAR / SUSPENDER LICENCIADO ══
+async function editarLicenciado(id){
+  const l=(D.licenciados||[]).find(x=>x.id===id);
+  if(!l)return toast('Licenciado não encontrado.','e');
+  openDrawer('Editar Licenciado',`<div style="display:flex;flex-direction:column;gap:10px">
+    <div class="fg"><label>Nome *</label><input id="el-nome" value="${escapeHtml(l.nome||'')}"></div>
+    <div class="fg"><label>Empresa *</label><input id="el-empresa" value="${escapeHtml(l.empresa||'')}"></div>
+    <div class="fg"><label>CNPJ *</label><input id="el-cnpj" value="${escapeHtml(l.cnpj||'')}"></div>
+    <div class="fg"><label>Estado *</label><input id="el-estado" value="${escapeHtml(l.estado||'')}" maxlength="2"></div>
+    <div class="fg"><label>E-mail *</label><input id="el-email" type="email" value="${escapeHtml(l.email||'')}"></div>
+    <div class="fg"><label>Telefone *</label><input id="el-tel" value="${escapeHtml(l.tel||'')}"></div>
+    <div class="fg"><label>PIX</label><input id="el-pix" value="${escapeHtml(l.pix||'')}"></div>
+    <div class="fg"><label>Banco</label><input id="el-banco" value="${escapeHtml(l.banco||'')}"></div>
+    <div class="fg"><label>% Home Equity</label><input id="el-comHE" type="number" step="0.5" value="${l.comHE||1}"></div>
+    <div class="fg"><label>Meta Trimestral (R$)</label><input id="el-meta" type="number" value="${l.meta||3000000}"></div>
+    <div class="fg"><label>Cobrança de taxa</label><select id="el-taxa"><option value="cobrado" ${l.taxa==='cobrado'?'selected':''}>Cobrado</option><option value="isento" ${l.taxa==='isento'?'selected':''}>Isento</option></select></div>
+    <div class="fg"><label>Nova senha (opcional)</label><input id="el-senha" type="password" placeholder="Mín. 8 — em branco = manter"></div>
+    <div class="fc g8 mt8"><button class="btn btn-p" id="el-btn" onclick="salvarEdicaoLicenciado('${l.id}')">✓ Salvar</button><button class="btn btn-g" onclick="closeDrawer()">Cancelar</button></div>
+  </div>`);
+}
+async function salvarEdicaoLicenciado(id){
+  const v=k=>document.getElementById(k)?.value?.trim();
+  const payload={
+    nome:v('el-nome'),empresa:v('el-empresa'),cnpj:v('el-cnpj'),estado:v('el-estado'),
+    email:v('el-email'),tel:v('el-tel'),pix:v('el-pix'),banco:v('el-banco'),
+    comHE:parseFloat(v('el-comHE')||'1'),meta:parseFloat(v('el-meta')||'3000000'),
+    taxa:v('el-taxa'),
+  };
+  const senha=v('el-senha');if(senha){if(senha.length<8)return toast('Senha mínima 8 caracteres.','e');payload.senha=senha;}
+  if(!payload.nome||!payload.email)return toast('Nome e e-mail são obrigatórios.','e');
+  const btn=document.getElementById('el-btn');if(btn)btn.disabled=true;
+  const res=await API.put('/api/licenciados/'+id,payload);
+  if(btn)btn.disabled=false;
+  if(res&&!res.error){closeDrawer();toast('Licenciado atualizado!','ok');await loadAppData();go('licenciados');}
+  else if(res&&res.error){toast(res.error,'e');}
+}
+async function alternarStatusLicenciado(id,statusAtual){
+  const novo=(statusAtual==='SUSPENSO'||statusAtual==='suspenso')?'ATIVO':'SUSPENSO';
+  const acao=novo==='ATIVO'?'reativar':'suspender';
+  if(!confirm(`Confirma ${acao} este licenciado?`))return;
+  const res=await API.patch('/api/licenciados/'+id+'/status',{status:novo});
+  if(res&&!res.error){toast(`Licenciado ${novo==='ATIVO'?'reativado':'suspenso'}.`,'ok');await loadAppData();go('licenciados');}
+  else if(res&&res.error){toast(res.error,'e');}
+}
+
+// ══ EDITAR CLIENTE ══
+async function editarCliente(id){
+  const c=(D.clientes||[]).find(x=>x.id===id);
+  if(!c)return toast('Cliente não encontrado.','e');
+  openDrawer('Editar Cliente',`<div style="display:flex;flex-direction:column;gap:10px">
+    <div class="fg"><label>Nome *</label><input id="ec-nome" value="${escapeHtml(c.nome||'')}"></div>
+    <div class="fg"><label>CPF *</label><input id="ec-cpf" value="${escapeHtml(c.cpf||'')}"></div>
+    <div class="fg"><label>Telefone *</label><input id="ec-tel" value="${escapeHtml(c.tel||'')}"></div>
+    <div class="fg"><label>E-mail</label><input id="ec-email" type="email" value="${escapeHtml(c.email||'')}"></div>
+    <div class="fg"><label>Endereço</label><input id="ec-end" value="${escapeHtml(c.end||'')}"></div>
+    <div class="fg"><label>Origem</label><select id="ec-orig">${['','Indicação','Instagram','Google','Evento','WhatsApp'].map(o=>`<option value="${o}" ${c.orig===o?'selected':''}>${o||'—'}</option>`).join('')}</select></div>
+    <div class="fg"><label>Produto</label><select id="ec-prod">${['','Arrematação Individual','Home Equity','Revisão Contratual','Clube do Milhão'].map(o=>`<option value="${o}" ${c.prod===o?'selected':''}>${o||'—'}</option>`).join('')}</select></div>
+    <div class="fc g8 mt8"><button class="btn btn-p" id="ec-btn" onclick="salvarEdicaoCliente('${c.id}')">✓ Salvar</button><button class="btn btn-g" onclick="closeDrawer()">Cancelar</button></div>
+  </div>`);
+}
+async function salvarEdicaoCliente(id){
+  const v=k=>document.getElementById(k)?.value?.trim();
+  const payload={nome:v('ec-nome'),cpf:v('ec-cpf'),tel:v('ec-tel'),email:v('ec-email'),end:v('ec-end'),orig:v('ec-orig'),prod:v('ec-prod')};
+  if(!payload.nome||!payload.cpf||!payload.tel)return toast('Nome, CPF e telefone são obrigatórios.','e');
+  const btn=document.getElementById('ec-btn');if(btn)btn.disabled=true;
+  const res=await API.put('/api/clientes/'+id,payload);
+  if(btn)btn.disabled=false;
+  if(res&&!res.error){closeDrawer();toast('Cliente atualizado!','ok');await loadAppData();go('clientes');}
+  else if(res&&res.error){toast(res.error,'e');}
+}
+
+// ══ APROVAR COMISSÕES ══
+async function aprovarComissao(id){
+  if(!confirm('Marcar esta comissão como paga?'))return;
+  const res=await API.patch('/api/comissoes/'+id+'/pagar',{});
+  if(res&&!res.error){toast('Comissão aprovada!','ok');await loadAppData();go('comissoes');}
+  else if(res&&res.error){toast(res.error,'e');}
+}
+async function aprovarTodasComissoes(){
+  const pendentes=(D.comissoes||[]).filter(c=>(c.status||'').toLowerCase()==='pendente');
+  if(!pendentes.length)return toast('Nenhuma comissão pendente.','w');
+  if(!confirm(`Aprovar ${pendentes.length} comissão(ões) pendente(s)?`))return;
+  const results=await Promise.allSettled(pendentes.map(c=>API.patch('/api/comissoes/'+c.id+'/pagar',{})));
+  const ok=results.filter(r=>r.status==='fulfilled'&&r.value&&!r.value.error).length;
+  toast(`${ok}/${pendentes.length} aprovadas.`,ok===pendentes.length?'ok':'w');
+  await loadAppData();go('comissoes');
+}
+
+// ══ MUDAR STATUS VENDA ══
+async function mudarStatusVenda(id,atual){
+  const opts=['ABERTA','FECHADA','CANCELADA'];
+  const novo=prompt(`Status atual: ${atual}\nNovo status (${opts.join('/')}):`,atual);
+  if(!novo||!opts.includes(novo.toUpperCase()))return;
+  const res=await API.patch('/api/vendas/'+id+'/status',{status:novo.toUpperCase()});
+  if(res&&!res.error){toast('Status atualizado!','ok');await loadAppData();go('det-venda',{id});}
+  else if(res&&res.error){toast(res.error,'e');}
+}
+
+// ══ UPLOAD DOCUMENTO ══
+function abrirUploadDocumento(){
+  const cliOptions=(D.clientes||[]).map(c=>`<option value="${c.id}">${escapeHtml(c.nome||'')} — ${c.cpf||''}</option>`).join('');
+  openDrawer('Enviar Documento',`<div style="display:flex;flex-direction:column;gap:10px">
+    <div class="fg"><label>Cliente</label><select id="ud-cli"><option value="">Geral</option>${cliOptions}</select></div>
+    <div class="fg"><label>Tipo do documento</label><select id="ud-tipo"><option value="contrato">Contrato</option><option value="pessoal">Pessoal</option><option value="imovel">Imóvel</option><option value="financeiro">Financeiro</option><option value="outro">Outro</option></select></div>
+    <div class="fg"><label>Arquivo *</label><input id="ud-file" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"></div>
+    <div class="fc g8 mt8"><button class="btn btn-p" id="ud-btn" onclick="salvarUploadDocumento()">✓ Enviar</button><button class="btn btn-g" onclick="closeDrawer()">Cancelar</button></div>
+  </div>`);
+}
+async function salvarUploadDocumento(){
+  const fileEl=document.getElementById('ud-file');
+  const file=fileEl?.files?.[0];
+  if(!file)return toast('Selecione um arquivo.','e');
+  const cliId=document.getElementById('ud-cli')?.value||'';
+  const tipo=document.getElementById('ud-tipo')?.value||'outro';
+  const fd=new FormData();fd.append('arquivo',file);fd.append('tipo',tipo);if(cliId)fd.append('cliId',cliId);
+  const btn=document.getElementById('ud-btn');if(btn)btn.disabled=true;
+  try{
+    const headers={};const t=API._tokens.access;if(t)headers.Authorization='Bearer '+t;
+    const r=await fetch(API_URL+'/api/documentos',{method:'POST',headers,body:fd});
+    const data=await r.json().catch(()=>({}));
+    if(r.ok){closeDrawer();toast('Documento enviado!','ok');await loadAppData();go('documentos');}
+    else toast(data.error||'Erro ao enviar.','e');
+  }catch(e){toast('Erro de conexão.','e');}
+  if(btn)btn.disabled=false;
+}
+
 // ══ AUDITORIA ══
 SCREENS['auditoria']=()=>S.role!=='admin'?`<div class="page"><div class="alert alert-e"><span class="ai" style="width:16px;height:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="var(--red)" stroke-width="1.5" stroke-linecap="round"><rect x="2" y="5" width="8" height="6" rx="1"/><path d="M4 5V4a2 2 0 0 1 4 0v1"/></svg></span><div>Acesso restrito.</div></div></div>`:`<div class="page">
   <div class="ph"><div class="ph-l"><div class="pt">Auditoria</div><div class="ps">Rastro imutável de todas as ações · SHA256 · Não editável</div></div>
@@ -7101,7 +7227,7 @@ SCREENS['auditoria']=()=>S.role!=='admin'?`<div class="page"><div class="alert a
 </div>`;
 // ══ KANBAN DRAG & DROP ══
 function dragStart(e,cardId,fromCol){S.dragging=cardId;S.draggingFrom=fromCol;const el=document.getElementById('kcard-'+cardId);if(el)el.classList.add('dragging');}
-function dropCard(e,toCol){e.preventDefault();if(!S.dragging||S.draggingFrom===toCol)return;const card=D.kanban[S.draggingFrom]?.find(c=>c.id===S.dragging);if(!card)return;D.kanban[S.draggingFrom]=D.kanban[S.draggingFrom].filter(c=>c.id!==S.dragging);(D.kanban[toCol]=D.kanban[toCol]||[]).push(card);S.dragging=null;S.draggingFrom=null;go('crm');toast(`Lead movido para ${toCol}`,'ok');}
+async function dropCard(e,toCol){e.preventDefault();if(!S.dragging||S.draggingFrom===toCol)return;const cardId=S.dragging,fromCol=S.draggingFrom;const card=D.kanban[fromCol]?.find(c=>c.id===cardId);if(!card)return;D.kanban[fromCol]=D.kanban[fromCol].filter(c=>c.id!==cardId);(D.kanban[toCol]=D.kanban[toCol]||[]).push(card);S.dragging=null;S.draggingFrom=null;go('crm');const res=await API.patch('/api/kanban/'+cardId+'/move',{col:toCol});if(res&&!res.error)toast(`Lead movido para ${toCol}`,'ok');else{toast((res&&res.error)||'Falha ao salvar.','e');}}
 function openCard(id){const col=Object.keys(D.kanban).find(c=>D.kanban[c].some(x=>x.id===id));const card=D.kanban[col]?.find(x=>x.id===id);if(!card)return;openDrawer(`Lead: ${card.nome}`,`<div style="display:flex;flex-direction:column;gap:10px">
   ${[['Produto',card.prod],['Responsável',card.resp],['Licenciado',card.lic],['Valor',card.val>0?RM(card.val):'—'],['Origem',card.orig],['Coluna',col],['Idade',card.dias+'d']].map(([k,v])=>`<div class="fb" style="padding:5px 0;border-bottom:1px solid var(--border)"><span style="font-size:8px;color:var(--muted);min-width:90px;font-family:var(--fm);text-transform:uppercase">${k}</span><span style="font-size:11px;color:var(--dark)">${v}</span></div>`).join('')}
   <div class="fc g6 mt8"><button class="btn btn-p" onclick="toast('Lead qualificado!','ok');closeDrawer()">✓ Qualificar</button><button class="btn btn-ok" onclick="go('nova-venda',{cli:'${card.nome}'});closeDrawer()">+ Venda</button><button class="btn btn-g" onclick="closeDrawer()">Fechar</button></div>
