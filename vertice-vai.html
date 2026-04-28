@@ -6237,43 +6237,43 @@ function _parcFormHtml(p){
   const tipo = (p.tipoComissao||'PERCENTUAL').toUpperCase();
   return `<div style="display:flex;flex-direction:column;gap:10px">
     <div class="fgrid">
-      <div class="fg s2"><label>Nome completo *</label><input id="pf-nome" value="${escapeHtml(p.nome||'')}" maxlength="120"></div>
-      <div class="fg"><label>WhatsApp *</label><input id="pf-wpp" value="${escapeHtml(p.whatsapp||'')}" maxlength="20" placeholder="(00) 00000-0000" oninput="_parcMaskTel(this)"></div>
-      <div class="fg"><label>E-mail *</label><input id="pf-email" type="email" value="${escapeHtml(p.email||'')}" maxlength="120"></div>
-      <div class="fg"><label>CPF ou CNPJ *</label><input id="pf-doc" value="${escapeHtml(p.documento||'')}" maxlength="18" placeholder="000.000.000-00 ou CNPJ" oninput="_parcMaskDoc(this)"></div>
-      <div class="fg"><label>Cidade</label><input id="pf-cidade" value="${escapeHtml(p.cidade||'')}" maxlength="80"></div>
-      <div class="fg"><label>Estado</label><select id="pf-estado">
+      <div class="fg s2"><label>Nome completo *</label><input id="pcr-nome" value="${escapeHtml(p.nome||'')}" maxlength="120"></div>
+      <div class="fg"><label>WhatsApp *</label><input id="pcr-wpp" value="${escapeHtml(p.whatsapp||'')}" maxlength="20" placeholder="(00) 00000-0000" oninput="_parcMaskTel(this)"></div>
+      <div class="fg"><label>E-mail *</label><input id="pcr-email" type="email" value="${escapeHtml(p.email||'')}" maxlength="120"></div>
+      <div class="fg"><label>CPF ou CNPJ *</label><input id="pcr-doc" value="${escapeHtml(p.documento||'')}" maxlength="18" placeholder="000.000.000-00 ou CNPJ" oninput="_parcMaskDoc(this)"></div>
+      <div class="fg"><label>Cidade</label><input id="pcr-cidade" value="${escapeHtml(p.cidade||'')}" maxlength="80"></div>
+      <div class="fg"><label>Estado</label><select id="pcr-estado">
         <option value="">—</option>
         ${['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'].map(uf=>`<option value="${uf}" ${p.estado===uf?'selected':''}>${uf}</option>`).join('')}
       </select></div>
-      <div class="fg"><label>Tipo de atuação</label><select id="pf-atuacao">
+      <div class="fg"><label>Tipo de atuação</label><select id="pcr-atuacao">
         <option value="">—</option>
         ${['Corretor de imóveis','Advogado','Contador','Consultor financeiro','Indicador / Influenciador','Outro'].map(t=>`<option ${p.tipoAtuacao===t?'selected':''}>${t}</option>`).join('')}
       </select></div>
-      <div class="fg"><label>Produto de interesse</label><select id="pf-prod">
+      <div class="fg"><label>Produto de interesse</label><select id="pcr-prod">
         <option value="">—</option>
         ${['Arrematação Individual','Home Equity','Revisão Contratual','Clube do Milhão','Todos'].map(p2=>`<option ${p.prodInteresse===p2?'selected':''}>${p2}</option>`).join('')}
       </select></div>
-      <div class="fg s2"><label>Observação</label><textarea id="pf-obs" maxlength="1000">${escapeHtml(p.observacao||'')}</textarea></div>
+      <div class="fg s2"><label>Observação</label><textarea id="pcr-obs" maxlength="1000">${escapeHtml(p.observacao||'')}</textarea></div>
     </div>
 
     <div style="border:1px dashed var(--border2);border-radius:6px;padding:10px;background:var(--clarity)">
       <div style="font-family:var(--fm);font-size:8px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Comissão do parceiro (livre)</div>
       <div class="fc g8" style="flex-wrap:wrap">
-        <label style="display:flex;align-items:center;gap:5px;font-size:11px"><input type="radio" name="pf-tipo" value="PERCENTUAL" ${tipo==='PERCENTUAL'?'checked':''}> Percentual (%)</label>
-        <label style="display:flex;align-items:center;gap:5px;font-size:11px"><input type="radio" name="pf-tipo" value="FIXO" ${tipo==='FIXO'?'checked':''}> Valor fixo (R$)</label>
-        <input id="pf-valcom" type="number" step="0.01" min="0" value="${p.valComissao||0}" style="max-width:140px" placeholder="0">
+        <label style="display:flex;align-items:center;gap:5px;font-size:11px"><input type="radio" name="pcr-tipo" value="PERCENTUAL" ${tipo==='PERCENTUAL'?'checked':''}> Percentual (%)</label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:11px"><input type="radio" name="pcr-tipo" value="FIXO" ${tipo==='FIXO'?'checked':''}> Valor fixo (R$)</label>
+        <input id="pcr-valcom" type="number" step="0.01" min="0" value="${p.valComissao||0}" style="max-width:140px" placeholder="0">
       </div>
       <div style="font-size:9.5px;color:var(--muted);margin-top:6px">Você define livremente o repasse — não há regra global obrigatória.</div>
     </div>
 
-    ${isEdit?`<div class="fg"><label>Status</label><select id="pf-status">
+    ${isEdit?`<div class="fg"><label>Status</label><select id="pcr-status">
       <option value="ATIVO" ${(p.status||'').toUpperCase()==='ATIVO'?'selected':''}>Ativo</option>
       <option value="INATIVO" ${(p.status||'').toUpperCase()==='INATIVO'?'selected':''}>Inativo</option>
     </select></div>`:''}
 
     <div style="display:flex;gap:8px;margin-top:6px">
-      <button class="btn btn-p" id="pf-btn" onclick="${isEdit?`salvarEdicaoParceiro('${p.id}')`:'salvarNovoParceiro()'}">${isEdit?'✓ Salvar alterações':'✓ Cadastrar parceiro'}</button>
+      <button class="btn btn-p" id="pcr-btn" onclick="${isEdit?`salvarEdicaoParceiro('${p.id}')`:'salvarNovoParceiro()'}">${isEdit?'✓ Salvar alterações':'✓ Cadastrar parceiro'}</button>
       <button class="btn btn-g" onclick="closeDrawer()">Cancelar</button>
     </div>
   </div>`;
@@ -6289,22 +6289,25 @@ function abrirEditarParceiro(id){
 }
 
 function _parcReadForm(){
-  const v = id => document.getElementById(id)?.value?.trim();
-  const tipoEl = document.querySelector('input[name="pf-tipo"]:checked');
-  const valCom = parseFloat(document.getElementById('pf-valcom')?.value||'0')||0;
+  // Busca os campos APENAS dentro do drawer aberto (evita colisão de IDs com a LP de licenciado)
+  const root = document.getElementById('drawer-b') || document;
+  const v = id => root.querySelector('#'+id)?.value?.trim();
+  const tipoEl = root.querySelector('input[name="pcr-tipo"]:checked');
+  const valEl = root.querySelector('#pcr-valcom');
+  const valCom = parseFloat(valEl?.value||'0')||0;
   return {
-    nome: v('pf-nome'),
-    whatsapp: v('pf-wpp'),
-    email: v('pf-email'),
-    documento: v('pf-doc'),
-    cidade: v('pf-cidade') || null,
-    estado: v('pf-estado') || null,
-    tipoAtuacao: v('pf-atuacao') || null,
-    prodInteresse: v('pf-prod') || null,
-    observacao: v('pf-obs') || null,
+    nome: v('pcr-nome'),
+    whatsapp: v('pcr-wpp'),
+    email: v('pcr-email'),
+    documento: v('pcr-doc'),
+    cidade: v('pcr-cidade') || null,
+    estado: v('pcr-estado') || null,
+    tipoAtuacao: v('pcr-atuacao') || null,
+    prodInteresse: v('pcr-prod') || null,
+    observacao: v('pcr-obs') || null,
     tipoComissao: tipoEl ? tipoEl.value : 'PERCENTUAL',
     valComissao: valCom,
-    status: v('pf-status') || undefined,
+    status: v('pcr-status') || undefined,
   };
 }
 function _parcValidate(d){
@@ -6321,7 +6324,7 @@ async function salvarNovoParceiro(){
   delete d.status;
   const err = _parcValidate(d);
   if(err) return toast(err,'e');
-  const btn=document.getElementById('pf-btn'); if(btn) btn.disabled=true;
+  const btn=document.getElementById('pcr-btn'); if(btn) btn.disabled=true;
   if(typeof API_MODE==='undefined' || !API_MODE){
     if(btn) btn.disabled=false;
     toast('Parceiro cadastrado (modo demo).','ok'); closeDrawer(); return;
@@ -6338,7 +6341,7 @@ async function salvarEdicaoParceiro(id){
   const d = _parcReadForm();
   const err = _parcValidate(d);
   if(err) return toast(err,'e');
-  const btn=document.getElementById('pf-btn'); if(btn) btn.disabled=true;
+  const btn=document.getElementById('pcr-btn'); if(btn) btn.disabled=true;
   if(typeof API_MODE==='undefined' || !API_MODE){
     if(btn) btn.disabled=false;
     toast('Parceiro atualizado (modo demo).','ok'); closeDrawer(); return;
