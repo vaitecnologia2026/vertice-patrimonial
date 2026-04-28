@@ -6235,8 +6235,13 @@ function _parcFormHtml(p){
   p = p || {};
   const isEdit = !!p.id;
   const tipo = (p.tipoComissao||'PERCENTUAL').toUpperCase();
+  const isAdmin = (S.role === 'admin');
+  const licOpts = isAdmin
+    ? (D.licenciados||[]).map(l=>`<option value="${escapeHtml(l.id)}" ${p.licId===l.id?'selected':''}>${escapeHtml(l.nome||l.empresa||l.id)}</option>`).join('')
+    : '';
   return `<div style="display:flex;flex-direction:column;gap:10px">
     <div class="fgrid">
+      ${isAdmin?`<div class="fg s2"><label>Licenciado responsável *</label><select id="pcr-licid"><option value="">— selecione —</option>${licOpts}</select></div>`:''}
       <div class="fg s2"><label>Nome completo *</label><input id="pcr-nome" value="${escapeHtml(p.nome||'')}" maxlength="120"></div>
       <div class="fg"><label>WhatsApp *</label><input id="pcr-wpp" value="${escapeHtml(p.whatsapp||'')}" maxlength="20" placeholder="(00) 00000-0000" oninput="_parcMaskTel(this)"></div>
       <div class="fg"><label>E-mail *</label><input id="pcr-email" type="email" value="${escapeHtml(p.email||'')}" maxlength="120"></div>
@@ -6308,6 +6313,7 @@ function _parcReadForm(){
     tipoComissao: tipoEl ? tipoEl.value : 'PERCENTUAL',
     valComissao: valCom,
     status: v('pcr-status') || undefined,
+    licId: v('pcr-licid') || undefined,
   };
 }
 function _parcValidate(d){
@@ -6316,6 +6322,7 @@ function _parcValidate(d){
   if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email||'')) return 'Informe um e-mail válido.';
   if(!d.documento) return 'Informe CPF ou CNPJ.';
   if(d.valComissao<0) return 'Comissão não pode ser negativa.';
+  if(S.role==='admin' && !d.licId) return 'Selecione o licenciado responsável.';
   return null;
 }
 
