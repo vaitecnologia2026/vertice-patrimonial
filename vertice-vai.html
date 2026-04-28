@@ -4017,6 +4017,7 @@ const API = {
   put(path, body)        { return this._request('PUT', path, body); },
   patch(path, body)      { return this._request('PATCH', path, body); },
   delete(path)           { return this._request('DELETE', path); },
+  del(path)              { return this._request('DELETE', path); },
 
   // ── AUTH ──────────────────────────────────────────────────
   async login(email, password) {
@@ -5045,6 +5046,8 @@ async function loadAppData(){
     else if(res.data&&Array.isArray(res.data))D[key]=res.data;
     else if(typeof res==='object'&&!Array.isArray(res))D[key]=res;
   }));
+  // Sincroniza consórcios com localStorage para o módulo GE
+  if(typeof loadConsorcios==='function')await loadConsorcios();
 }
 
 function _loginContinue(btn, errEl){
@@ -6217,23 +6220,116 @@ SCREENS['det-op']=()=>{
   <!-- DOCUMENTOS -->
   <div class="card"><div class="card-h"><span class="card-ht">Documentos (${dcs.length})</span></div>
   <div>${dcs.map(d=>`<div class="fb" style="padding:8px 14px;border-bottom:1px solid var(--border)">
-    <div class="fc g8"><span style="font-size:13px">${d.ext==='pdf'?'PDF':'IMG'}</span><div><div style="font-size:10.5px;color:var(--dark)">${d.nome}</div><div style="font-size:8.5px;color:var(--muted)">${d.tipo} · ${d.tam}</div></div></div>
-    <div class="fc g5">${statusBadge(d.status)}<button class="btn btn-g xs" onclick="toast('Baixando...','ok')">⬇</button></div>
+    <div class="fc g8"><span style="font-size:13px">${(d.ext||d.tipo||'').toString().toLowerCase().includes('pdf')?'PDF':'IMG'}</span><div><div style="font-size:10.5px;color:var(--dark)">${escapeHtml(d.nome||'')}</div><div style="font-size:8.5px;color:var(--muted)">${escapeHtml(d.tipo||'')} · ${d.tam||''}</div></div></div>
+    <div class="fc g5">${statusBadge(d.status)}<a class="btn btn-g xs" href="${d.url||'#'}" download target="_blank">⬇</a>${S.role==='admin'?`<button class="btn btn-s xs" onclick="mudarStatusDocumento('${d.id}','${d.status||'PENDENTE'}')">Status</button>`:''}</div>
   </div>`).join('')}
-  ${dcs.some(d=>d.status==='pendente')?`<div class="alert alert-w" style="margin:8px;font-size:10px"><span class="ai" style="width:16px;height:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="12" height="11" viewBox="0 0 12 11" fill="none" stroke="var(--gold2)" stroke-width="1.5" stroke-linecap="round"><path d="M6 1L1 10h10L6 1z"/><line x1="6" y1="4" x2="6" y2="7"/><circle cx="6" cy="9" r=".5" fill="var(--gold2)"/></svg></span><div>Documentos pendentes. Cliente deve ser notificado.</div></div>`:''}
+  ${dcs.some(d=>(d.status||'').toLowerCase()==='pendente')?`<div class="alert alert-w" style="margin:8px;font-size:10px"><span class="ai" style="width:16px;height:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="12" height="11" viewBox="0 0 12 11" fill="none" stroke="var(--gold2)" stroke-width="1.5" stroke-linecap="round"><path d="M6 1L1 10h10L6 1z"/><line x1="6" y1="4" x2="6" y2="7"/><circle cx="6" cy="9" r=".5" fill="var(--gold2)"/></svg></span><div>Documentos pendentes. Cliente deve ser notificado.</div></div>`:''}
   </div></div>
+
+  <!-- ANEXOS DA OPERAÇÃO -->
+  ${(S.role==='admin'||S.role==='juridico'||S.role==='pesquisa')?`<div class="card mt14"><div class="card-h"><span class="card-ht">Anexos da Operação (${(op.anexos||[]).length})</span><button class="btn btn-p xs" onclick="abrirUploadAnexoOp('${op.id}')">+ Anexar</button></div>
+  <div>${(op.anexos||[]).map(a=>`<div class="fb" style="padding:8px 14px;border-bottom:1px solid var(--border)">
+    <div class="fc g8"><span style="font-size:13px">${(a.tipo||'').toLowerCase().includes('pdf')?'PDF':'DOC'}</span><div><div style="font-size:10.5px;color:var(--dark)">${escapeHtml(a.nome||'')}</div><div style="font-size:8.5px;color:var(--muted)">${escapeHtml(a.categoria||'outro')}</div></div></div>
+    <div class="fc g5"><a class="btn btn-g xs" href="${a.url||'#'}" download target="_blank">⬇</a><button class="btn btn-d xs" onclick="excluirAnexoOp('${op.id}','${a.id}')">×</button></div>
+  </div>`).join('')||'<div style="padding:14px;color:var(--muted);font-size:10.5px;text-align:center">Nenhum anexo. Clique em + Anexar para adicionar PDF/DOC/DOCX.</div>'}
+  </div></div>`:''}
 </div>`;
 };
 
+// ══ ANEXOS DE OPERAÇÃO ══
+function abrirUploadAnexoOp(opId){
+  openDrawer('Anexar Arquivo à Operação',`<div style="display:flex;flex-direction:column;gap:10px">
+    <div class="fg"><label>Categoria</label><select id="ax-cat"><option value="contrato">Contrato</option><option value="pessoal">Documentos Pessoais</option><option value="imovel">Imóvel</option><option value="financeiro">Financeiro</option><option value="processual">Processual</option><option value="outro">Outro</option></select></div>
+    <div class="fg"><label>Arquivos (PDF, DOC, DOCX) *</label><input id="ax-files" type="file" accept=".pdf,.doc,.docx" multiple></div>
+    <div class="fc g8 mt8"><button class="btn btn-p" id="ax-btn" onclick="enviarAnexoOp('${opId}')">✓ Enviar</button><button class="btn btn-g" onclick="closeDrawer()">Cancelar</button></div>
+  </div>`);
+}
+async function enviarAnexoOp(opId){
+  const files=document.getElementById('ax-files')?.files;
+  if(!files||!files.length)return toast('Selecione ao menos 1 arquivo.','e');
+  const cat=document.getElementById('ax-cat')?.value||'outro';
+  const fd=new FormData();fd.append('categoria',cat);
+  Array.from(files).forEach(f=>fd.append('arquivos',f));
+  const btn=document.getElementById('ax-btn');if(btn)btn.disabled=true;
+  try{
+    const headers={};const t=API._tokens.access;if(t)headers.Authorization='Bearer '+t;
+    const r=await fetch(API_URL+'/api/operacoes/'+opId+'/anexos',{method:'POST',headers,body:fd});
+    const data=await r.json().catch(()=>({}));
+    if(r.ok){closeDrawer();toast(`${data.length||'?'} arquivo(s) anexado(s)!`,'ok');await loadAppData();go('det-op',{id:opId});}
+    else toast(data.error||'Erro no upload.','e');
+  }catch(e){toast('Erro de conexão.','e');}
+  if(btn)btn.disabled=false;
+}
+async function excluirAnexoOp(opId,anexoId){
+  if(!confirm('Excluir este anexo?'))return;
+  const res=await API.del('/api/operacoes/'+opId+'/anexos/'+anexoId);
+  if(res&&!res.error){toast('Anexo removido.','ok');await loadAppData();go('det-op',{id:opId});}
+  else if(res&&res.error){toast(res.error,'e');}
+}
+async function mudarStatusDocumento(id,atual){
+  const opts=['PENDENTE','ENTREGUE','REJEITADO'];
+  const novo=prompt(`Status atual: ${atual}\nNovo (${opts.join('/')}):`,atual);
+  if(!novo||!opts.includes(novo.toUpperCase()))return;
+  const res=await API.patch('/api/documentos/'+id+'/status',{status:novo.toUpperCase()});
+  if(res&&!res.error){toast('Status atualizado!','ok');await loadAppData();go('documentos');}
+  else if(res&&res.error){toast(res.error,'e');}
+}
+
+// ══ CONTRATO: ASSINAR ══
+async function assinarContrato(id){
+  if(!confirm('Confirma a assinatura deste contrato?'))return;
+  const res=await API.patch('/api/contratos/'+id+'/assinar',{});
+  if(res&&!res.error){toast('Contrato assinado!','ok');await loadAppData();go('contratos');}
+  else if(res&&res.error){toast(res.error,'e');}
+}
+
+// ══ INTENÇÃO DE CONTRATO ══
+async function salvarIntencaoContrato(){
+  const v=k=>document.getElementById(k)?.value?.trim();
+  const cliId=v('ic-cli'),prod=v('ic-prod'),val=parseFloat(v('ic-val')||'0'),data=v('ic-data'),cond=v('ic-cond');
+  if(!cliId)return toast('Selecione um cliente.','e');
+  if(!prod)return toast('Selecione um produto.','e');
+  if(!val||val<=0)return toast('Informe um valor válido.','e');
+  const btn=document.getElementById('ic-btn');if(btn)btn.disabled=true;
+  // 1. Cria a venda
+  const venda=await API.post('/api/vendas',{cliId,prod,val,data,canal:'Licenciado',status:'ABERTA'});
+  if(!venda||venda.error){if(btn)btn.disabled=false;return toast(venda?.error||'Falha ao criar venda.','e');}
+  // 2. Cria o contrato (admin only)
+  if(S.role==='admin'){
+    const contrato=await API.post('/api/contratos',{vendaId:venda.id,tipo:prod});
+    if(!contrato||contrato.error){if(btn)btn.disabled=false;return toast(contrato?.error||'Venda criada, mas falhou contrato.','w');}
+  }
+  if(btn)btn.disabled=false;
+  toast('Intenção registrada com sucesso!','ok');
+  await loadAppData();go('contratos');
+}
+
 function tarefaDrawer(opId){
   return `<div style="display:flex;flex-direction:column;gap:10px">
-    <div class="fg"><label>Etapa</label><select><option>leilaoId</option><option>lanceRealizado</option><option>arrematado</option><option>pagamentoLance</option><option>carta</option><option>itbi</option><option>escritura</option><option>posse</option><option>cartorio</option><option>reforma</option><option>desfecho</option></select></div>
-    <div class="fg"><label>Descrição da Tarefa *</label><input placeholder="Ex: Enviar documentação ao cartório"></div>
-    <div class="fg"><label>Responsável</label><select><option>Licenciado</option><option>Jurídico</option><option>Adm.</option><option>Equipe Reforma</option><option>Equipe Comercial</option></select></div>
-    <div class="fg"><label>Prazo</label><input type="date"></div>
-    <div class="fg"><label>Observação</label><textarea placeholder="Detalhes..."></textarea></div>
-    <div class="fc g6"><button class="btn btn-p" onclick="toast('Tarefa registrada!','ok');closeDrawer()">✓ Salvar Tarefa</button><button class="btn btn-g" onclick="closeDrawer()">Cancelar</button></div>
+    <div class="fg"><label>Status da Operação *</label><select id="te-status">
+      <option value="em_analise">Em análise</option>
+      <option value="aprovado">Aprovado</option>
+      <option value="reprovado">Reprovado</option>
+      <option value="concluido">Concluído</option>
+      <option value="cancelado">Cancelado</option>
+      <option value="pendente">Pendente</option>
+    </select></div>
+    <div class="fg"><label>Etapa (informativo)</label><select id="te-etapa"><option value="">—</option><option>leilaoId</option><option>lanceRealizado</option><option>arrematado</option><option>pagamentoLance</option><option>carta</option><option>itbi</option><option>escritura</option><option>posse</option><option>cartorio</option><option>reforma</option><option>desfecho</option></select></div>
+    <div class="fg"><label>Descrição</label><input id="te-desc" placeholder="Ex: Enviar documentação ao cartório"></div>
+    <div class="fg"><label>Responsável</label><select id="te-resp"><option value="Licenciado">Licenciado</option><option value="Jurídico">Jurídico</option><option value="Adm.">Adm.</option><option value="Equipe Reforma">Equipe Reforma</option><option value="Equipe Comercial">Equipe Comercial</option></select></div>
+    <div class="fg"><label>Prazo</label><input id="te-prazo" type="date"></div>
+    <div class="fg"><label>Observação</label><textarea id="te-obs" placeholder="Detalhes..."></textarea></div>
+    <div class="fc g6"><button class="btn btn-p" id="te-btn" onclick="salvarStatusOperacao('${opId}')">✓ Salvar</button><button class="btn btn-g" onclick="closeDrawer()">Cancelar</button></div>
   </div>`;
+}
+async function salvarStatusOperacao(opId){
+  const status=document.getElementById('te-status')?.value;
+  if(!status)return toast('Selecione um status.','e');
+  const btn=document.getElementById('te-btn');if(btn)btn.disabled=true;
+  const res=await API.patch('/api/operacoes/'+opId+'/status',{status});
+  if(btn)btn.disabled=false;
+  if(res&&!res.error){closeDrawer();toast('Status atualizado!','ok');await loadAppData();go('det-op',{id:opId});}
+  else if(res&&res.error){toast(res.error,'e');}
 }
 
 // ══ ARREMATAÇÃO INDIVIDUAL ══
@@ -6448,9 +6544,7 @@ SCREENS['contratos']=()=>{const lista=myContratos();return `<div class="page">
     <td>${statusBadge(c.status)}</td>
     <td class="td-m" style="font-size:9px">${c.ass||'—'}</td>
     <td><div class="td-a">
-      ${c.status==='intencao_criada'?`<button class="btn btn-ok xs" onclick="toast('Contrato gerado!','ok')">Gerar</button>`:
-        c.status==='contrato_gerado'?`<button class="btn btn-b xs" onclick="toast('Contrato enviado!','ok')">Enviar</button>`:
-        c.status==='contrato_enviado'?`<button class="btn btn-ok xs" onclick="toast('Assinatura confirmada!','ok')">Assinar</button>`:''}
+      ${c.status&&!['ASSINADO','assinado'].includes(c.status)?`<button class="btn btn-ok xs" onclick="assinarContrato('${c.id}')">Assinar</button>`:''}
       <button class="btn btn-g xs" onclick="go('ass-contrato',{id:'${c.id}'})">Ver</button>
     </div></td>
   </tr>`).join('')}</tbody></table></div>
@@ -6462,14 +6556,12 @@ SCREENS['int-contrato']=()=>`<div class="page">
   <div class="pa"><button class="btn btn-g" onclick="go('contratos')">← Voltar</button></div></div>
   <div class="split">
     <div class="card"><div class="card-h"><span class="card-ht">Dados da Intenção</span></div><div class="card-b">
-      <div class="fgrid"><div class="fg s2"><label>Cliente (CPF validado) *</label><input placeholder="Buscar por CPF..."></div>
-      <div class="fg"><label>Produto *</label><select><option>Arrematação Individual</option><option>Home Equity</option><option>Revisão Contratual</option><option>Clube do Milhão</option></select></div>
-      <div class="fg"><label>Valor (R$) *</label><input type="number" placeholder="0"></div>
-      <div class="fg"><label>Data da Intenção *</label><input type="date" value="${new Date().toISOString().slice(0,10)}"></div>
-      <div class="fg s2"><label>Condições Especiais</label><textarea placeholder="Descreva termos, condições ou particularidades..."></textarea></div>
-      <div class="fg"><label>Licenciado Responsável</label><input value="${S.role==='lic'?S.user.name:''}" placeholder="Nome"></div>
-      <div class="fg"><label>Advogado</label><select><option>—</option><option>Dra. Patricia Melo</option></select></div></div>
-      <div class="factions mt12"><button class="btn btn-p" onclick="toast('Intenção criada!','ok');go('contratos')">✓ Registrar Intenção</button><button class="btn btn-g" onclick="go('contratos')">Cancelar</button></div>
+      <div class="fgrid"><div class="fg s2"><label>Cliente *</label><select id="ic-cli">${(D.clientes||[]).map(c=>`<option value="${c.id}">${escapeHtml(c.nome||'')} — ${c.cpf||''}</option>`).join('')}</select></div>
+      <div class="fg"><label>Produto *</label><select id="ic-prod"><option value="Arrematação Individual">Arrematação Individual</option><option value="Home Equity">Home Equity</option><option value="Revisão Contratual">Revisão Contratual</option><option value="Clube do Milhão">Clube do Milhão</option></select></div>
+      <div class="fg"><label>Valor (R$) *</label><input id="ic-val" type="number" placeholder="0"></div>
+      <div class="fg"><label>Data *</label><input id="ic-data" type="date" value="${new Date().toISOString().slice(0,10)}"></div>
+      <div class="fg s2"><label>Condições Especiais</label><textarea id="ic-cond" placeholder="Descreva termos, condições ou particularidades..."></textarea></div></div>
+      <div class="factions mt12"><button class="btn btn-p" id="ic-btn" onclick="salvarIntencaoContrato()">✓ Registrar Intenção</button><button class="btn btn-g" onclick="go('contratos')">Cancelar</button></div>
     </div></div>
     <div class="card"><div class="card-h"><span class="card-ht">Fluxo do Contrato</span></div><div class="card-b">
       <div class="tl">
@@ -6903,11 +6995,24 @@ const CFG = {
     },800);
   },
 
-  salvarTudo(){
+  async salvarTudo(){
     CFG.aplicarCores();
     CFG.salvarVAI();
     const nome=document.getElementById('cfg-nome-empresa')?.value;
     if(nome)CFG.set('nomeEmpresa',nome);
+    // Persiste no backend (singleton)
+    if(API_MODE){
+      const payload={
+        nomeEmpresa:nome||CFG.get('nomeEmpresa','Vertice'),
+        corPrimaria:CFG.get('corPrimaria','#c9a84c'),
+        corSidebar:CFG.get('corSidebar','#FDFEFF'),
+        corBG:CFG.get('corBG','#F4F6F9'),
+        corCard:CFG.get('corCard','#FFFFFF'),
+        logo:CFG.get('logo','')||null,
+      };
+      const res=await API.put('/api/config',payload);
+      if(res&&res.error){toast('Local OK, backend: '+res.error,'w');return;}
+    }
     toast('Todas as configurações salvas!','ok');
   },
 
@@ -10049,7 +10154,7 @@ function coMaskCurrency(el){
   el.value='R$ '+num.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
 }
 
-function coSaveConsorcio(){
+async function coSaveConsorcio(){
   var tipo=document.getElementById('co-tipo').value;
   var nome=document.getElementById('co-nome').value.trim();
   var admin=document.getElementById('co-admin').value.trim();
@@ -10066,9 +10171,16 @@ function coSaveConsorcio(){
   if(!admin){errEl.textContent='Informe a administradora.';errEl.style.display='block';return;}
   if(!carta){errEl.textContent='Informe o valor da carta.';errEl.style.display='block';return;}
   errEl.style.display='none';
-  var arr=_coLoad();
-  arr.unshift({id:Date.now(),tipo:tipo,nome:nome,admin:admin,carta:carta,prazo:prazo,parcela:parcela,taxa:taxa,comissao:comissao,tabela:tabela,visivel:visivel==='1',status:'aprovado',criadoEm:new Date().toLocaleDateString('pt-BR')});
-  _coSave(arr);
+  var payload={tipo:tipo,nome:nome,admin:admin,carta:carta,prazo:prazo,parcela:parcela,taxa:taxa,comissao:comissao,tabela:tabela,visivel:visivel==='1'};
+  if(typeof API_MODE!=='undefined' && API_MODE){
+    var res=await API.post('/api/consorcios',payload);
+    if(res && res.error){errEl.textContent=res.error;errEl.style.display='block';return;}
+    if(res){var arr=_coLoad();arr.unshift({...res,criadoEm:new Date().toLocaleDateString('pt-BR')});_coSave(arr);}
+  } else {
+    var arr=_coLoad();
+    arr.unshift({id:Date.now(),...payload,status:'aprovado',criadoEm:new Date().toLocaleDateString('pt-BR')});
+    _coSave(arr);
+  }
   coCloseConsorcio();
   if(typeof toast==='function') toast('Consórcio cadastrado e aprovado!','ok');
   if(typeof GE!=='undefined' && GE.tab==='produto'){
@@ -10077,20 +10189,40 @@ function coSaveConsorcio(){
   }
 }
 
-function coDeleteConsorcio(id){
+async function coDeleteConsorcio(id){
   if(!confirm('Remover este consórcio?'))return;
+  if(typeof API_MODE!=='undefined' && API_MODE && typeof id==='string'){
+    var res=await API.del('/api/consorcios/'+id);
+    if(res && res.error){toast(res.error,'e');return;}
+  }
   _coSave(_coLoad().filter(function(c){return c.id!==id;}));
   var el=document.getElementById('ge-content');
   if(el && typeof GE!=='undefined' && typeof GE.renderProduto==='function') el.innerHTML=GE.renderProduto();
   if(typeof toast==='function') toast('Consórcio removido','w');
 }
 
-function coToggleVisibilidade(id){
+async function coToggleVisibilidade(id){
   var arr=_coLoad();
   var item=arr.find(function(c){return c.id===id;});
-  if(item){item.visivel=!item.visivel;_coSave(arr);}
+  if(!item)return;
+  var novo=!item.visivel;
+  if(typeof API_MODE!=='undefined' && API_MODE && typeof id==='string'){
+    var res=await API.patch('/api/consorcios/'+id+'/visibilidade',{visivel:novo});
+    if(res && res.error){toast(res.error,'e');return;}
+  }
+  item.visivel=novo;_coSave(arr);
   var el=document.getElementById('ge-content');
   if(el && typeof GE!=='undefined' && typeof GE.renderProduto==='function') el.innerHTML=GE.renderProduto();
+}
+
+// Carrega consórcios do backend ao iniciar
+async function loadConsorcios(){
+  if(typeof API_MODE==='undefined' || !API_MODE)return;
+  var res=await API.get('/api/consorcios');
+  if(Array.isArray(res)){
+    var withDate=res.map(function(c){return {...c,criadoEm:c.createdAt?new Date(c.createdAt).toLocaleDateString('pt-BR'):''};});
+    _coSave(withDate);
+  }
 }
 
 function _renderConsorcios(){
