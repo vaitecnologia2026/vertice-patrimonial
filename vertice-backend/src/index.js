@@ -30,6 +30,8 @@ const kanbanRoutes      = require('./routes/kanban');
 const dashboardRoutes   = require('./routes/dashboard');
 const contasRoutes      = require('./routes/contas');
 const clubeRoutes       = require('./routes/clube');
+const parceirosRoutes   = require('./routes/parceiros');
+const lpRoutes          = require('./routes/lp');
 
 const app = express();
 
@@ -81,6 +83,15 @@ const uploadLimiter = rateLimit({
   message: { error: 'Muitos uploads. Aguarde antes de enviar mais arquivos.' },
 });
 
+// Rate limiting para Landing Page pública (anti-spam de cadastro de parceiros)
+const lpLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Muitos envios. Tente novamente em alguns minutos.' },
+});
+
 // ─── MIDDLEWARE ───────────────────────────────────────────────
 app.use(compression());
 app.use(express.json({ limit: '5mb' }));
@@ -111,6 +122,9 @@ app.get('/health', (req, res) => {
 // Rotas abertas (perfis Juridico/Pesquisa autenticados também chegam aqui):
 app.use('/api/auth',         loginLimiter, authRoutes);
 
+// Landing Page pública (parceiros do licenciado) — sem auth, com rate limit
+app.use('/api/lp',           lpLimiter, lpRoutes);
+
 // Operações → acesso liberado para ADMIN, LIC, JURIDICO, PESQUISA (controle fino por perfil nas próprias rotas)
 app.use('/api/operacoes',    operacoesRoutes);
 
@@ -133,6 +147,7 @@ app.use('/api/kanban',       auth, blockRestricted, kanbanRoutes);
 app.use('/api/dashboard',    auth, blockRestricted, dashboardRoutes);
 app.use('/api/contas',       auth, blockRestricted, contasRoutes);
 app.use('/api/clube',        auth, blockRestricted, clubeRoutes);
+app.use('/api/parceiros',    auth, blockRestricted, parceirosRoutes);
 
 // ─── ERROR HANDLERS ──────────────────────────────────────────
 app.use(notFound);
@@ -141,8 +156,18 @@ app.use(errorHandler);
 // ─── FRONTEND SPA (catch-all para rotas não-API) ─────────────
 const fs = require('fs');
 const frontendPath = path.resolve(__dirname, '../../vertice-vai.html');
+
+// Landing Page pública de Parceiros — antes do catch-all do SPA
+const lpHtmlPath = path.resolve(__dirname, '../lp-parceiros.html');
+if (fs.existsSync(lpHtmlPath)) {
+  app.get('/lp/parceiros/:licId', (req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
+    res.sendFile(lpHtmlPath);
+  });
+}
+
 if (fs.existsSync(frontendPath)) {
-  app.get(/^(?!\/api|\/uploads|\/health).*$/, (req, res) => {
+  app.get(/^(?!\/api|\/uploads|\/health|\/lp\/).*$/, (req, res) => {
     res.sendFile(frontendPath);
   });
 }

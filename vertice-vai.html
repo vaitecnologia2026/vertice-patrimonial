@@ -4890,7 +4890,7 @@ const D={
 // ══ NAV ══
 const ADMIN_NAV=[
   {s:'Principal'},{id:'dashboard',i:'dashboard',l:'Dashboard'},
-  {s:'Comercial'},{id:'licenciados',i:'licenciados',l:'Licenciados'},{id:'clientes',i:'clientes',l:'Clientes'},{id:'crm',i:'crm',l:'CRM · Kanban'},{id:'oportunidades',i:'oportunidades',l:'Oportunidades'},{id:'vendas',i:'vendas',l:'Vendas'},
+  {s:'Comercial'},{id:'licenciados',i:'licenciados',l:'Licenciados'},{id:'clientes',i:'clientes',l:'Clientes'},{id:'parceiros',i:'parceiros',l:'Parceiros'},{id:'crm',i:'crm',l:'CRM · Kanban'},{id:'oportunidades',i:'oportunidades',l:'Oportunidades'},{id:'vendas',i:'vendas',l:'Vendas'},
   {s:'Produtos'},{id:'arremata',i:'arremata',l:'Arrematação Individual'},{id:'homeequity',i:'homeequity',l:'Home Equity'},{id:'revisao',i:'revisao',l:'Revisão Contratual'},{id:'clube',i:'clube',l:'Clube do Milhão'},
   {s:'Financeiro'},{id:'comissoes',i:'comissoes',l:'Comissões',b:'3'},{id:'financeiro',i:'financeiro',l:'Financeiro'},{id:'contas',i:'contas',l:'Contas a Receber'},
   {s:'Operações'},{id:'contratos',i:'contratos',l:'Contratos'},{id:'documentos',i:'documentos',l:'Documentos'},
@@ -4898,7 +4898,7 @@ const ADMIN_NAV=[
 ];
 const LIC_NAV=[
   {s:'Principal'},{id:'dashboard',i:'dashboard',l:'Meu Painel'},
-  {s:'Comercial'},{id:'clientes',i:'clientes',l:'Meus Clientes'},{id:'crm',i:'crm',l:'CRM · Kanban'},{id:'oportunidades',i:'oportunidades',l:'Oportunidades'},{id:'vendas',i:'vendas',l:'Minhas Vendas'},
+  {s:'Comercial'},{id:'clientes',i:'clientes',l:'Meus Clientes'},{id:'parceiros',i:'parceiros',l:'Parceiros'},{id:'crm',i:'crm',l:'CRM · Kanban'},{id:'oportunidades',i:'oportunidades',l:'Oportunidades'},{id:'vendas',i:'vendas',l:'Minhas Vendas'},
   {s:'Operações'},{id:'arremata',i:'arremata',l:'Arrematação Individual'},{id:'homeequity',i:'homeequity',l:'Home Equity'},{id:'revisao',i:'revisao',l:'Revisão Contratual'},{id:'clube',i:'clube',l:'Clube do Milhão'},
   {s:'Financeiro'},{id:'comissoes',i:'comissoes',l:'Minhas Comissões'},
   {s:'Conta'},{id:'contratos',i:'contratos',l:'Contratos'},{id:'documentos',i:'documentos',l:'Documentos'},{id:'metas',i:'metas',l:'Metas & Performance'},
@@ -4921,12 +4921,13 @@ const ROLE_WHITELIST = {
   pesquisa: new Set(['ge-home']),
 };
 const RESTRICTED_PROFILES = new Set(['juridico','pesquisa']);
-const LABELS={'ge-home':'Gestão de Equipe',dashboard:'Dashboard',licenciados:'Licenciados','novo-lic':'Novo Licenciado','det-lic':'Detalhe do Licenciado',clientes:'Clientes','novo-cli':'Novo Cliente','det-cli':'Detalhe do Cliente','cpf-dup':'CPF Duplicado',crm:'CRM · Kanban',oportunidades:'Oportunidades',vendas:'Vendas','nova-venda':'Nova Venda','det-venda':'Detalhe da Venda',comissoes:'Comissões','det-com':'Comissão Detalhada',financeiro:'Financeiro',contas:'Contas a Receber',clube:'Clube do Milhão','det-grupo':'Detalhe do Grupo',arremata:'Arrematação Individual',homeequity:'Home Equity',revisao:'Revisão Contratual',contratos:'Contratos','int-contrato':'Intenção de Contrato','ass-contrato':'Contrato',documentos:'Documentos',metas:'Metas & Performance','cfg-licenca':'Config. Licença',usuarios:'Usuários',auditoria:'Auditoria','det-op':'Avaliação da Operação','recuperar':'Recuperar Senha'};
+const LABELS={'ge-home':'Gestão de Equipe',dashboard:'Dashboard',licenciados:'Licenciados','novo-lic':'Novo Licenciado','det-lic':'Detalhe do Licenciado',clientes:'Clientes','novo-cli':'Novo Cliente','det-cli':'Detalhe do Cliente','cpf-dup':'CPF Duplicado',crm:'CRM · Kanban',oportunidades:'Oportunidades',vendas:'Vendas','nova-venda':'Nova Venda','det-venda':'Detalhe da Venda',comissoes:'Comissões','det-com':'Comissão Detalhada',financeiro:'Financeiro',contas:'Contas a Receber',clube:'Clube do Milhão','det-grupo':'Detalhe do Grupo',arremata:'Arrematação Individual',homeequity:'Home Equity',revisao:'Revisão Contratual',contratos:'Contratos','int-contrato':'Intenção de Contrato','ass-contrato':'Contrato',documentos:'Documentos',metas:'Metas & Performance','cfg-licenca':'Config. Licença',usuarios:'Usuários',auditoria:'Auditoria','det-op':'Avaliação da Operação','recuperar':'Recuperar Senha',parceiros:'Parceiros'};
 
 
 // ── ICON REGISTRY (SVG profissionais, sem emoji) ──
 const ICON = {'dashboard': '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>', 'licenciados': '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 14v-1a3 3 0 0 0-3-3H5a3 3 0 0 0-3 3v1"/><circle cx="7" cy="7" r="3"/><path d="M14 14v-1a3 3 0 0 0-2-2.83"/><path d="M11 4a3 3 0 0 1 0 5.66"/></svg>', 'clientes': '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="6" r="3"/><path d="M1 14s1-5 7-5 7 5 7 5"/></svg>', 'crm': '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="2" width="3" height="12" rx="1"/><rect x="6" y="5" width="3" height="9" rx="1"/><rect x="11" y="1" width="3" height="13" rx="1"/></svg>', 'oportunidades': '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="5" r="4"/><path d="m2 14 5.5-5.5"/><line x1="8" y1="11" x2="14" y2="11"/></svg>', 'vendas': '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="12" height="9" rx="1"/><path d="M5 5V4a3 3 0 0 1 6 0v1"/><path d="M5 9h6"/></svg>', 'arremata': '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 13L8 2l7 11H1z"/><line x1="8" y1="9" x2="8" y2="11"/><line x1="8" y1="12" x2="8" y2="13"/></svg>', 'homeequity': '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8L8 2l6 6v6a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1z"/><path d="M6 14V9h4v5"/></svg>', 'revisao': '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V6z"/><path d="M9 2v4h4"/><line x1="5" y1="9" x2="11" y2="9"/><line x1="5" y1="12" x2="8" y2="12"/></svg>', 'clube': '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 1l1.9 3.8 4.2.6-3 2.9.7 4.2L8 10.5l-3.8 2 .7-4.2-3-2.9 4.2-.6z"/></svg>', 'comissoes': '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6"/><path d="M8 5v1.5M8 9.5V11"/><path d="M6 7c0-.8.9-1.5 2-1.5s2 .7 2 1.5-1 1.5-2 1.5-2 .7-2 1.5.9 1.5 2 1.5 2-.7 2-1.5"/></svg>', 'financeiro': '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="14" height="10" rx="1"/><path d="M1 7h14"/></svg>', 'contas': '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 2h12a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z"/><path d="M8 6v4"/><path d="M5 8l3 3 3-3"/></svg>', 'contratos': '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V6z"/><path d="M9 2v4h4"/><line x1="5" y1="9" x2="11" y2="9"/><line x1="5" y1="12" x2="9" y2="12"/></svg>', 'documentos': '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 7V4l-3-3H3a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-1"/><path d="M10 1v3h3"/><path d="M9 12l2 2 4-4"/></svg>', 'metas': '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 11 5 7 9 10 15 4"/><polyline points="12 4 15 4 15 7"/></svg>', 'config': '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="2"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.41 1.41M11.54 11.54l1.41 1.41M3.05 12.95l1.41-1.41M11.54 4.46l1.41-1.41"/></svg>', 'usuarios': '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="5" r="3"/><path d="M2 14c0-3.31 2.69-6 6-6s6 2.69 6 6"/></svg>', 'auditoria': '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="7" r="5"/><line x1="11" y1="11" x2="15" y2="15"/></svg>',
 'membros': '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="14" height="10" rx="1"/><path d="M5 7h6M5 10h4"/></svg>',
+'parceiros': '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="6" r="2.5"/><circle cx="11" cy="6" r="2.5"/><path d="M1 14c0-2.2 1.8-4 4-4s4 1.8 4 4"/><path d="M7 14c0-2.2 1.8-4 4-4s4 1.8 4 4"/></svg>',
 'calc': '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="1" width="12" height="14" rx="1"/><rect x="4" y="3" width="8" height="2" rx="1"/><circle cx="5" cy="8" r="1" fill="currentColor" stroke="none"/><circle cx="8" cy="8" r="1" fill="currentColor" stroke="none"/><circle cx="11" cy="8" r="1" fill="currentColor" stroke="none"/><circle cx="5" cy="11" r="1" fill="currentColor" stroke="none"/><circle cx="8" cy="11" r="1" fill="currentColor" stroke="none"/><circle cx="11" cy="11" r="1" fill="currentColor" stroke="none"/></svg>'};
 function sbIcon(key){return ICON[key]||'';}
 
@@ -5038,7 +5039,7 @@ function doLogin(){
 
 async function loadAppData(){
   if(!API_MODE)return;
-  const endpoints={licenciados:'/api/licenciados',clientes:'/api/clientes',vendas:'/api/vendas',comissoes:'/api/comissoes',operacoes:'/api/operacoes',contratos:'/api/contratos',usuarios:'/api/usuarios',docs:'/api/documentos',logs:'/api/auditoria',consorcios:'/api/consorcios',metas:'/api/metas',kanban:'/api/kanban',contas:'/api/contas',grupos:'/api/clube/grupos'};
+  const endpoints={licenciados:'/api/licenciados',clientes:'/api/clientes',vendas:'/api/vendas',comissoes:'/api/comissoes',operacoes:'/api/operacoes',contratos:'/api/contratos',usuarios:'/api/usuarios',docs:'/api/documentos',logs:'/api/auditoria',consorcios:'/api/consorcios',metas:'/api/metas',kanban:'/api/kanban',contas:'/api/contas',grupos:'/api/clube/grupos',parceiros:'/api/parceiros'};
   await Promise.allSettled(Object.entries(endpoints).map(async([key,path])=>{
     const res=await API.get(path);
     if(!res)return;
@@ -6206,6 +6207,300 @@ async function salvarNovaConta(){
   if(!res)return toast('Falha ao salvar conta.','e');
   toast('Conta cadastrada!','ok');
   closeDrawer();await loadAppData();go('contas');
+}
+
+// ══════════════════════════════════════════════════════════════
+// PARCEIROS DO LICENCIADO — módulo isolado
+// ══════════════════════════════════════════════════════════════
+function _parceirosFonte(){
+  const lista = Array.isArray(D.parceiros) ? D.parceiros : [];
+  if (S.role === 'lic' && S.user?.licId) {
+    return lista.filter(p => p.licId === S.user.licId);
+  }
+  return lista;
+}
+function _parcStatus(s){ return (s||'').toString().toLowerCase(); }
+function _parcOrigem(o){ return (o||'manual').toString().toLowerCase(); }
+function _parcComissaoFmt(p){
+  const tipo = (p.tipoComissao||'PERCENTUAL').toUpperCase();
+  const v = parseFloat(p.valComissao||0)||0;
+  if (!v) return '<span style="color:var(--muted)">Não definida</span>';
+  return tipo === 'FIXO' ? RM(v) : v.toFixed(2).replace('.',',') + '%';
+}
+function _parcLinkLP(){
+  const licId = S.user?.licId;
+  if (!licId) return '';
+  const origin = window.location.origin;
+  return origin + '/lp/parceiros/' + licId;
+}
+
+SCREENS['parceiros'] = ()=>{
+  const lista = _parceirosFonte();
+  const total = lista.length;
+  const ativos = lista.filter(p => _parcStatus(p.status) === 'ativo').length;
+  const inativos = lista.filter(p => _parcStatus(p.status) === 'inativo').length;
+  const viaLp = lista.filter(p => _parcOrigem(p.origem) === 'lp').length;
+  const cidades = [...new Set(lista.map(p=>p.cidade).filter(Boolean))].sort();
+  const produtos = [...new Set(lista.map(p=>p.prodInteresse).filter(Boolean))].sort();
+  const linkLP = _parcLinkLP();
+  const podeLP = S.role === 'lic' && !!linkLP;
+
+  return `<div class="page">
+  <div class="ph"><div class="ph-l"><div class="pt">${S.role==='lic'?'Meus Parceiros':'Parceiros'}</div><div class="ps"><span id="tbl-parc-cnt">${total}</span> parceiros${S.role==='lic'?' · Sua base individual':' · Base global (todos os licenciados)'}</div></div>
+    <div class="pa">
+      ${podeLP?`<button class="btn btn-s sm" onclick="copiarLinkLPParceiros()" title="Copia o link público da sua LP de cadastro de parceiros">🔗 Copiar link da minha LP</button>`:''}
+      ${podeLP?`<button class="btn btn-g sm" onclick="window.open('${linkLP}','_blank')" title="Abrir LP em nova aba">↗ Visualizar LP</button>`:''}
+      <button class="btn btn-p sm" onclick="abrirNovoParceiro()">+ Cadastrar parceiro</button>
+    </div>
+  </div>
+
+  <div class="kpi-grid kpi-g4 mb14">
+    <div class="kpi"><div class="kpi-lbl">Total de Parceiros</div><div class="kpi-val">${total}</div></div>
+    <div class="kpi"><div class="kpi-lbl">Ativos</div><div class="kpi-val green">${ativos}</div></div>
+    <div class="kpi"><div class="kpi-lbl">Inativos</div><div class="kpi-val" style="color:var(--muted)">${inativos}</div></div>
+    <div class="kpi"><div class="kpi-lbl">Via LP</div><div class="kpi-val" style="color:var(--dark3)">${viaLp}</div></div>
+  </div>
+
+  <div class="card mb12"><div class="card-b" style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end">
+    <div class="fg" style="flex:2;min-width:200px"><label style="font-size:9px;color:var(--muted);font-family:var(--fm);text-transform:uppercase;letter-spacing:.1em">Buscar</label>
+      <input id="flt-parc-q" placeholder="Nome, e-mail, WhatsApp, documento..." oninput="filtroParc()" style="font-size:12px"></div>
+    <div class="fg" style="min-width:140px"><label style="font-size:9px;color:var(--muted);font-family:var(--fm);text-transform:uppercase;letter-spacing:.1em">Status</label>
+      <select id="flt-parc-status" onchange="filtroParc()" style="font-size:11px"><option value="">Todos</option><option value="ativo">Ativo</option><option value="inativo">Inativo</option></select></div>
+    <div class="fg" style="min-width:160px"><label style="font-size:9px;color:var(--muted);font-family:var(--fm);text-transform:uppercase;letter-spacing:.1em">Produto</label>
+      <select id="flt-parc-prod" onchange="filtroParc()" style="font-size:11px"><option value="">Todos</option>${produtos.map(p=>`<option value="${escapeHtml(p)}">${escapeHtml(p)}</option>`).join('')}</select></div>
+    <div class="fg" style="min-width:140px"><label style="font-size:9px;color:var(--muted);font-family:var(--fm);text-transform:uppercase;letter-spacing:.1em">Cidade</label>
+      <select id="flt-parc-cid" onchange="filtroParc()" style="font-size:11px"><option value="">Todas</option>${cidades.map(c=>`<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('')}</select></div>
+    <div class="fg" style="min-width:140px"><label style="font-size:9px;color:var(--muted);font-family:var(--fm);text-transform:uppercase;letter-spacing:.1em">Cadastrado desde</label>
+      <input id="flt-parc-data" type="date" onchange="filtroParc()" style="font-size:11px"></div>
+    <button class="btn btn-g xs" onclick="limparFiltrosParc()" style="margin-bottom:1px">Limpar</button>
+  </div></div>
+
+  <div class="tw"><table id="tbl-parc"><thead><tr>
+    <th>Nome</th><th>Documento</th><th>Contato</th>${S.role==='admin'?'<th>Licenciado</th>':''}<th>Cidade/UF</th><th>Atuação</th><th>Produto</th><th>Comissão</th><th>Origem</th><th>Cadastro</th><th>Status</th><th>Ações</th>
+  </tr></thead>
+  <tbody>${lista.map(p=>{
+    const search = [p.nome,p.email,p.whatsapp,p.documento,p.cidade].filter(Boolean).join(' ').toLowerCase();
+    const dataIso = p.createdAt ? new Date(p.createdAt).toISOString().slice(0,10) : '';
+    const dataFmt = p.createdAt ? new Date(p.createdAt).toLocaleDateString('pt-BR') : '—';
+    const st = _parcStatus(p.status);
+    const og = _parcOrigem(p.origem);
+    return `<tr data-row data-search="${escapeHtml(search)}" data-status="${st}" data-prod="${escapeHtml(p.prodInteresse||'')}" data-cidade="${escapeHtml(p.cidade||'')}" data-data="${dataIso}">
+      <td class="td-n">${escapeHtml(p.nome)}</td>
+      <td class="td-m" style="font-size:9.5px">${escapeHtml(p.documento||'—')}</td>
+      <td style="font-size:10px;line-height:1.3"><div>${escapeHtml(p.whatsapp||'—')}</div><div style="color:var(--muted);font-size:9.5px">${escapeHtml(p.email||'—')}</div></td>
+      ${S.role==='admin'?`<td style="font-size:10px;color:var(--muted)">${escapeHtml(p.licenciado?.nome||p.licId||'—')}</td>`:''}
+      <td style="font-size:10px">${escapeHtml(p.cidade||'—')}${p.estado?`/${escapeHtml(p.estado)}`:''}</td>
+      <td style="font-size:10px;color:var(--muted)">${escapeHtml(p.tipoAtuacao||'—')}</td>
+      <td style="font-size:10px">${escapeHtml(p.prodInteresse||'—')}</td>
+      <td class="mono" style="font-size:10px">${_parcComissaoFmt(p)}</td>
+      <td><span class="badge ${og==='lp'?'badge-g':'badge-n'}">${og==='lp'?'LP':'Manual'}</span></td>
+      <td class="td-m" style="font-size:9px">${dataFmt}</td>
+      <td>${statusBadge(st)}</td>
+      <td><div class="td-a">
+        <button class="btn btn-s xs" onclick="verParceiro('${p.id}')">Ver</button>
+        <button class="btn btn-g xs" onclick="abrirEditarParceiro('${p.id}')">Editar</button>
+        <button class="btn ${st==='ativo'?'btn-d':'btn-ok'} xs" onclick="alternarStatusParceiro('${p.id}','${st}')">${st==='ativo'?'Inativar':'Ativar'}</button>
+      </div></td>
+    </tr>`;}).join('')||`<tr><td colspan="${S.role==='admin'?12:11}" style="text-align:center;padding:30px;color:var(--muted);font-size:11px">Nenhum parceiro cadastrado.${podeLP?' Compartilhe o link da sua LP para começar a receber cadastros.':''}</td></tr>`}
+  </tbody></table></div>
+</div>`;
+};
+
+function filtroParc(){
+  const q=(document.getElementById('flt-parc-q')?.value||'').toLowerCase().trim();
+  const status=document.getElementById('flt-parc-status')?.value||'';
+  const prod=document.getElementById('flt-parc-prod')?.value||'';
+  const cid=document.getElementById('flt-parc-cid')?.value||'';
+  const data=document.getElementById('flt-parc-data')?.value||'';
+  _tblFilter('tbl-parc', tr=>{
+    if(q && !(tr.dataset.search||'').includes(q)) return false;
+    if(status && tr.dataset.status!==status) return false;
+    if(prod && tr.dataset.prod!==prod) return false;
+    if(cid && tr.dataset.cidade!==cid) return false;
+    if(data && (tr.dataset.data||'') < data) return false;
+    return true;
+  });
+}
+function limparFiltrosParc(){
+  ['flt-parc-q','flt-parc-status','flt-parc-prod','flt-parc-cid','flt-parc-data'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  filtroParc();
+}
+
+function copiarLinkLPParceiros(){
+  const link = _parcLinkLP();
+  if(!link)return toast('Você precisa estar logado como Licenciado.','e');
+  const tryClipboard = navigator.clipboard && window.isSecureContext
+    ? navigator.clipboard.writeText(link)
+    : Promise.reject();
+  tryClipboard
+    .then(()=>toast('Link copiado: '+link,'ok'))
+    .catch(()=>{
+      // Fallback: textarea + execCommand
+      const ta=document.createElement('textarea');ta.value=link;document.body.appendChild(ta);ta.select();
+      try{document.execCommand('copy');toast('Link copiado!','ok');}catch(_){toast('Copie manualmente: '+link,'i');}
+      document.body.removeChild(ta);
+    });
+}
+
+function _parcFormHtml(p){
+  p = p || {};
+  const isEdit = !!p.id;
+  const tipo = (p.tipoComissao||'PERCENTUAL').toUpperCase();
+  return `<div style="display:flex;flex-direction:column;gap:10px">
+    <div class="fgrid">
+      <div class="fg s2"><label>Nome completo *</label><input id="pf-nome" value="${escapeHtml(p.nome||'')}" maxlength="120"></div>
+      <div class="fg"><label>WhatsApp *</label><input id="pf-wpp" value="${escapeHtml(p.whatsapp||'')}" maxlength="20" placeholder="(00) 00000-0000" oninput="_parcMaskTel(this)"></div>
+      <div class="fg"><label>E-mail *</label><input id="pf-email" type="email" value="${escapeHtml(p.email||'')}" maxlength="120"></div>
+      <div class="fg"><label>CPF ou CNPJ *</label><input id="pf-doc" value="${escapeHtml(p.documento||'')}" maxlength="18" placeholder="000.000.000-00 ou CNPJ" oninput="_parcMaskDoc(this)"></div>
+      <div class="fg"><label>Cidade</label><input id="pf-cidade" value="${escapeHtml(p.cidade||'')}" maxlength="80"></div>
+      <div class="fg"><label>Estado</label><select id="pf-estado">
+        <option value="">—</option>
+        ${['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'].map(uf=>`<option value="${uf}" ${p.estado===uf?'selected':''}>${uf}</option>`).join('')}
+      </select></div>
+      <div class="fg"><label>Tipo de atuação</label><select id="pf-atuacao">
+        <option value="">—</option>
+        ${['Corretor de imóveis','Advogado','Contador','Consultor financeiro','Indicador / Influenciador','Outro'].map(t=>`<option ${p.tipoAtuacao===t?'selected':''}>${t}</option>`).join('')}
+      </select></div>
+      <div class="fg"><label>Produto de interesse</label><select id="pf-prod">
+        <option value="">—</option>
+        ${['Arrematação Individual','Home Equity','Revisão Contratual','Clube do Milhão','Todos'].map(p2=>`<option ${p.prodInteresse===p2?'selected':''}>${p2}</option>`).join('')}
+      </select></div>
+      <div class="fg s2"><label>Observação</label><textarea id="pf-obs" maxlength="1000">${escapeHtml(p.observacao||'')}</textarea></div>
+    </div>
+
+    <div style="border:1px dashed var(--border2);border-radius:6px;padding:10px;background:var(--clarity)">
+      <div style="font-family:var(--fm);font-size:8px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Comissão do parceiro (livre)</div>
+      <div class="fc g8" style="flex-wrap:wrap">
+        <label style="display:flex;align-items:center;gap:5px;font-size:11px"><input type="radio" name="pf-tipo" value="PERCENTUAL" ${tipo==='PERCENTUAL'?'checked':''}> Percentual (%)</label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:11px"><input type="radio" name="pf-tipo" value="FIXO" ${tipo==='FIXO'?'checked':''}> Valor fixo (R$)</label>
+        <input id="pf-valcom" type="number" step="0.01" min="0" value="${p.valComissao||0}" style="max-width:140px" placeholder="0">
+      </div>
+      <div style="font-size:9.5px;color:var(--muted);margin-top:6px">Você define livremente o repasse — não há regra global obrigatória.</div>
+    </div>
+
+    ${isEdit?`<div class="fg"><label>Status</label><select id="pf-status">
+      <option value="ATIVO" ${(p.status||'').toUpperCase()==='ATIVO'?'selected':''}>Ativo</option>
+      <option value="INATIVO" ${(p.status||'').toUpperCase()==='INATIVO'?'selected':''}>Inativo</option>
+    </select></div>`:''}
+
+    <div style="display:flex;gap:8px;margin-top:6px">
+      <button class="btn btn-p" id="pf-btn" onclick="${isEdit?`salvarEdicaoParceiro('${p.id}')`:'salvarNovoParceiro()'}">${isEdit?'✓ Salvar alterações':'✓ Cadastrar parceiro'}</button>
+      <button class="btn btn-g" onclick="closeDrawer()">Cancelar</button>
+    </div>
+  </div>`;
+}
+function _parcMaskTel(i){let v=i.value.replace(/\D/g,'').slice(0,11);if(v.length>10)v=v.replace(/(\d{2})(\d{5})(\d{4}).*/,'($1) $2-$3');else if(v.length>6)v=v.replace(/(\d{2})(\d{4})(\d{0,4}).*/,'($1) $2-$3');else if(v.length>2)v=v.replace(/(\d{2})(\d{0,5}).*/,'($1) $2');i.value=v;}
+function _parcMaskDoc(i){let v=i.value.replace(/\D/g,'');if(v.length<=11){v=v.slice(0,11);v=v.replace(/(\d{3})(\d{3})(\d{3})(\d{0,2}).*/,'$1.$2.$3-$4');v=v.replace(/(\d{3})(\d{3})(\d{0,3})$/,'$1.$2.$3');v=v.replace(/(\d{3})(\d{0,3})$/,'$1.$2');}else{v=v.slice(0,14);v=v.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{0,2}).*/,'$1.$2.$3/$4-$5');}i.value=v;}
+
+function abrirNovoParceiro(){ openDrawer('Cadastrar Parceiro', _parcFormHtml({})); }
+function abrirEditarParceiro(id){
+  const p = (D.parceiros||[]).find(x=>x.id===id);
+  if(!p) return toast('Parceiro não encontrado.','e');
+  openDrawer('Editar Parceiro', _parcFormHtml(p));
+}
+
+function _parcReadForm(){
+  const v = id => document.getElementById(id)?.value?.trim();
+  const tipoEl = document.querySelector('input[name="pf-tipo"]:checked');
+  const valCom = parseFloat(document.getElementById('pf-valcom')?.value||'0')||0;
+  return {
+    nome: v('pf-nome'),
+    whatsapp: v('pf-wpp'),
+    email: v('pf-email'),
+    documento: v('pf-doc'),
+    cidade: v('pf-cidade') || null,
+    estado: v('pf-estado') || null,
+    tipoAtuacao: v('pf-atuacao') || null,
+    prodInteresse: v('pf-prod') || null,
+    observacao: v('pf-obs') || null,
+    tipoComissao: tipoEl ? tipoEl.value : 'PERCENTUAL',
+    valComissao: valCom,
+    status: v('pf-status') || undefined,
+  };
+}
+function _parcValidate(d){
+  if(!d.nome) return 'Informe o nome do parceiro.';
+  if(!d.whatsapp) return 'Informe o WhatsApp.';
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email||'')) return 'Informe um e-mail válido.';
+  if(!d.documento) return 'Informe CPF ou CNPJ.';
+  if(d.valComissao<0) return 'Comissão não pode ser negativa.';
+  return null;
+}
+
+async function salvarNovoParceiro(){
+  const d = _parcReadForm();
+  delete d.status;
+  const err = _parcValidate(d);
+  if(err) return toast(err,'e');
+  const btn=document.getElementById('pf-btn'); if(btn) btn.disabled=true;
+  if(typeof API_MODE==='undefined' || !API_MODE){
+    if(btn) btn.disabled=false;
+    toast('Parceiro cadastrado (modo demo).','ok'); closeDrawer(); return;
+  }
+  const res = await API.post('/api/parceiros', d);
+  if(btn) btn.disabled=false;
+  if(res && res.error) return toast(res.error,'e');
+  if(!res) return toast('Falha ao cadastrar parceiro.','e');
+  toast('Parceiro cadastrado!','ok');
+  closeDrawer(); await loadAppData(); go('parceiros');
+}
+
+async function salvarEdicaoParceiro(id){
+  const d = _parcReadForm();
+  const err = _parcValidate(d);
+  if(err) return toast(err,'e');
+  const btn=document.getElementById('pf-btn'); if(btn) btn.disabled=true;
+  if(typeof API_MODE==='undefined' || !API_MODE){
+    if(btn) btn.disabled=false;
+    toast('Parceiro atualizado (modo demo).','ok'); closeDrawer(); return;
+  }
+  const res = await API.put('/api/parceiros/'+id, d);
+  if(btn) btn.disabled=false;
+  if(res && res.error) return toast(res.error,'e');
+  if(!res) return toast('Falha ao atualizar parceiro.','e');
+  toast('Parceiro atualizado!','ok');
+  closeDrawer(); await loadAppData(); go('parceiros');
+}
+
+async function alternarStatusParceiro(id, atual){
+  const novo = (atual||'').toLowerCase()==='ativo' ? 'INATIVO' : 'ATIVO';
+  if(!confirm('Alterar status do parceiro para '+novo+'?')) return;
+  if(typeof API_MODE==='undefined' || !API_MODE){
+    toast('Status alterado (modo demo).','ok'); return;
+  }
+  const res = await API.patch('/api/parceiros/'+id+'/status', { status: novo });
+  if(res && res.error) return toast(res.error,'e');
+  if(!res) return toast('Falha ao alterar status.','e');
+  toast('Status atualizado!','ok');
+  await loadAppData(); go('parceiros');
+}
+
+function verParceiro(id){
+  const p = (D.parceiros||[]).find(x=>x.id===id);
+  if(!p) return toast('Parceiro não encontrado.','e');
+  const dataFmt = p.createdAt ? new Date(p.createdAt).toLocaleString('pt-BR') : '—';
+  const updFmt  = p.updatedAt ? new Date(p.updatedAt).toLocaleString('pt-BR') : '—';
+  const linhas = [
+    ['Nome', p.nome],
+    ['Documento', p.documento],
+    ['WhatsApp', p.whatsapp],
+    ['E-mail', p.email],
+    ['Cidade/UF', (p.cidade||'—')+(p.estado?'/'+p.estado:'')],
+    ['Tipo de atuação', p.tipoAtuacao||'—'],
+    ['Produto de interesse', p.prodInteresse||'—'],
+    ['Comissão', _parcComissaoFmt(p)],
+    ['Status', (p.status||'—').toString().toUpperCase()],
+    ['Origem', _parcOrigem(p.origem)==='lp'?'LP do licenciado':'Cadastro manual'],
+    ['Licenciado responsável', p.licenciado?.nome || p.licId || '—'],
+    ['Cadastrado em', dataFmt],
+    ['Última atualização', updFmt],
+  ];
+  const html = `<div style="display:flex;flex-direction:column;gap:0">
+    ${linhas.map(([k,v])=>`<div class="fb" style="padding:7px 0;border-bottom:1px solid var(--border)"><span style="font-size:8px;color:var(--muted);min-width:130px;font-family:var(--fm);text-transform:uppercase;letter-spacing:.1em">${k}</span><span style="font-size:11px;color:var(--soft);text-align:right;flex:1">${escapeHtml(String(v))}</span></div>`).join('')}
+    ${p.observacao?`<div style="margin-top:10px"><div style="font-size:8px;color:var(--muted);font-family:var(--fm);text-transform:uppercase;letter-spacing:.1em;margin-bottom:5px">Observação</div><div style="font-size:11px;color:var(--soft);background:var(--clarity);padding:9px;border-radius:6px;border:1px solid var(--border);white-space:pre-wrap">${escapeHtml(p.observacao)}</div></div>`:''}
+    <div style="display:flex;gap:8px;margin-top:14px"><button class="btn btn-p" onclick="abrirEditarParceiro('${p.id}')">Editar</button><button class="btn btn-g" onclick="closeDrawer()">Fechar</button></div>
+  </div>`;
+  openDrawer('Detalhes do Parceiro', html);
 }
 // ══ FLUXO OPERACIONAL VISUAL (bifurcado) ══
 function renderOpFlow(fluxo,isAdmin,opId){

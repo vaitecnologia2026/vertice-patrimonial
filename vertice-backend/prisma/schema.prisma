@@ -67,6 +67,7 @@ model Licenciado {
   comissoes Comissao[]
   metas     Meta[]
   contas    Conta[]
+  parceiros Parceiro[]
 }
 
 enum StatusLic {
@@ -335,6 +336,44 @@ model GrupoClube {
   status         String    @default("ativo") // ativo, encerrado, suspenso
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
+}
+
+// ─── PARCEIROS DO LICENCIADO ─────────────────────────────────
+// Cada Licenciado tem sua própria base de Parceiros (corretores, indicadores, etc).
+// Cadastros podem ser manuais (pelo CRM) ou via LP pública vinculada ao Licenciado.
+model Parceiro {
+  id            String              @id @default(cuid())
+  licId         String
+  licenciado    Licenciado          @relation(fields: [licId], references: [id])
+  nome          String
+  whatsapp      String
+  email         String
+  documento     String              // CPF ou CNPJ (não-único, pode haver mesmo CPF em LICs diferentes)
+  cidade        String?
+  estado        String?
+  tipoAtuacao   String?             // ex: corretor, advogado, contador, indicador
+  prodInteresse String?             // produto Vértice de interesse
+  observacao    String?
+  tipoComissao  TipoComissaoParceiro @default(PERCENTUAL)
+  valComissao   Float               @default(0)
+  status        StatusParceiro      @default(ATIVO)
+  origem        String              @default("manual") // "manual" | "lp"
+  ipCadastro    String?             // IP do cadastrante quando origem=lp
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+
+  @@index([licId])
+  @@index([status])
+}
+
+enum TipoComissaoParceiro {
+  FIXO
+  PERCENTUAL
+}
+
+enum StatusParceiro {
+  ATIVO
+  INATIVO
 }
 
 // ─── CONSÓRCIOS ──────────────────────────────────────────────
