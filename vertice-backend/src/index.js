@@ -32,6 +32,7 @@ const contasRoutes      = require('./routes/contas');
 const clubeRoutes       = require('./routes/clube');
 const parceirosRoutes   = require('./routes/parceiros');
 const lpRoutes          = require('./routes/lp');
+const contaRoutes       = require('./routes/conta');
 
 const app = express();
 
@@ -125,6 +126,10 @@ app.use('/api/auth',         loginLimiter, authRoutes);
 // Landing Page pública (parceiros do licenciado) — sem auth, com rate limit
 app.use('/api/lp',           lpLimiter, lpRoutes);
 
+// Autoatendimento de privacidade (exclusão de conta/dados) — público, protegido por
+// verificação de credenciais dentro da rota + rate limit de login (anti força-bruta)
+app.use('/api/conta',        loginLimiter, contaRoutes);
+
 // Operações → acesso liberado para ADMIN, LIC, JURIDICO, PESQUISA (controle fino por perfil nas próprias rotas)
 app.use('/api/operacoes',    operacoesRoutes);
 
@@ -166,8 +171,27 @@ if (fs.existsSync(lpHtmlPath)) {
   });
 }
 
+// Páginas legais públicas (URLs amigáveis) — antes do catch-all do SPA
+const publicPagesDir = path.resolve(__dirname, '../../public');
+const legalPages = {
+  '/politica-de-seguranca': 'politica-de-seguranca.html',
+  '/privacidade':           'politica-de-seguranca.html',
+  '/termos':                'termos.html',
+  '/excluir-conta':         'excluir-conta.html',
+  '/excluir-dados':         'excluir-dados.html',
+};
+for (const [route, file] of Object.entries(legalPages)) {
+  const filePath = path.join(publicPagesDir, file);
+  if (fs.existsSync(filePath)) {
+    app.get(route, (req, res) => {
+      res.setHeader('Cache-Control', 'public, max-age=3600');
+      res.sendFile(filePath);
+    });
+  }
+}
+
 if (fs.existsSync(frontendPath)) {
-  app.get(/^(?!\/api|\/uploads|\/health|\/lp\/).*$/, (req, res) => {
+  app.get(/^(?!\/api|\/uploads|\/health|\/lp\/|\/politica-de-seguranca|\/privacidade|\/termos|\/excluir-conta|\/excluir-dados).*$/, (req, res) => {
     res.sendFile(frontendPath);
   });
 }

@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<meta name="theme-color" content="#0D0F14">
+<meta name="robots" content="index,follow">
+<title>Excluir Dados — Vértice Patrimonial</title>
+<meta name="description" content="Elimine seus dados pessoais opcionais do Vértice Patrimonial mantendo sua conta de acesso ativa.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --gold:#F9E8B2;--gold2:#E8C96A;--gold-dim:rgba(249,232,178,.6);
+  --bg:#0D0F14;--bg2:#12151C;--card:#161A22;--card2:#1B202A;
+  --ink:#ECEBE8;--soft:#B8C2C0;--muted:#8A9794;--dim:#5E6A68;
+  --border:rgba(255,255,255,.08);--border2:rgba(249,232,178,.22);--gold4:rgba(249,232,178,.10);
+  --red:#E0645F;--red-bg:rgba(224,100,95,.10);--red-bd:rgba(224,100,95,.4);
+  --green:#3FCB8A;--green-bg:rgba(63,203,138,.10);--green-bd:rgba(63,203,138,.4);
+  --info:#5BA3E0;--info-bg:rgba(91,163,224,.10);--info-bd:rgba(91,163,224,.4);
+  --ff:'Plus Jakarta Sans',system-ui,sans-serif;--mono:'DM Mono',ui-monospace,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--ff);background:var(--bg);color:var(--ink);font-size:15px;line-height:1.7;-webkit-font-smoothing:antialiased;min-height:100vh;display:flex;flex-direction:column}
+a{color:var(--gold2);text-decoration:none;transition:color .15s}a:hover{color:var(--gold)}
+.nav{position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;padding:16px 24px;background:rgba(13,15,20,.92);backdrop-filter:blur(20px);border-bottom:1px solid var(--border)}
+.brand{display:flex;align-items:center;gap:11px}
+.logo-box{width:36px;height:36px;background:linear-gradient(135deg,var(--gold2),var(--gold));border-radius:9px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px;color:#0B2B28;flex-shrink:0;box-shadow:0 4px 14px rgba(249,232,178,.25)}
+.brand-txt{display:flex;flex-direction:column;line-height:1.15}
+.brand-name{font-size:15px;font-weight:700;letter-spacing:-.02em}
+.brand-sub{font-size:10px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--muted)}
+.nav-back{font-size:13px;font-weight:600;color:var(--muted)}
+.wrap{flex:1;width:100%;max-width:520px;margin:0 auto;padding:48px 24px 64px}
+.eyebrow{display:inline-flex;align-items:center;gap:7px;padding:5px 14px;border:1px solid var(--border2);background:var(--gold4);border-radius:20px;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--gold2);margin-bottom:20px}
+h1{font-size:32px;font-weight:800;letter-spacing:-.035em;line-height:1.1;margin-bottom:12px}
+.lead{font-size:15px;color:var(--soft);margin-bottom:26px}
+.info{background:var(--info-bg);border:1px solid var(--info-bd);border-radius:12px;padding:16px 18px;margin-bottom:26px}
+.info-t{font-size:13px;font-weight:700;color:var(--info);margin-bottom:8px;display:flex;align-items:center;gap:7px}
+.info ul{margin:0;padding-left:18px}.info li{font-size:13.5px;color:var(--soft);margin-bottom:5px}.info li::marker{color:var(--info)}
+.info b{color:var(--ink)}
+.form{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:26px}
+.field{margin-bottom:18px}
+label{display:block;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:7px}
+input{width:100%;padding:13px 15px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;color:var(--ink);font-size:15px;font-family:inherit;outline:none;transition:border-color .15s,box-shadow .15s}
+input:focus{border-color:var(--gold2);box-shadow:0 0 0 3px var(--gold4)}
+input::placeholder{color:var(--dim)}
+.btn{width:100%;padding:14px;border:none;border-radius:11px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-p{background:var(--gold2);color:#0B2B28}.btn-p:hover{background:var(--gold)}
+.btn:disabled{opacity:.55;cursor:not-allowed}
+.msg{display:none;border-radius:12px;padding:16px 18px;margin-bottom:22px;font-size:14px}
+.msg.show{display:block}
+.msg.err{background:var(--red-bg);border:1px solid var(--red-bd);color:var(--red)}
+.msg.ok{background:var(--green-bg);border:1px solid var(--green-bd);color:var(--green)}
+.spinner{width:16px;height:16px;border:2px solid rgba(11,43,40,.3);border-top-color:#0B2B28;border-radius:50%;animation:sp .6s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.alt{text-align:center;margin-top:22px;font-size:13px;color:var(--muted)}
+footer{border-top:1px solid var(--border);padding:28px 24px;text-align:center}
+.foot-links{display:flex;flex-wrap:wrap;gap:18px;justify-content:center;margin-bottom:12px}
+.foot-links a{font-size:13px;color:var(--muted);font-weight:500}
+.foot-c{font-size:12px;color:var(--dim)}
+@media(max-width:600px){h1{font-size:27px}}
+</style>
+</head>
+<body>
+<nav class="nav">
+  <a href="/" class="brand">
+    <div class="logo-box">V</div>
+    <div class="brand-txt"><span class="brand-name">Vértice Patrimonial</span><span class="brand-sub">VAI Inteligência Comercial</span></div>
+  </a>
+  <a href="/" class="nav-back">← Voltar ao app</a>
+</nav>
+
+<main class="wrap">
+  <span class="eyebrow">● Exclusão de dados</span>
+  <h1>Excluir meus dados</h1>
+  <p class="lead">Elimine seus dados pessoais opcionais e encerre todas as sessões, <strong>mantendo sua conta de acesso ativa</strong>. Confirme sua identidade para prosseguir.</p>
+
+  <div class="info">
+    <div class="info-t">ℹ O que é eliminado e o que é mantido</div>
+    <ul>
+      <li><b>Eliminado:</b> foto de perfil e demais dados pessoais opcionais;</li>
+      <li><b>Encerrado:</b> todas as sessões ativas (você precisará entrar novamente);</li>
+      <li><b>Mantido:</b> sua conta de acesso e os dados essenciais ao funcionamento do serviço;</li>
+      <li>Registros legais/fiscais permanecem conforme a <a href="/politica-de-seguranca">Política de Privacidade</a>.</li>
+    </ul>
+  </div>
+
+  <div id="msg" class="msg"></div>
+
+  <form class="form" id="form" autocomplete="off">
+    <div class="field">
+      <label for="email">E-mail da conta</label>
+      <input type="email" id="email" name="email" placeholder="voce@empresa.com.br" required>
+    </div>
+    <div class="field">
+      <label for="password">Senha</label>
+      <input type="password" id="password" name="password" placeholder="Sua senha de acesso" required>
+    </div>
+    <button type="submit" class="btn btn-p" id="submit">Eliminar meus dados pessoais</button>
+  </form>
+
+  <p class="alt">Quer remover tudo? <a href="/excluir-conta">Excluir minha conta →</a></p>
+</main>
+
+<footer>
+  <div class="foot-links">
+    <a href="/politica-de-seguranca">Privacidade & Segurança</a>
+    <a href="/termos">Termos de Uso</a>
+    <a href="/excluir-conta">Excluir Conta</a>
+    <a href="/excluir-dados">Excluir Dados</a>
+  </div>
+  <p class="foot-c">© 2026 VAI Inteligência Comercial · Vértice Patrimonial v3.1</p>
+</footer>
+
+<script>
+(function(){
+  var form=document.getElementById('form'),
+      btn=document.getElementById('submit'),
+      msg=document.getElementById('msg');
+
+  function show(type,text){
+    msg.className='msg show '+type;
+    msg.textContent=text;
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+
+  form.addEventListener('submit',async function(e){
+    e.preventDefault();
+    var email=document.getElementById('email').value.trim(),
+        password=document.getElementById('password').value;
+    btn.disabled=true;
+    btn.innerHTML='<span class="spinner"></span> Processando...';
+    msg.className='msg';
+    try{
+      var r=await fetch('/api/conta/excluir-dados',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({email:email,password:password})
+      });
+      var data=await r.json().catch(function(){return {};});
+      if(r.ok){
+        form.style.display='none';
+        document.querySelector('.info').style.display='none';
+        document.querySelector('.alt').style.display='none';
+        show('ok',data.message||'Seus dados pessoais foram eliminados.');
+      }else{
+        show('err',(data.error||'Não foi possível processar a solicitação.')+' Verifique seus dados e tente novamente.');
+        btn.disabled=false;btn.textContent='Eliminar meus dados pessoais';
+      }
+    }catch(err){
+      show('err','Erro de conexão. Verifique sua internet e tente novamente.');
+      btn.disabled=false;btn.textContent='Eliminar meus dados pessoais';
+    }
+  });
+})();
+</script>
+</body>
+</html>

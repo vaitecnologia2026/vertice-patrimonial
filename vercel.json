@@ -13,6 +13,11 @@
     { "source": "/health",              "destination": "/api/index" },
     { "source": "/uploads/:path*",      "destination": "/api/index" },
     { "source": "/lp/parceiros/:licId", "destination": "/lp-parceiros.html" },
+    { "source": "/politica-de-seguranca", "destination": "/politica-de-seguranca.html" },
+    { "source": "/privacidade",         "destination": "/politica-de-seguranca.html" },
+    { "source": "/termos",              "destination": "/termos.html" },
+    { "source": "/excluir-conta",       "destination": "/excluir-conta.html" },
+    { "source": "/excluir-dados",       "destination": "/excluir-dados.html" },
     { "source": "/(.*)",                "destination": "/api/index" }
   ]
 }

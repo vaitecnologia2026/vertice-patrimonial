@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<meta name="theme-color" content="#0D0F14">
+<meta name="robots" content="index,follow">
+<title>Excluir Conta — Vértice Patrimonial</title>
+<meta name="description" content="Exclua sua conta do Vértice Patrimonial e anonimize seus dados pessoais de forma definitiva.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --gold:#F9E8B2;--gold2:#E8C96A;--gold-dim:rgba(249,232,178,.6);
+  --bg:#0D0F14;--bg2:#12151C;--card:#161A22;--card2:#1B202A;
+  --ink:#ECEBE8;--soft:#B8C2C0;--muted:#8A9794;--dim:#5E6A68;
+  --border:rgba(255,255,255,.08);--border2:rgba(249,232,178,.22);--gold4:rgba(249,232,178,.10);
+  --red:#E0645F;--red-bg:rgba(224,100,95,.10);--red-bd:rgba(224,100,95,.4);
+  --green:#3FCB8A;--green-bg:rgba(63,203,138,.10);--green-bd:rgba(63,203,138,.4);
+  --ff:'Plus Jakarta Sans',system-ui,sans-serif;--mono:'DM Mono',ui-monospace,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--ff);background:var(--bg);color:var(--ink);font-size:15px;line-height:1.7;-webkit-font-smoothing:antialiased;min-height:100vh;display:flex;flex-direction:column}
+a{color:var(--gold2);text-decoration:none;transition:color .15s}a:hover{color:var(--gold)}
+.nav{position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;padding:16px 24px;background:rgba(13,15,20,.92);backdrop-filter:blur(20px);border-bottom:1px solid var(--border)}
+.brand{display:flex;align-items:center;gap:11px}
+.logo-box{width:36px;height:36px;background:linear-gradient(135deg,var(--gold2),var(--gold));border-radius:9px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px;color:#0B2B28;flex-shrink:0;box-shadow:0 4px 14px rgba(249,232,178,.25)}
+.brand-txt{display:flex;flex-direction:column;line-height:1.15}
+.brand-name{font-size:15px;font-weight:700;letter-spacing:-.02em}
+.brand-sub{font-size:10px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--muted)}
+.nav-back{font-size:13px;font-weight:600;color:var(--muted)}
+.wrap{flex:1;width:100%;max-width:520px;margin:0 auto;padding:48px 24px 64px}
+.eyebrow{display:inline-flex;align-items:center;gap:7px;padding:5px 14px;border:1px solid var(--red-bd);background:var(--red-bg);border-radius:20px;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--red);margin-bottom:20px}
+h1{font-size:32px;font-weight:800;letter-spacing:-.035em;line-height:1.1;margin-bottom:12px}
+.lead{font-size:15px;color:var(--soft);margin-bottom:26px}
+.warn{background:var(--red-bg);border:1px solid var(--red-bd);border-radius:12px;padding:16px 18px;margin-bottom:26px}
+.warn-t{font-size:13px;font-weight:700;color:var(--red);margin-bottom:8px;display:flex;align-items:center;gap:7px}
+.warn ul{margin:0;padding-left:18px}.warn li{font-size:13.5px;color:var(--soft);margin-bottom:5px}.warn li::marker{color:var(--red)}
+.form{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:26px}
+.field{margin-bottom:18px}
+label{display:block;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:7px}
+input{width:100%;padding:13px 15px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;color:var(--ink);font-size:15px;font-family:inherit;outline:none;transition:border-color .15s,box-shadow .15s}
+input:focus{border-color:var(--gold2);box-shadow:0 0 0 3px var(--gold4)}
+input::placeholder{color:var(--dim)}
+.hint{font-size:12px;color:var(--dim);margin-top:6px}
+.confirm-strong{font-family:var(--mono);color:var(--red);font-weight:600;letter-spacing:1px}
+.btn{width:100%;padding:14px;border:none;border-radius:11px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-danger{background:var(--red);color:#fff}
+.btn-danger:hover{filter:brightness(1.08)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn-ghost{display:inline-block;width:auto;margin-top:14px;background:none;color:var(--muted);font-size:13px;font-weight:600;padding:0}
+.msg{display:none;border-radius:12px;padding:16px 18px;margin-bottom:22px;font-size:14px}
+.msg.show{display:block}
+.msg.err{background:var(--red-bg);border:1px solid var(--red-bd);color:var(--red)}
+.msg.ok{background:var(--green-bg);border:1px solid var(--green-bd);color:var(--green)}
+.spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:sp .6s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.alt{text-align:center;margin-top:22px;font-size:13px;color:var(--muted)}
+footer{border-top:1px solid var(--border);padding:28px 24px;text-align:center}
+.foot-links{display:flex;flex-wrap:wrap;gap:18px;justify-content:center;margin-bottom:12px}
+.foot-links a{font-size:13px;color:var(--muted);font-weight:500}
+.foot-c{font-size:12px;color:var(--dim)}
+@media(max-width:600px){h1{font-size:27px}}
+</style>
+</head>
+<body>
+<nav class="nav">
+  <a href="/" class="brand">
+    <div class="logo-box">V</div>
+    <div class="brand-txt"><span class="brand-name">Vértice Patrimonial</span><span class="brand-sub">VAI Inteligência Comercial</span></div>
+  </a>
+  <a href="/" class="nav-back">← Voltar ao app</a>
+</nav>
+
+<main class="wrap">
+  <span class="eyebrow">⚠ Exclusão de conta</span>
+  <h1>Excluir minha conta</h1>
+  <p class="lead">Confirme sua identidade para excluir definitivamente sua conta do Vértice Patrimonial. Esta ação é <strong>irreversível</strong>.</p>
+
+  <div class="warn">
+    <div class="warn-t">⚠ O que acontece ao excluir</div>
+    <ul>
+      <li>Seu acesso é <strong>desativado imediatamente</strong>;</li>
+      <li>Seus dados pessoais (nome, e-mail e foto) são <strong>anonimizados</strong>;</li>
+      <li>Todas as sessões ativas são encerradas;</li>
+      <li>Registros exigidos por lei são retidos anonimizados e eliminados ao fim do prazo legal.</li>
+    </ul>
+  </div>
+
+  <div id="msg" class="msg"></div>
+
+  <form class="form" id="form" autocomplete="off">
+    <div class="field">
+      <label for="email">E-mail da conta</label>
+      <input type="email" id="email" name="email" placeholder="voce@empresa.com.br" required>
+    </div>
+    <div class="field">
+      <label for="password">Senha</label>
+      <input type="password" id="password" name="password" placeholder="Sua senha de acesso" required>
+    </div>
+    <div class="field">
+      <label for="confirm">Digite <span class="confirm-strong">EXCLUIR</span> para confirmar</label>
+      <input type="text" id="confirm" name="confirm" placeholder="EXCLUIR" autocapitalize="characters" required>
+      <p class="hint">Confirmação de segurança para evitar exclusões acidentais.</p>
+    </div>
+    <button type="submit" class="btn btn-danger" id="submit" disabled>Excluir conta definitivamente</button>
+  </form>
+
+  <p class="alt">Prefere manter a conta? <a href="/excluir-dados">Excluir apenas meus dados →</a></p>
+</main>
+
+<footer>
+  <div class="foot-links">
+    <a href="/politica-de-seguranca">Privacidade & Segurança</a>
+    <a href="/termos">Termos de Uso</a>
+    <a href="/excluir-conta">Excluir Conta</a>
+    <a href="/excluir-dados">Excluir Dados</a>
+  </div>
+  <p class="foot-c">© 2026 VAI Inteligência Comercial · Vértice Patrimonial v3.1</p>
+</footer>
+
+<script>
+(function(){
+  var form=document.getElementById('form'),
+      btn=document.getElementById('submit'),
+      msg=document.getElementById('msg'),
+      confirm=document.getElementById('confirm');
+
+  confirm.addEventListener('input',function(){
+    btn.disabled=confirm.value.trim().toUpperCase()!=='EXCLUIR';
+  });
+
+  function show(type,text){
+    msg.className='msg show '+type;
+    msg.textContent=text;
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+
+  form.addEventListener('submit',async function(e){
+    e.preventDefault();
+    if(confirm.value.trim().toUpperCase()!=='EXCLUIR')return;
+    var email=document.getElementById('email').value.trim(),
+        password=document.getElementById('password').value;
+    btn.disabled=true;
+    btn.innerHTML='<span class="spinner"></span> Processando...';
+    msg.className='msg';
+    try{
+      var r=await fetch('/api/conta/excluir',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({email:email,password:password})
+      });
+      var data=await r.json().catch(function(){return {};});
+      if(r.ok){
+        form.style.display='none';
+        document.querySelector('.warn').style.display='none';
+        document.querySelector('.alt').style.display='none';
+        show('ok',data.message||'Conta excluída com sucesso.');
+      }else{
+        show('err',(data.error||'Não foi possível processar a solicitação.')+' Verifique seus dados e tente novamente.');
+        btn.disabled=false;btn.textContent='Excluir conta definitivamente';
+      }
+    }catch(err){
+      show('err','Erro de conexão. Verifique sua internet e tente novamente.');
+      btn.disabled=false;btn.textContent='Excluir conta definitivamente';
+    }
+  });
+})();
+</script>
+</body>
+</html>
