@@ -154,24 +154,21 @@ app.use('/api/contas',       auth, blockRestricted, contasRoutes);
 app.use('/api/clube',        auth, blockRestricted, clubeRoutes);
 app.use('/api/parceiros',    auth, blockRestricted, parceirosRoutes);
 
-// ─── ERROR HANDLERS ──────────────────────────────────────────
-app.use(notFound);
-app.use(errorHandler);
-
-// ─── FRONTEND SPA (catch-all para rotas não-API) ─────────────
+// ─── PÁGINAS PÚBLICAS / SPA (devem vir ANTES do notFound) ────
 const fs = require('fs');
 const frontendPath = path.resolve(__dirname, '../../vertice-vai.html');
 
-// Landing Page pública de Parceiros — antes do catch-all do SPA
+// Landing Page pública de Parceiros
 const lpHtmlPath = path.resolve(__dirname, '../lp-parceiros.html');
-if (fs.existsSync(lpHtmlPath)) {
-  app.get('/lp/parceiros/:licId', (req, res) => {
-    res.setHeader('Cache-Control', 'no-store');
-    res.sendFile(lpHtmlPath);
-  });
-}
+app.get('/lp/parceiros/:licId', (req, res, next) => {
+  if (!fs.existsSync(lpHtmlPath)) return next();
+  res.setHeader('Cache-Control', 'no-store');
+  res.sendFile(lpHtmlPath);
+});
 
-// Páginas legais públicas (URLs amigáveis) — antes do catch-all do SPA
+// Páginas legais públicas (URLs amigáveis) — privacidade, termos e exclusão.
+// Servidas diretamente pelo Express (independem de rewrite/estático da Vercel).
+// Os arquivos são incluídos no bundle da função via "includeFiles" no vercel.json.
 const publicPagesDir = path.resolve(__dirname, '../../public');
 const legalPages = {
   '/politica-de-seguranca': 'politica-de-seguranca.html',
@@ -181,20 +178,24 @@ const legalPages = {
   '/excluir-dados':         'excluir-dados.html',
 };
 for (const [route, file] of Object.entries(legalPages)) {
-  const filePath = path.join(publicPagesDir, file);
-  if (fs.existsSync(filePath)) {
-    app.get(route, (req, res) => {
-      res.setHeader('Cache-Control', 'public, max-age=3600');
-      res.sendFile(filePath);
-    });
-  }
+  app.get(route, (req, res, next) => {
+    const filePath = path.join(publicPagesDir, file);
+    if (!fs.existsSync(filePath)) return next();
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    res.sendFile(filePath);
+  });
 }
 
+// Catch-all do SPA (rotas não-API e não-legais)
 if (fs.existsSync(frontendPath)) {
   app.get(/^(?!\/api|\/uploads|\/health|\/lp\/|\/politica-de-seguranca|\/privacidade|\/termos|\/excluir-conta|\/excluir-dados).*$/, (req, res) => {
     res.sendFile(frontendPath);
   });
 }
+
+// ─── ERROR HANDLERS (sempre por último) ──────────────────────
+app.use(notFound);
+app.use(errorHandler);
 
 // ─── START (apenas quando rodando diretamente, não via Vercel) ─
 if (require.main === module) {
