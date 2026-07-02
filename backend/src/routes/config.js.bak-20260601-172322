@@ -1,0 +1,114 @@
+const express = require('express');
+const prisma = require('../utils/prisma');
+const { auth, adminOnly } = require('../middleware/auth');
+const { pick } = require('../utils/sanitize');
+
+const router = express.Router();
+
+const CFG_FIELDS = ['nomeEmpresa', 'corPrimaria', 'corSidebar', 'corBG', 'corCard', 'logo', 'pixelFb', 'ga4'];
+
+// Config PÚBLICA (sem auth) — só o necessário pras páginas públicas (tracking + marca).
+router.get('/public', async (req, res, next) => {
+  try {
+    const cfg = await prisma.configuracao.findFirst();
+    res.json({
+      nomeEmpresa: (cfg && cfg.nomeEmpresa) || 'Vértice',
+      logo: (cfg && cfg.logo) || null,
+      corPrimaria: (cfg && cfg.corPrimaria) || '#c9a84c',
+      pixelFb: (cfg && cfg.pixelFb) || null,
+      ga4: (cfg && cfg.ga4) || null,
+    });
+  } catch (err) { next(err); }
+});
+
+router.get('/', auth, async (req, res, next) => {
+  try {
+    let cfg = await prisma.configuracao.findFirst();
+    if (!cfg) cfg = await prisma.configuracao.create({ data: {} });
+    res.json(cfg);
+  } catch (err) { next(err); }
+});
+
+router.put('/', auth, adminOnly, async (req, res, next) => {
+  try {
+    const data = pick(req.body, CFG_FIELDS);
+    const cfg = await prisma.configuracao.upsert({
+      where: { id: 'singleton' },
+      update: data,
+      create: { id: 'singleton', ...data },
+    });
+    res.json(cfg);
+  } catch (err) { next(err); }
+});
+
+// ─── Central de Configurações (business rules editáveis pelo cliente) ─────────
+const CONFIG_DOMAINS = [
+  'pipeline_status', 'prioridade', 'tipo_imovel', 'modalidade',
+  'produto', 'canal_origem', 'equipe', 'motivo_perda', 'tag',
+];
+
+// Atualiza UM domínio do business config (merge não-destrutivo) + grava auditoria.
+router.put('/business', auth, adminOnly, async (req, res, next) => {
+  try {
+    const { domain, items } = req.body || {};
+    if (!CONFIG_DOMAINS.includes(domain)) {
+      return res.status(400).json({ error: 'Domínio de configuração inválido.' });
+    }
+    if (!Array.isArray(items)) {
+      return res.status(400).json({ error: 'O campo items deve ser uma lista.' });
+    }
+    // Sanitiza cada item para o formato canônico (evita lixo no JSON).
+    const clean = items
+      .map((it, i) => ({
+        key: String((it && it.key) ?? '').slice(0, 80),
+        label: String((it && it.label) ?? '').slice(0, 120),
+        ...(it && it.emoji != null ? { emoji: String(it.emoji).slice(0, 8) } : {}),
+        ...(it && it.color != null ? { color: String(it.color).slice(0, 16) } : {}),
+        ...(it && it.parent != null ? { parent: String(it.parent).slice(0, 40) } : {}),
+        ordem: Number.isFinite(it && it.ordem) ? it.ordem : i,
+        ativo: !(it && it.ativo === false),
+      }))
+      .filter((it) => it.key && it.label);
+
+    let cfg = await prisma.configuracao.findFirst();
+    if (!cfg) cfg = await prisma.configuracao.create({ data: {} });
+    const business = cfg.business && typeof cfg.business === 'object' ? { ...cfg.business } : {};
+    business[domain] = clean;
+
+    const updated = await prisma.configuracao.update({
+      where: { id: cfg.id },
+      data: { business },
+    });
+
+    // Auditoria — reusa a tabela existente. Nunca derruba a operação.
+    try {
+      await prisma.auditoria.create({
+        data: {
+          userId: req.user.id,
+          action: 'CONFIG_UPDATE',
+          entity: 'config',
+          entityId: domain,
+          desc: `Atualizou "${domain}" (${clean.length} ${clean.length === 1 ? 'item' : 'itens'})`,
+          ip: req.ip,
+        },
+      });
+    } catch (_) { /* auditoria opcional */ }
+
+    res.json({ ok: true, domain, business: updated.business });
+  } catch (err) { next(err); }
+});
+
+// Histórico de alterações da Central (auditoria filtrada).
+router.get('/business/audit', auth, adminOnly, async (req, res, next) => {
+  try {
+    const rows = await prisma.auditoria.findMany({
+      where: { entity: 'config' },
+      orderBy: { createdAt: 'desc' },
+      take: 30,
+      include: { user: { select: { name: true } } },
+    });
+    res.json(rows);
+  } catch (err) { next(err); }
+});
+
+module.exports = router;

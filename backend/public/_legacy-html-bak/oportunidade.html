@@ -1,0 +1,553 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0D0F14">
+<title>Oportunidade — Vértice</title>
+<meta name="description" content="Oportunidade imobiliária exclusiva — análise detalhada, ROI estimado e contato direto com o responsável.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Oportunidade Imobiliária — Vértice">
+<meta property="og:description" content="Imóvel selecionado com análise completa de viabilidade.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --bg:#0D0F14; --bg2:#11151B; --bg3:#1A1F28; --bg4:#252B36;
+    --gold:#E8C96A; --gold-d:#c9a84c; --gold-l:#F9E8B2;
+    --ink:#FEFEFE; --soft:#C8CCD3; --muted:#8A93A1; --dim:#5A6373;
+    --green:#3FB950; --green-bg:rgba(63,185,80,.12); --green-bd:rgba(63,185,80,.3);
+    --red:#E5484D; --line:rgba(255,255,255,.08); --line2:rgba(255,255,255,.14);
+    --radius:14px; --radius-sm:8px;
+    --shadow:0 14px 40px rgba(0,0,0,.35);
+    --shadow-lg:0 30px 80px rgba(0,0,0,.5);
+    --font:'Inter',-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
+    --font-h:'Sora','Inter',sans-serif;
+  }
+  *,*:before,*:after{box-sizing:border-box}
+  html,body{margin:0;padding:0;font-family:var(--font);background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+  body{font-size:15px;line-height:1.65;overflow-x:hidden}
+  a{color:var(--gold);text-decoration:none}
+  img{max-width:100%;display:block}
+  button{font-family:inherit}
+
+  /* ── NAV ── */
+  .nav{position:sticky;top:0;z-index:100;background:rgba(13,15,20,.86);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-bottom:1px solid var(--line)}
+  .nav-in{max-width:1200px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;justify-content:space-between}
+  .nav-logo{display:flex;align-items:center;gap:10px;font-family:var(--font-h);font-weight:800;font-size:17px;letter-spacing:-.02em}
+  .nav-logo-box{width:32px;height:32px;background:linear-gradient(135deg,var(--gold-l),var(--gold));border-radius:8px;display:flex;align-items:center;justify-content:center;color:#000;font-weight:800;font-size:13px}
+  .nav-cta{padding:9px 20px;background:var(--gold);color:#000;border:0;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;transition:all .15s}
+  .nav-cta:hover{background:var(--gold-l);transform:translateY(-1px)}
+
+  /* ── HERO ── */
+  .hero{padding:32px 24px 12px;max-width:1200px;margin:0 auto}
+  .hero-badge{display:inline-flex;align-items:center;gap:6px;padding:5px 14px;border:1px solid rgba(232,201,106,.3);background:rgba(232,201,106,.08);border-radius:20px;font-size:10.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);margin-bottom:18px}
+  .hero-badge-dot{width:6px;height:6px;border-radius:50%;background:var(--gold);box-shadow:0 0 0 3px rgba(232,201,106,.18)}
+  .hero-h{font-family:var(--font-h);font-size:clamp(28px,5vw,46px);font-weight:800;line-height:1.05;letter-spacing:-.03em;margin:0 0 12px;color:var(--ink)}
+  .hero-h em{font-style:normal;color:var(--gold)}
+  .hero-loc{font-size:15px;color:var(--soft);margin-bottom:18px;display:inline-flex;align-items:center;gap:8px}
+  .hero-loc svg{flex-shrink:0}
+  .hero-roi{display:inline-flex;align-items:center;gap:12px;margin-bottom:24px;padding:10px 16px;background:var(--green-bg);border:1px solid var(--green-bd);border-radius:10px}
+  .hero-roi-v{font-family:var(--font-h);font-size:24px;font-weight:800;color:var(--green);line-height:1}
+  .hero-roi-l{font-size:11px;color:var(--soft);font-weight:500}
+
+  /* ── GALERIA ── */
+  .gallery{max-width:1200px;margin:0 auto;padding:0 24px 32px}
+  .gallery-grid{display:grid;grid-template-columns:2fr 1fr 1fr;grid-template-rows:200px 200px;gap:8px;border-radius:var(--radius);overflow:hidden}
+  .gallery-grid img,.gallery-grid .ph{width:100%;height:100%;object-fit:cover;background:var(--bg3);cursor:pointer;transition:transform .3s,opacity .2s;display:block}
+  .gallery-grid img:hover{transform:scale(1.03);opacity:.95}
+  .gallery-grid .main{grid-row:span 2}
+  .gallery-grid .ph{display:flex;align-items:center;justify-content:center;color:var(--dim)}
+  .gallery-grid .more-overlay{position:relative}
+  .gallery-grid .more-overlay::after{content:attr(data-more);position:absolute;inset:0;background:rgba(0,0,0,.6);color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;border-radius:0;pointer-events:none}
+  @media(max-width:768px){.gallery-grid{grid-template-columns:1fr;grid-template-rows:240px;gap:6px}.gallery-grid > *:not(.main){display:none}}
+
+  /* ── LIGHTBOX ── */
+  .lb{display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:1000;align-items:center;justify-content:center;padding:20px}
+  .lb.open{display:flex}
+  .lb-img{max-width:92vw;max-height:88vh;border-radius:8px;object-fit:contain}
+  .lb-close{position:absolute;top:18px;right:20px;background:rgba(255,255,255,.1);border:0;color:#fff;width:42px;height:42px;border-radius:50%;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center}
+  .lb-prev,.lb-next{position:absolute;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.1);border:0;color:#fff;width:48px;height:48px;border-radius:50%;cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center;transition:background .15s}
+  .lb-prev:hover,.lb-next:hover{background:rgba(255,255,255,.2)}
+  .lb-prev{left:20px}.lb-next{right:20px}
+
+  /* ── MAIN GRID ── */
+  .container{max-width:1200px;margin:0 auto;padding:0 24px 80px;display:grid;grid-template-columns:1fr 380px;gap:36px}
+  @media(max-width:960px){.container{grid-template-columns:1fr;gap:24px}}
+
+  /* ── SEÇÕES ── */
+  .section{margin-bottom:36px}
+  .section-h{font-family:var(--font-h);font-size:20px;font-weight:700;letter-spacing:-.02em;margin:0 0 14px;color:var(--ink);display:flex;align-items:center;gap:8px}
+  .section-h::before{content:'';width:3px;height:18px;background:var(--gold);border-radius:2px}
+  .section-p{color:var(--soft);font-size:15px;line-height:1.75;white-space:pre-wrap}
+
+  /* ── KPIS ── */
+  .kpi-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:32px}
+  @media(min-width:600px){.kpi-grid{grid-template-columns:repeat(4,1fr)}}
+  .kpi{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:16px 18px}
+  .kpi-l{font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+  .kpi-v{font-family:var(--font-h);font-size:20px;font-weight:700;letter-spacing:-.02em;line-height:1.1}
+
+  /* ── FEATURES ── */
+  .features{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:24px}
+  .feat{display:flex;align-items:center;gap:9px;background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:10px 13px;font-size:13px;color:var(--soft)}
+  .feat svg{color:var(--gold);flex-shrink:0}
+
+  /* ── MAPA ── */
+  .map-box{aspect-ratio:16/9;border-radius:var(--radius);overflow:hidden;border:1px solid var(--line);background:var(--bg3);position:relative}
+  .map-box iframe{width:100%;height:100%;border:0;filter:grayscale(.2) brightness(.85)}
+  .map-fallback{display:flex;align-items:center;justify-content:center;height:100%;color:var(--muted);font-size:13px;padding:20px;text-align:center}
+
+  /* ── CORRETOR / SIDEBAR CTA ── */
+  .side{position:sticky;top:84px;align-self:start}
+  @media(max-width:960px){.side{position:static}}
+  .cta-card{background:linear-gradient(180deg,var(--bg2),var(--bg3));border:1px solid var(--line);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);overflow:hidden}
+  .cta-price-l{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:5px}
+  .cta-price{font-family:var(--font-h);font-size:30px;font-weight:800;color:var(--gold);letter-spacing:-.02em;line-height:1;margin-bottom:4px}
+  .cta-price-sub{font-size:12px;color:var(--muted);margin-bottom:20px}
+  .cta-btn{width:100%;padding:14px 18px;border:0;border-radius:10px;font-weight:700;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .15s;margin-bottom:8px;font-family:inherit}
+  .cta-btn-wa{background:#25D366;color:#fff}
+  .cta-btn-wa:hover{background:#1DB855;transform:translateY(-1px)}
+  .cta-btn-tel{background:transparent;color:var(--ink);border:1px solid var(--line2)}
+  .cta-btn-tel:hover{background:var(--bg3);border-color:var(--gold)}
+  .cta-btn-form{background:var(--gold);color:#000;margin-top:14px}
+  .cta-btn-form:hover{background:var(--gold-l);transform:translateY(-1px)}
+
+  .corretor{margin-top:22px;padding-top:18px;border-top:1px solid var(--line);display:flex;align-items:center;gap:12px}
+  .corretor-av{width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,var(--gold-l),var(--gold-d));display:flex;align-items:center;justify-content:center;color:#000;font-weight:800;font-size:18px;flex-shrink:0}
+  .corretor-info{flex:1;min-width:0}
+  .corretor-nome{font-size:14px;font-weight:600;color:var(--ink)}
+  .corretor-rol{font-size:11px;color:var(--muted)}
+
+  /* ── FORM ── */
+  .form{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);margin-top:32px}
+  .form-h{font-family:var(--font-h);font-size:18px;font-weight:700;margin:0 0 4px;color:var(--ink)}
+  .form-sub{font-size:13px;color:var(--muted);margin-bottom:18px}
+  .form-row{display:grid;gap:12px;margin-bottom:12px}
+  @media(min-width:540px){.form-row.two{grid-template-columns:1fr 1fr}}
+  .inp{width:100%;padding:11px 14px;background:rgba(255,255,255,.04);border:1px solid var(--line2);border-radius:10px;color:var(--ink);font-size:14px;font-family:inherit;outline:none;transition:border-color .15s}
+  .inp:focus{border-color:var(--gold)}
+  .inp::placeholder{color:var(--dim)}
+  textarea.inp{resize:vertical;min-height:80px}
+  .form-ok{display:none;padding:14px;background:var(--green-bg);border:1px solid var(--green-bd);border-radius:10px;color:var(--green);font-weight:600;text-align:center;margin-bottom:14px}
+
+  /* ── FOOTER ── */
+  .footer{padding:32px 24px;border-top:1px solid var(--line);background:var(--bg2);margin-top:60px;text-align:center;color:var(--muted);font-size:12px}
+  .footer-logo{margin-bottom:8px;color:var(--gold);font-weight:700}
+
+  /* ── EMPTY STATE (URL inválida) ── */
+  .empty{max-width:480px;margin:80px auto;padding:40px 30px;text-align:center;background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius)}
+  .empty h1{font-family:var(--font-h);font-size:22px;margin:0 0 10px}
+  .empty p{color:var(--muted);margin:0 0 20px}
+
+  @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+  .fade-up{animation:fadeUp .5s ease-out backwards}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-in">
+    <div class="nav-logo">
+      <div class="nav-logo-box">V</div>
+      <span>Vértice</span>
+    </div>
+    <button class="nav-cta" onclick="document.getElementById('lead-form')?.scrollIntoView({behavior:'smooth'})">Tenho Interesse</button>
+  </div>
+</nav>
+
+<div id="app"></div>
+
+<!-- LIGHTBOX -->
+<div class="lb" id="lb" onclick="if(event.target.id==='lb')closeLb()">
+  <button class="lb-close" onclick="closeLb()" aria-label="Fechar">✕</button>
+  <button class="lb-prev" onclick="navLb(-1)" aria-label="Anterior">‹</button>
+  <img class="lb-img" id="lb-img" alt="">
+  <button class="lb-next" onclick="navLb(1)" aria-label="Próximo">›</button>
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+  <div class="footer-logo">VÉRTICE</div>
+  <div>Esta página foi gerada exclusivamente para apresentação desta oportunidade.</div>
+  <div style="margin-top:8px;font-size:11px;color:var(--dim)">© Vértice · Inteligência Comercial</div>
+</div>
+
+<script>
+(function(){
+  // ── PARSE DATA ──
+  function parseQuery(){
+    const q = {};
+    location.search.replace(/^\?/,'').split('&').forEach(p => {
+      if(!p) return;
+      const [k,v] = p.split('=');
+      q[decodeURIComponent(k)] = decodeURIComponent(v||'');
+    });
+    return q;
+  }
+  function decodePayload(d){
+    try{
+      const json = decodeURIComponent(escape(atob(d)));
+      return JSON.parse(json);
+    }catch(e){
+      console.error('Payload inválido:', e);
+      return null;
+    }
+  }
+  function loadData(){
+    const q = parseQuery();
+    // Modo 1: payload embutido (?d=base64)
+    if(q.d){
+      return Promise.resolve(decodePayload(q.d));
+    }
+    // Modo 2: backend (?id=X) — futuro
+    if(q.id){
+      // tenta um endpoint convencional — pode ser configurado no futuro
+      return fetch('/api/opportunities/' + encodeURIComponent(q.id))
+        .then(r => r.ok ? r.json() : Promise.reject('Backend offline'))
+        .catch(()=>null);
+    }
+    return Promise.resolve(null);
+  }
+
+  function $(sel){ return document.querySelector(sel); }
+  function el(tag, attrs, ...kids){
+    const e = document.createElement(tag);
+    if(attrs) for(const k in attrs){
+      if(k==='class') e.className = attrs[k];
+      else if(k.startsWith('on')) e[k] = attrs[k];
+      else e.setAttribute(k, attrs[k]);
+    }
+    for(const k of kids){
+      if(k==null) continue;
+      e.appendChild(typeof k==='string' ? document.createTextNode(k) : k);
+    }
+    return e;
+  }
+  function fmtMoney(v){
+    if(!v && v!==0) return '—';
+    return 'R$ ' + Math.round(v).toLocaleString('pt-BR');
+  }
+  function fmtDate(s){
+    if(!s) return '—';
+    try{ return new Date(s).toLocaleDateString('pt-BR'); }catch{ return s; }
+  }
+  function calcRoi(d){
+    if(!d.aval || !d.lance) return null;
+    const custo = d.lance + (d.deb||0) + (d.ref||0);
+    return ((d.aval - custo) / custo) * 100;
+  }
+  function emptyState(){
+    document.getElementById('app').innerHTML = `<div class="empty">
+      <h1>Oportunidade não encontrada</h1>
+      <p>O link que você acessou pode ter expirado ou ser inválido. Entre em contato com seu corretor para obter um novo link.</p>
+      <a href="/" class="nav-cta" style="display:inline-block;text-decoration:none">Voltar ao início</a>
+    </div>`;
+  }
+
+  // ── GALERIA ──
+  let _gallery = [];
+  let _lbIdx = 0;
+  window.openLb = function(idx){
+    _lbIdx = idx;
+    document.getElementById('lb-img').src = _gallery[idx];
+    document.getElementById('lb').classList.add('open');
+  };
+  window.closeLb = function(){
+    document.getElementById('lb').classList.remove('open');
+  };
+  window.navLb = function(dir){
+    _lbIdx = (_lbIdx + dir + _gallery.length) % _gallery.length;
+    document.getElementById('lb-img').src = _gallery[_lbIdx];
+  };
+  document.addEventListener('keydown', e => {
+    if(!document.getElementById('lb').classList.contains('open')) return;
+    if(e.key==='Escape') closeLb();
+    else if(e.key==='ArrowLeft') navLb(-1);
+    else if(e.key==='ArrowRight') navLb(1);
+  });
+
+  // ── PIXELS ──
+  function injectFbPixel(id){
+    if(!id) return;
+    const s = document.createElement('script');
+    s.innerHTML = "!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','" + id + "');fbq('track','PageView');";
+    document.head.appendChild(s);
+  }
+  function injectGa(id){
+    if(!id) return;
+    const s1 = document.createElement('script');
+    s1.async = true;
+    s1.src = 'https://www.googletagmanager.com/gtag/js?id=' + id;
+    document.head.appendChild(s1);
+    const s2 = document.createElement('script');
+    s2.innerHTML = "window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','" + id + "');";
+    document.head.appendChild(s2);
+  }
+
+  // ── LEAD SUBMIT ──
+  window.submitLead = function(ev){
+    ev.preventDefault();
+    const f = ev.target;
+    const data = {
+      oppId: window._OPP_DATA?.id,
+      oppTitulo: window._OPP_DATA?.titulo,
+      nome: f.nome.value,
+      tel: f.tel.value,
+      email: f.email.value,
+      msg: f.msg.value,
+      ts: new Date().toISOString(),
+    };
+    // Tenta enviar pra backend
+    let sentToBackend = false;
+    try{
+      fetch('/api/opportunities/' + encodeURIComponent(data.oppId) + '/lead', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(data)
+      }).catch(()=>{});
+    }catch{}
+    // Fallback local + LocalStorage do app (se aberto no mesmo navegador do admin)
+    try{
+      const k = 'opp_leads';
+      const list = JSON.parse(localStorage.getItem(k) || '[]');
+      list.push(data);
+      localStorage.setItem(k, JSON.stringify(list));
+    }catch{}
+    // Event tracking
+    if(window.fbq) fbq('track','Lead');
+    if(window.gtag) gtag('event','generate_lead',{value:1});
+    // UI feedback
+    const ok = document.getElementById('form-ok');
+    if(ok) ok.style.display = 'block';
+    f.style.display = 'none';
+    // Encaminha pro WhatsApp do contato ativo (corretor ou responsável pelas aquisições)
+    const _opp = window._OPP_DATA || {};
+    const _isInv = (_opp.finalidade === 'investidor');
+    const wa = (_isInv ? (_opp.respAq && _opp.respAq.wa) : (_opp.corretor && _opp.corretor.wa)) || '';
+    if(wa){
+      const _prefix = _isInv ? '*Lead investidor:*' : '*Lead da LP:*';
+      const msg = _prefix + ' ' + data.nome + '\n📞 ' + data.tel + (data.email?'\n📧 '+data.email:'') + (data.msg?'\n💬 '+data.msg:'') + '\n\n🏠 ' + (data.oppTitulo||'');
+      setTimeout(()=>{ window.open('https://wa.me/' + wa + '?text=' + encodeURIComponent(msg), '_blank'); }, 800);
+    }
+    return false;
+  };
+
+  // ── RENDER ──
+  function render(d){
+    if(!d){ emptyState(); return; }
+    window._OPP_DATA = d;
+    document.title = (d.titulo || 'Oportunidade') + ' — Vértice';
+
+    // Pixels
+    if(d.pixel && d.pixel.fb) injectFbPixel(d.pixel.fb);
+    if(d.pixel && d.pixel.ga) injectGa(d.pixel.ga);
+
+    // Galeria
+    _gallery = (d.fotos && d.fotos.length) ? d.fotos : [];
+    const galleryHTML = _gallery.length === 0
+      ? '<div class="ph" style="aspect-ratio:16/9;border-radius:14px;border:1px solid var(--line);background:linear-gradient(135deg,var(--bg3),var(--bg4));display:flex;align-items:center;justify-content:center;color:var(--dim)"><svg width="64" height="64" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8L8 2l6 6v6a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1z"/><path d="M6 14V9h4v5"/></svg></div>'
+      : (function(){
+          const main = _gallery[0];
+          const rest = _gallery.slice(1,5);
+          while(rest.length < 4) rest.push(null);
+          let html = '<div class="gallery-grid">';
+          html += '<img class="main" src="'+main+'" onclick="openLb(0)" alt="Foto principal">';
+          rest.forEach((src,i)=>{
+            if(src){
+              const idx = i + 1;
+              const showMore = (i === 3 && _gallery.length > 5);
+              html += showMore
+                ? '<div class="more-overlay" onclick="openLb('+idx+')" data-more="+'+(_gallery.length - 5)+' fotos"><img src="'+src+'" alt="Foto"></div>'
+                : '<img src="'+src+'" onclick="openLb('+idx+')" alt="Foto '+(idx+1)+'">';
+            }else{
+              html += '<div class="ph"><svg width="32" height="32" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M2 8L8 2l6 6v6H2z"/></svg></div>';
+            }
+          });
+          html += '</div>';
+          return html;
+        })();
+
+    // KPIs — variam por finalidade
+    //  · Venda (imobiliária): foco em preço/condições para o comprador final
+    //  · Investidor (leilão): foco em métricas de oportunidade (lance, ROI, leilão)
+    const roi = calcRoi(d);
+    const kpis = [];
+    const _isInvKpi = (d.finalidade === 'investidor');
+    if(_isInvKpi){
+      if(d.lance)  kpis.push({l:'Lance Mínimo',  v:fmtMoney(d.lance), c:'var(--gold)'});
+      if(d.aval)   kpis.push({l:'Avaliação',     v:fmtMoney(d.aval),  c:'var(--green)'});
+      if(d.deb)    kpis.push({l:'Débitos',       v:fmtMoney(d.deb),   c:'var(--soft)'});
+      if(d.ref)    kpis.push({l:'Reforma Est.',  v:fmtMoney(d.ref),   c:'var(--soft)'});
+      if(roi !== null) kpis.push({l:'ROI Estimado', v:'+'+roi.toFixed(0)+'%', c:'var(--green)'});
+      if(d.leilao) kpis.push({l:'Data Leilão',   v:fmtDate(d.leilao), c:'var(--soft)'});
+    } else {
+      // Venda (imobiliária) — info útil pro comprador final
+      if(d.lance)  kpis.push({l:'Preço',         v:fmtMoney(d.lance), c:'var(--gold)'});
+      if(d.aval && d.aval > (d.lance||0)) kpis.push({l:'Valor de Mercado', v:fmtMoney(d.aval), c:'var(--green)'});
+      // Tipo do imóvel como KPI visual
+      const tipoMap = {apartamento:'Apartamento',casa:'Casa',sala_comercial:'Sala Comercial',terreno:'Terreno',lote:'Lote',galpao:'Galpão',predio:'Prédio'};
+      if(d.tipo)   kpis.push({l:'Tipo',          v:(tipoMap[d.tipo] || d.tipo), c:'var(--soft)'});
+      if(d.bairro || d.cidade) kpis.push({l:'Localização', v:(d.bairro||d.cidade||'').slice(0,20), c:'var(--soft)'});
+      if(d.ref)    kpis.push({l:'Reforma Est.',  v:fmtMoney(d.ref),   c:'var(--soft)'});
+      // Economia (se avaliação > preço, mostra a diferença como vantagem)
+      if(d.aval && d.lance && d.aval > d.lance){
+        const econ = d.aval - d.lance;
+        kpis.push({l:'Economia',  v:fmtMoney(econ), c:'var(--green)'});
+      }
+    }
+
+    // Mapa — preferência: lat/lng exatos → URL do Google Maps (botão) → endereço aproximado
+    let mapHTML;
+    if(d.lat && d.lng){
+      mapHTML = '<iframe loading="lazy" allowfullscreen src="https://www.google.com/maps?q=' + d.lat + ',' + d.lng + '&z=15&output=embed"></iframe>';
+    } else if(d.mapsUrl){
+      const safeUrl = String(d.mapsUrl).replace(/"/g,'&quot;');
+      mapHTML = '<a href="'+safeUrl+'" target="_blank" rel="noopener" class="map-fallback" style="display:flex;align-items:center;justify-content:center;gap:10px;color:#4285f4;text-decoration:none;font-weight:600">'
+        +'<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C7.6 2 4 5.6 4 10c0 5.5 8 12 8 12s8-6.5 8-12c0-4.4-3.6-8-8-8zm0 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6z"/></svg>'
+        +'<span>Abrir localização no Google Maps</span>'
+      +'</a>';
+    } else {
+      mapHTML = '<div class="map-fallback">Localização aproximada: <b style="color:var(--ink);margin-left:6px">' + (d.bairro||'') + ' · ' + (d.cidade||'') + '</b></div>';
+    }
+
+    // Contato — adapta-se à finalidade (venda → corretor · investidor → responsável aquisições)
+    const finalidade = (d.finalidade === 'investidor') ? 'investidor' : 'venda';
+    const isInvestidor = (finalidade === 'investidor');
+    const cor = isInvestidor ? (d.respAq || {}) : (d.corretor || {});
+    const corName = cor.nome || (isInvestidor ? 'Responsável pelas aquisições' : 'Equipe Vértice');
+    const corInitial = (corName.match(/\b(\w)/g) || ['V']).slice(0,2).join('').toUpperCase();
+    const wa = cor.wa || '';
+    const tel = cor.tel || '';
+    const corRole = isInvestidor ? 'Responsável pelas aquisições' : 'Corretor responsável';
+    const formTitle = isInvestidor ? 'Quer participar desta aquisição? Fale com o responsável' : 'Quer saber mais? Fale com o corretor';
+    const formSub = isInvestidor ? 'Preencha abaixo. Retornamos com as próximas etapas em até 1 hora.' : 'Preencha abaixo. Ligamos pra você em até 1 hora.';
+    const btnTelLabel = isInvestidor ? 'Ligar para responsável' : 'Ligar para corretor';
+    const sideCtaLabel = isInvestidor ? 'Tenho interesse em participar' : 'Receber proposta personalizada';
+    const heroBadgeText = isInvestidor ? 'Oportunidade para investidores' : 'Oportunidade Selecionada';
+    const waMsg = encodeURIComponent('Olá, vi a oportunidade "' + (d.titulo||'') + '" e gostaria de ' + (isInvestidor ? 'mais informações sobre essa aquisição.' : 'mais informações.'));
+
+    // Features (tags)
+    const features = [];
+    if(d.tipo) features.push({l: ({apartamento:'Apartamento',casa:'Casa',sala_comercial:'Sala Comercial',terreno:'Terreno',lote:'Lote',galpao:'Galpão',predio:'Prédio'})[d.tipo] || d.tipo});
+    // Modalidade só aparece em oportunidade pra investidor (leilão judicial/extrajudicial)
+    if(d.mod && isInvestidor) features.push({l: d.mod==='judicial' ? 'Leilão Judicial' : 'Leilão Extrajudicial'});
+    if(!isInvestidor) features.push({l: 'Pronto para morar'});
+    if(d.bairro) features.push({l: d.bairro});
+    if(d.cidade) features.push({l: d.cidade});
+
+    // Compose
+    const app = document.getElementById('app');
+    app.innerHTML = `
+      <div class="hero fade-up">
+        <div class="hero-badge"><span class="hero-badge-dot"></span>${escapeHtml(heroBadgeText)}</div>
+        <h1 class="hero-h">${escapeHtml(d.titulo||'Imóvel')}</h1>
+        <div class="hero-loc">
+          <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14 7c0 4.5-6 9-6 9S2 11.5 2 7a6 6 0 0 1 12 0z"/><circle cx="8" cy="7" r="2.2"/></svg>
+          ${escapeHtml(d.bairro||'')} · ${escapeHtml(d.cidade||'')}
+        </div>
+        ${(roi!==null && isInvestidor) ? '<div class="hero-roi"><span class="hero-roi-v">+'+roi.toFixed(0)+'%</span><span class="hero-roi-l">ROI estimado<br>sobre lance + custos</span></div>' : ''}
+      </div>
+
+      <div class="gallery fade-up" style="animation-delay:.05s">
+        ${galleryHTML}
+      </div>
+
+      <div class="container">
+        <div>
+          ${kpis.length ? '<div class="kpi-grid fade-up" style="animation-delay:.1s">' + kpis.map(k=>`<div class="kpi"><div class="kpi-l">${k.l}</div><div class="kpi-v" style="color:${k.c}">${k.v}</div></div>`).join('') + '</div>' : ''}
+
+          ${d.desc ? `<div class="section fade-up" style="animation-delay:.15s">
+            <h2 class="section-h">Sobre o imóvel</h2>
+            <div class="section-p">${escapeHtml(d.desc)}</div>
+          </div>` : ''}
+
+          ${features.length ? `<div class="section fade-up" style="animation-delay:.2s">
+            <h2 class="section-h">Características</h2>
+            <div class="features">
+              ${features.map(f => `<div class="feat"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 8 7 12 13 4"/></svg>${escapeHtml(f.l)}</div>`).join('')}
+            </div>
+          </div>` : ''}
+
+          <div class="section fade-up" style="animation-delay:.25s">
+            <h2 class="section-h">Localização</h2>
+            <div class="map-box">${mapHTML}</div>
+          </div>
+
+          <div class="form fade-up" id="lead-form" style="animation-delay:.3s">
+            <div class="form-ok" id="form-ok">✓ Recebemos seu contato! Nossa equipe entrará em contato em até 1 hora.</div>
+            <form onsubmit="return submitLead(event)">
+              <h3 class="form-h">${escapeHtml(formTitle)}</h3>
+              <p class="form-sub">${escapeHtml(formSub)}</p>
+              <div class="form-row"><input class="inp" name="nome" placeholder="Seu nome completo" required></div>
+              <div class="form-row two">
+                <input class="inp" name="tel" placeholder="(99) 99999-9999" required>
+                <input class="inp" name="email" placeholder="E-mail (opcional)" type="email">
+              </div>
+              <div class="form-row"><textarea class="inp" name="msg" placeholder="Quero saber mais sobre esta oportunidade…"></textarea></div>
+              <button type="submit" class="cta-btn cta-btn-form">Solicitar Contato →</button>
+            </form>
+          </div>
+        </div>
+
+        <aside class="side fade-up" style="animation-delay:.1s">
+          <div class="cta-card">
+            ${d.lance ? `<div class="cta-price-l">${isInvestidor ? 'Lance a partir de' : 'Preço'}</div>
+              <div class="cta-price">${fmtMoney(d.lance)}</div>
+              ${d.aval ? '<div class="cta-price-sub">'+(isInvestidor ? 'Avaliação: ' : 'Valor de mercado: ')+fmtMoney(d.aval)+'</div>' : ''}` : ''}
+
+            ${wa ? `<button class="cta-btn cta-btn-wa" onclick="window.open('https://wa.me/${wa}?text=${waMsg}','_blank');if(window.fbq)fbq('track','Contact');if(window.gtag)gtag('event','contact',{method:'whatsapp'});">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38c1.45.79 3.08 1.21 4.79 1.21h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.02A9.87 9.87 0 0 0 12.04 2z"/></svg>
+              WhatsApp Direto
+            </button>` : ''}
+
+            ${tel ? `<a href="tel:${tel.replace(/\D/g,'')}" class="cta-btn cta-btn-tel" style="text-decoration:none">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 11.32V14a1 1 0 0 1-1.09 1 13.86 13.86 0 0 1-6.04-2.15 13.7 13.7 0 0 1-4.2-4.2A13.86 13.86 0 0 1 .52 2.61 1 1 0 0 1 1.51 1.5h2.68a1 1 0 0 1 1 .85c.06.48.18.95.34 1.4a1 1 0 0 1-.22 1.05L4.18 5.93a11 11 0 0 0 4.2 4.2l1.13-1.13a1 1 0 0 1 1.05-.22c.45.16.92.28 1.4.34a1 1 0 0 1 .85 1.02z"/></svg>
+              ${escapeHtml(btnTelLabel)}
+            </a>` : ''}
+
+            <button class="cta-btn cta-btn-form" onclick="document.getElementById('lead-form').scrollIntoView({behavior:'smooth'})">
+              ${escapeHtml(sideCtaLabel)}
+            </button>
+
+            <div class="corretor">
+              <div class="corretor-av">${corInitial}</div>
+              <div class="corretor-info">
+                <div class="corretor-nome">${escapeHtml(corName)}</div>
+                <div class="corretor-rol">${escapeHtml(corRole)}</div>
+              </div>
+            </div>
+          </div>
+        </aside>
+      </div>
+    `;
+
+    // Registra visualização (best-effort, sem bloquear)
+    if(d.id){
+      const oppId = d.id;
+      // Tenta endpoint backend
+      try{ fetch('/api/opportunities/' + oppId + '/view', {method:'POST'}).catch(()=>{}); }catch{}
+      // Incrementa contador local (útil pra demo)
+      try{
+        const k = 'opp_views_log';
+        const list = JSON.parse(localStorage.getItem(k)||'[]');
+        list.push({id:oppId, ts: Date.now()});
+        localStorage.setItem(k, JSON.stringify(list.slice(-500)));
+      }catch{}
+    }
+  }
+
+  function escapeHtml(s){
+    return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
+  }
+
+  // Boot
+  loadData().then(render).catch(()=> emptyState());
+})();
+</script>
+</body>
+</html>

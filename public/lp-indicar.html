@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="theme-color" content="#0D0F14">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%230D0F14'/%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23F9E8B2'/%3E%3Cstop offset='1' stop-color='%23C9A84C'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M 22 22 L 50 80 L 78 22' stroke='url(%23g)' stroke-width='13' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="./logo-pegasus-gold.jpg">
+<title>Vértice · Indique uma oportunidade</title>
+<meta name="description" content="Indique um cliente para a rede Vértice. Arrematação, Home Equity, Revisão Contratual e Clube do Milhão.">
+<meta property="og:title" content="Vértice · Indique uma oportunidade">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./lp-shared.css">
+</head>
+<body>
+
+<nav class="lp-nav">
+  <a href="#" class="lp-nav-logo" onclick="event.preventDefault();window.scrollTo({top:0,behavior:'smooth'})">
+    <img class="lp-nav-logo-img" src="./logo-vertice.svg" alt="Vértice">
+  </a>
+  <button class="lp-nav-cta" onclick="scrollToForm()">Indicar agora →</button>
+</nav>
+
+<section class="lp-hero">
+  <div class="lp-hero-l">
+    <div class="lp-hero-badge">
+      <span class="lp-hero-badge-dot"></span>
+      Indicação Qualificada
+    </div>
+    <h1 class="lp-hero-h">
+      Uma indicação. <em>Quatro oportunidades.</em>
+    </h1>
+    <p class="lp-hero-sub">
+      Sua indicação será conduzida pelo licenciado responsável em até 24h. Abordagem consultiva, sem pressão de venda — análise séria do potencial de cada operação.
+    </p>
+    <div id="parc-banner-wrap"></div>
+    <div class="lp-hero-stats">
+      <div>
+        <div class="lp-hero-stat-v gold">24h</div>
+        <div class="lp-hero-stat-l">RESPOSTA GARANTIDA</div>
+      </div>
+      <div>
+        <div class="lp-hero-stat-v">4</div>
+        <div class="lp-hero-stat-l">PRODUTOS DISPONÍVEIS</div>
+      </div>
+      <div>
+        <div class="lp-hero-stat-v">100%</div>
+        <div class="lp-hero-stat-l">CONFIDENCIAL · LGPD</div>
+      </div>
+    </div>
+    <div class="lp-hero-btns">
+      <button class="lp-btn-p" onclick="scrollToForm()">Indicar agora →</button>
+      <a href="#produtos" class="lp-btn-s">Ver produtos</a>
+    </div>
+  </div>
+  <aside class="lp-hero-r" id="form-anchor">
+    <form class="lp-form-box" onsubmit="enviarIndicacao(event)" autocomplete="on">
+      <div class="lp-form-title">Dados da indicação</div>
+      <div class="lp-form-sub">O licenciado entra em contato em até 24h</div>
+
+      <div class="lp-form-row">
+        <label class="lp-label">Nome do cliente</label>
+        <input type="text" class="lp-input" name="nome" placeholder="Nome do indicado" required>
+      </div>
+      <div class="lp-form-row-2">
+        <div>
+          <label class="lp-label">Telefone</label>
+          <input type="tel" class="lp-input" name="telefone" placeholder="(00) 00000-0000" required oninput="maskTel(this)" maxlength="15">
+        </div>
+        <div>
+          <label class="lp-label">E-mail (opc.)</label>
+          <input type="email" class="lp-input" name="email" placeholder="email@cliente.com">
+        </div>
+      </div>
+      <div class="lp-form-row-2">
+        <div>
+          <label class="lp-label">Cidade</label>
+          <input type="text" class="lp-input" name="cidade" placeholder="Cidade">
+        </div>
+        <div>
+          <label class="lp-label">UF</label>
+          <input type="text" class="lp-input" name="estado" placeholder="SP" maxlength="2" style="text-transform:uppercase">
+        </div>
+      </div>
+      <div class="lp-form-row">
+        <label class="lp-label">Produto de interesse</label>
+        <select class="lp-input" name="produto">
+          <option value="">Selecione…</option>
+          <option>Arrematação Individual</option>
+          <option>Home Equity</option>
+          <option>Revisão Contratual</option>
+          <option>Clube do Milhão</option>
+          <option>Não tenho certeza</option>
+        </select>
+      </div>
+      <div class="lp-form-row">
+        <label class="lp-label">Observações (opc.)</label>
+        <textarea class="lp-input" name="observacao" placeholder="Contexto, urgência, valor estimado..." rows="3"></textarea>
+      </div>
+      <button type="submit" class="lp-form-btn" id="submit-btn">
+        Enviar indicação
+        <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h8M7 3l4 4-4 4"/></svg>
+      </button>
+      <div class="lp-form-status" id="form-status"></div>
+      <p class="lp-form-foot">Enviado diretamente ao licenciado responsável</p>
+    </form>
+  </aside>
+</section>
+
+<section class="lp-section lp-section-alt" id="produtos">
+  <div class="lp-section-inner">
+    <div class="lp-section-header lp-reveal">
+      <span class="lp-section-label">Os 4 produtos</span>
+      <h2 class="lp-section-h">Qual oportunidade <em>se encaixa?</em></h2>
+      <p class="lp-section-sub">Você não precisa decidir — o licenciado avalia o melhor produto para o cliente indicado.</p>
+    </div>
+    <div class="lp-features">
+      <div class="lp-feat lp-reveal">
+        <div class="lp-feat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 19l11-17 11 17H1z"/></svg></div>
+        <div class="lp-feat-title">Arrematação Judicial</div>
+        <div class="lp-feat-desc">Para quem busca imóvel abaixo do mercado. Análise completa do leilão.</div>
+      </div>
+      <div class="lp-feat lp-reveal">
+        <div class="lp-feat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12l9-9 9 9"/><path d="M5 10v10h14V10"/></svg></div>
+        <div class="lp-feat-title">Home Equity</div>
+        <div class="lp-feat-desc">Crédito com imóvel próprio como garantia. Liberação rápida.</div>
+      </div>
+      <div class="lp-feat lp-reveal">
+        <div class="lp-feat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+        <div class="lp-feat-title">Revisão Contratual</div>
+        <div class="lp-feat-desc">Análise jurídica. Cliente paga só sobre o que recuperar.</div>
+      </div>
+      <div class="lp-feat lp-reveal">
+        <div class="lp-feat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15 8 22 9 17 14 18 21 12 18 6 21 7 14 2 9 9 8 12 2"/></svg></div>
+        <div class="lp-feat-title">Clube do Milhão</div>
+        <div class="lp-feat-desc">Consórcio premium com sorteio mensal. Ideal pra investidor.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="lp-section">
+  <div class="lp-section-inner">
+    <div class="lp-section-header lp-reveal">
+      <span class="lp-section-label">Dúvidas frequentes</span>
+      <h2 class="lp-section-h">Perguntas <em>comuns</em></h2>
+      <p class="lp-section-sub">Tudo que indicadores e clientes perguntam antes de enviar a indicação.</p>
+    </div>
+    <div class="lp-faq-list">
+      <div class="lp-faq-item lp-reveal">
+        <div class="lp-faq-q">Como o licenciado entra em contato?</div>
+        <div class="lp-faq-a">O licenciado entra em contato em até 24h pelo telefone ou e-mail informado. Abordagem consultiva, sem pressão de venda.</div>
+      </div>
+      <div class="lp-faq-item lp-reveal">
+        <div class="lp-faq-q">Meus dados ficam protegidos?</div>
+        <div class="lp-faq-a">Sim. Os dados são enviados diretamente ao licenciado responsável e ficam protegidos pela LGPD. Toda indicação tem hash criptográfico de auditoria.</div>
+      </div>
+      <div class="lp-faq-item lp-reveal">
+        <div class="lp-faq-q">Quanto tempo leva para fechar?</div>
+        <div class="lp-faq-a">Depende do produto. Home Equity em 15-30 dias. Arrematação depende do calendário do leilão. Revisão Contratual em 60-90 dias.</div>
+      </div>
+      <div class="lp-faq-item lp-reveal">
+        <div class="lp-faq-q">O cliente paga taxa para participar?</div>
+        <div class="lp-faq-a">Não há custo de adesão. Cada produto tem sua estrutura de honorários (sempre com sucesso, nunca antecipado).</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="lp-cta-bottom">
+  <h2 class="lp-cta-h">Conhece <em>uma oportunidade?</em></h2>
+  <p class="lp-cta-sub">Indique agora. O licenciado entra em contato em até 24h.</p>
+  <button class="lp-btn-p" onclick="scrollToForm()">Indicar agora →</button>
+</section>
+
+<footer class="lp-footer">
+  <img class="lp-footer-logo" src="./logo-vertice.svg" alt="Vértice">
+  <p class="lp-footer-txt">VAI Inteligência Comercial · Plataforma integrada para Arrematação Judicial, Home Equity, Revisão Contratual e Clube do Milhão.</p>
+  <p class="lp-footer-mini">© 2026 VÉRTICE · Indicação Qualificada</p>
+</footer>
+
+<script>
+const API_BASE = window.__VERTICE_API__ || location.origin;
+function getParceiroId(){const p=new URLSearchParams(location.search);return p.get('p')||location.pathname.match(/\/lp\/indicar\/([a-zA-Z0-9_-]+)/)?.[1]||null;}
+function maskTel(i){let v=i.value.replace(/\D/g,'');if(v.length>2)v='('+v.slice(0,2)+') '+v.slice(2);if(v.length>10)v=v.slice(0,10)+'-'+v.slice(10);i.value=v.slice(0,15);}
+function scrollToForm(){document.getElementById('form-anchor').scrollIntoView({behavior:'smooth',block:'center'});setTimeout(()=>{const el=document.querySelector('input[name="nome"]');if(el)el.focus();},500);}
+function showStatus(kind,msg){const el=document.getElementById('form-status');el.className='lp-form-status '+kind;el.textContent=msg;if(kind==='ok')setTimeout(()=>{el.className='lp-form-status';},10000);}
+
+async function loadParceiro(){
+  const pid=getParceiroId();
+  if(!pid)return;
+  try{
+    const res=await fetch(API_BASE+'/api/lp/indicacao/'+encodeURIComponent(pid));
+    if(res.ok){
+      const data=await res.json();
+      window.__parc=data.parceiro;
+      const initial=(data.parceiro.nome||'P').trim().charAt(0).toUpperCase();
+      document.getElementById('parc-banner-wrap').innerHTML=`<div class="lp-banner">
+        <div class="lp-banner-icon">${initial}</div>
+        <div class="lp-banner-text">Indicação via <strong>${data.parceiro.nome}</strong> <span class="lp-arrow">→</span> Licenciado <strong>${data.licenciado.nome}</strong> · ${data.licenciado.empresa}</div>
+      </div>`;
+    }
+  }catch(e){}
+}
+loadParceiro();
+
+async function enviarIndicacao(ev){
+  ev.preventDefault();
+  const form=ev.target;
+  const data=Object.fromEntries(new FormData(form));
+  const btn=document.getElementById('submit-btn');
+  const pid=(window.__parc&&window.__parc.id)||getParceiroId();
+  if(!data.nome?.trim())return showStatus('err','Informe o nome do cliente.');
+  if(!data.telefone?.trim())return showStatus('err','Informe o telefone.');
+  if(!pid){showStatus('ok','Indicação recebida (modo demo).');form.reset();return;}
+  btn.disabled=true; btn.innerHTML='Enviando…';
+  try{
+    const res=await fetch(API_BASE+'/api/lp/indicacao/'+encodeURIComponent(pid),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+    const body=await res.json().catch(()=>({}));
+    if(res.ok){showStatus('ok',body.message||'Indicação enviada!');form.reset();}
+    else{showStatus('err',body.error||'Falha ao enviar.');}
+  } catch(e){showStatus('err','Sem conexão. Tente novamente.');}
+  finally{btn.disabled=false;btn.innerHTML='Enviar indicação <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h8M7 3l4 4-4 4"/></svg>';}
+}
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}}),{threshold:0.12,rootMargin:'0px 0px -60px 0px'});
+document.querySelectorAll('.lp-reveal').forEach(el=>io.observe(el));
+</script>
+</body>
+</html>

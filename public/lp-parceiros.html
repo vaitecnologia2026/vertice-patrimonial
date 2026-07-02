@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="theme-color" content="#0D0F14">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%230D0F14'/%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23F9E8B2'/%3E%3Cstop offset='1' stop-color='%23C9A84C'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M 22 22 L 50 80 L 78 22' stroke='url(%23g)' stroke-width='13' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="./logo-pegasus-gold.jpg">
+<title>Vértice · Programa de Parceiros</title>
+<meta name="description" content="Torne-se parceiro Vértice. Acesso aos 4 produtos financeiros mais lucrativos. Comissão de 8-15%. Sem investimento inicial.">
+<meta property="og:title" content="Vértice · Programa de Parceiros">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./lp-shared.css">
+</head>
+<body>
+
+<nav class="lp-nav">
+  <a href="#" class="lp-nav-logo" onclick="event.preventDefault();window.scrollTo({top:0,behavior:'smooth'})">
+    <img class="lp-nav-logo-img" src="./logo-vertice.svg" alt="Vértice">
+  </a>
+  <div class="lp-nav-links">
+    <a href="#produtos" class="lp-nav-link">Produtos</a>
+    <a href="#processo" class="lp-nav-link">Como funciona</a>
+    <a href="#numeros" class="lp-nav-link">Resultados</a>
+  </div>
+  <button class="lp-nav-cta" onclick="scrollToForm()">Quero ser Parceiro →</button>
+</nav>
+
+<section class="lp-hero">
+  <div class="lp-hero-l">
+    <div class="lp-hero-badge">
+      <span class="lp-hero-badge-dot"></span>
+      Programa de Parceiros
+    </div>
+    <h1 class="lp-hero-h">
+      Construa sua rede. <em>Multiplique sua renda.</em>
+    </h1>
+    <p class="lp-hero-sub">
+      Indique clientes para os 4 produtos financeiros mais lucrativos do mercado. Você indica — a Vértice fecha. Sem mensalidade, sem cota mínima, sem investimento inicial.
+    </p>
+    <div id="lic-banner-wrap"></div>
+    <div class="lp-hero-stats">
+      <div>
+        <div class="lp-hero-stat-v gold">8-15%</div>
+        <div class="lp-hero-stat-l">COMISSÃO POR VENDA</div>
+      </div>
+      <div>
+        <div class="lp-hero-stat-v">24h</div>
+        <div class="lp-hero-stat-l">RESPOSTA DO LICENCIADO</div>
+      </div>
+      <div>
+        <div class="lp-hero-stat-v">R$ 0</div>
+        <div class="lp-hero-stat-l">INVESTIMENTO INICIAL</div>
+      </div>
+    </div>
+    <div class="lp-hero-btns">
+      <button class="lp-btn-p" onclick="scrollToForm()">Cadastrar agora →</button>
+      <a href="#produtos" class="lp-btn-s">Ver produtos</a>
+    </div>
+  </div>
+  <aside class="lp-hero-r" id="form-anchor">
+    <form class="lp-form-box" onsubmit="enviarParceiro(event)" autocomplete="on">
+      <div class="lp-form-title">Cadastro de Parceiro</div>
+      <div class="lp-form-sub">Resposta do licenciado em até 24h</div>
+
+      <div class="lp-form-row">
+        <label class="lp-label">Nome completo</label>
+        <input type="text" class="lp-input" name="nome" placeholder="Seu nome" required autocomplete="name">
+      </div>
+      <div class="lp-form-row-2">
+        <div>
+          <label class="lp-label">WhatsApp</label>
+          <input type="tel" class="lp-input" name="whatsapp" placeholder="(00) 00000-0000" required autocomplete="tel" oninput="maskTel(this)" maxlength="15">
+        </div>
+        <div>
+          <label class="lp-label">E-mail</label>
+          <input type="email" class="lp-input" name="email" placeholder="seu@email.com" required autocomplete="email">
+        </div>
+      </div>
+      <div class="lp-form-row-2">
+        <div>
+          <label class="lp-label">CPF ou CNPJ</label>
+          <input type="text" class="lp-input" name="documento" placeholder="000.000.000-00" required oninput="maskDoc(this)" maxlength="18">
+        </div>
+        <div>
+          <label class="lp-label">Cidade</label>
+          <input type="text" class="lp-input" name="cidade" placeholder="Sua cidade" autocomplete="address-level2">
+        </div>
+      </div>
+      <div class="lp-form-row">
+        <label class="lp-label">Como pretende atuar?</label>
+        <select class="lp-input" name="tipoAtuacao">
+          <option value="">Selecione…</option>
+          <option>Corretor de imóveis</option>
+          <option>Advogado</option>
+          <option>Contador</option>
+          <option>Consultor financeiro</option>
+          <option>Indicador / Influenciador</option>
+          <option>Outro</option>
+        </select>
+      </div>
+      <div class="lp-form-row">
+        <label class="lp-label">Produto de maior interesse</label>
+        <select class="lp-input" name="prodInteresse">
+          <option value="">Selecione…</option>
+          <option>Arrematação Individual</option>
+          <option>Home Equity</option>
+          <option>Revisão Contratual</option>
+          <option>Clube do Milhão</option>
+          <option>Todos</option>
+        </select>
+      </div>
+      <button type="submit" class="lp-form-btn" id="submit-btn">
+        Enviar cadastro
+        <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h8M7 3l4 4-4 4"/></svg>
+      </button>
+      <div class="lp-form-status" id="form-status"></div>
+      <p class="lp-form-foot">Dados enviados diretamente ao licenciado responsável</p>
+    </form>
+  </aside>
+</section>
+
+<section class="lp-section lp-section-alt" id="produtos">
+  <div class="lp-section-inner">
+    <div class="lp-section-header lp-reveal">
+      <span class="lp-section-label">Os 4 produtos</span>
+      <h2 class="lp-section-h">4 frentes de receita. <em>1 plataforma.</em></h2>
+      <p class="lp-section-sub">Indique 1 cliente. Abra acesso aos 4 produtos. Sua comissão por cada um.</p>
+    </div>
+    <div class="lp-features">
+      <div class="lp-feat lp-reveal">
+        <div class="lp-feat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 19l11-17 11 17H1z"/></svg></div>
+        <div class="lp-feat-title">Arrematação Judicial</div>
+        <div class="lp-feat-desc">Imóveis em leilão até 50% abaixo do mercado. Comissão 8-12% sobre o ticket.</div>
+      </div>
+      <div class="lp-feat lp-reveal">
+        <div class="lp-feat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12l9-9 9 9"/><path d="M5 10v10h14V10"/><path d="M9 20v-6h6v6"/></svg></div>
+        <div class="lp-feat-title">Home Equity</div>
+        <div class="lp-feat-desc">Crédito com garantia de imóvel. Liberação rápida, taxas competitivas.</div>
+      </div>
+      <div class="lp-feat lp-reveal">
+        <div class="lp-feat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/></svg></div>
+        <div class="lp-feat-title">Revisão Contratual</div>
+        <div class="lp-feat-desc">Análise jurídica de contratos bancários. Honorários por economia gerada.</div>
+      </div>
+      <div class="lp-feat lp-reveal">
+        <div class="lp-feat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15 8 22 9 17 14 18 21 12 18 6 21 7 14 2 9 9 8 12 2"/></svg></div>
+        <div class="lp-feat-title">Clube do Milhão</div>
+        <div class="lp-feat-desc">Consórcio premium com sorteio mensal. Comissão recorrente por cota ativa.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="lp-section" id="processo">
+  <div class="lp-section-inner">
+    <div class="lp-section-header lp-reveal">
+      <span class="lp-section-label">Como funciona</span>
+      <h2 class="lp-section-h">Da indicação ao <em>repasse</em></h2>
+      <p class="lp-section-sub">Você indica, o licenciado conduz, a comissão cai automaticamente.</p>
+    </div>
+    <div class="lp-features lp-features-3">
+      <div class="lp-feat lp-reveal">
+        <div class="lp-feat-num">1</div>
+        <div class="lp-feat-title">Cadastre-se</div>
+        <div class="lp-feat-desc">Preencha o formulário, aguarde a aprovação do licenciado (até 24h) e receba sua LP exclusiva de indicações.</div>
+      </div>
+      <div class="lp-feat lp-reveal">
+        <div class="lp-feat-num">2</div>
+        <div class="lp-feat-title">Compartilhe sua LP</div>
+        <div class="lp-feat-desc">Use sua URL exclusiva para captar clientes. Cada cliente vinculado fica registrado para sua comissão.</div>
+      </div>
+      <div class="lp-feat lp-reveal">
+        <div class="lp-feat-num">3</div>
+        <div class="lp-feat-title">Receba o repasse</div>
+        <div class="lp-feat-desc">Quando o licenciado fechar o deal, o repasse é calculado automaticamente pelo motor de comissões.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="lp-section lp-section-alt" id="numeros">
+  <div class="lp-section-inner">
+    <div class="lp-section-header lp-reveal">
+      <span class="lp-section-label">Por que parceiros escolhem</span>
+      <h2 class="lp-section-h">Mais que comissão. <em>Infraestrutura.</em></h2>
+      <p class="lp-section-sub">A diferença entre indicar e converter está nos bastidores.</p>
+    </div>
+    <div class="lp-numeros-grid lp-reveal">
+      <div><div class="lp-num-val">24h</div><div class="lp-num-lbl">Resposta do licenciado ao lead</div></div>
+      <div><div class="lp-num-val">100%</div><div class="lp-num-lbl">Auditoria automática SHA256</div></div>
+      <div><div class="lp-num-val">R$ 0</div><div class="lp-num-lbl">Mensalidade ou cota mínima</div></div>
+      <div><div class="lp-num-val">4</div><div class="lp-num-lbl">Produtos disponíveis pra indicar</div></div>
+    </div>
+  </div>
+</section>
+
+<section class="lp-cta-bottom">
+  <h2 class="lp-cta-h">Pronto para começar <em>a faturar?</em></h2>
+  <p class="lp-cta-sub">Cadastro analisado em até 24h pelo licenciado responsável.</p>
+  <button class="lp-btn-p" onclick="scrollToForm()">Cadastrar agora →</button>
+</section>
+
+<footer class="lp-footer">
+  <img class="lp-footer-logo" src="./logo-vertice.svg" alt="Vértice">
+  <p class="lp-footer-txt">VAI Inteligência Comercial · Plataforma integrada para Arrematação Judicial, Home Equity, Revisão Contratual e Clube do Milhão.</p>
+  <p class="lp-footer-mini">© 2026 VÉRTICE · Programa de Parceiros</p>
+</footer>
+
+<script>
+const API_BASE = window.__VERTICE_API__ || location.origin;
+function getLicId(){const p=new URLSearchParams(location.search);return p.get('lic')||location.pathname.match(/\/lp\/parceiros\/([a-zA-Z0-9_-]+)/)?.[1]||null;}
+function maskDoc(i){let v=i.value.replace(/\D/g,'');if(v.length<=11){if(v.length>3)v=v.slice(0,3)+'.'+v.slice(3);if(v.length>7)v=v.slice(0,7)+'.'+v.slice(7);if(v.length>11)v=v.slice(0,11)+'-'+v.slice(11);i.value=v.slice(0,14);}else{if(v.length>2)v=v.slice(0,2)+'.'+v.slice(2);if(v.length>6)v=v.slice(0,6)+'.'+v.slice(6);if(v.length>10)v=v.slice(0,10)+'/'+v.slice(10);if(v.length>15)v=v.slice(0,15)+'-'+v.slice(15);i.value=v.slice(0,18);}}
+function maskTel(i){let v=i.value.replace(/\D/g,'');if(v.length>2)v='('+v.slice(0,2)+') '+v.slice(2);if(v.length>10)v=v.slice(0,10)+'-'+v.slice(10);i.value=v.slice(0,15);}
+function scrollToForm(){document.getElementById('form-anchor').scrollIntoView({behavior:'smooth',block:'center'});setTimeout(()=>{const el=document.querySelector('input[name="nome"]');if(el)el.focus();},500);}
+function showStatus(kind,msg){const el=document.getElementById('form-status');el.className='lp-form-status '+kind;el.textContent=msg;if(kind==='ok')setTimeout(()=>{el.className='lp-form-status';},10000);}
+
+async function loadLic(){
+  const licId=getLicId();
+  if(!licId)return;
+  try{
+    const res=await fetch(API_BASE+'/api/lp/parceiros/'+encodeURIComponent(licId));
+    if(res.ok){
+      const data=await res.json();
+      window.__lic=data.licenciado;
+      const initial=(data.licenciado.nome||'L').trim().charAt(0).toUpperCase();
+      document.getElementById('lic-banner-wrap').innerHTML=`<div class="lp-banner">
+        <div class="lp-banner-icon">${initial}</div>
+        <div class="lp-banner-text">Você está se cadastrando para a rede de <strong>${data.licenciado.nome}</strong> · ${data.licenciado.empresa} · ${data.licenciado.estado}</div>
+      </div>`;
+    }
+  }catch(e){}
+}
+loadLic();
+
+async function enviarParceiro(ev){
+  ev.preventDefault();
+  const form=ev.target;
+  const data=Object.fromEntries(new FormData(form));
+  const btn=document.getElementById('submit-btn');
+  const licId=(window.__lic&&window.__lic.id)||getLicId();
+  if(!data.nome?.trim())return showStatus('err','Informe seu nome.');
+  if(!data.whatsapp?.trim())return showStatus('err','Informe seu WhatsApp.');
+  if(!data.email?.includes('@'))return showStatus('err','Email inválido.');
+  if(!data.documento?.trim())return showStatus('err','Informe CPF ou CNPJ.');
+  if(!licId){showStatus('ok','Cadastro recebido (modo demo).');form.reset();return;}
+  btn.disabled=true; btn.innerHTML='Enviando…';
+  try{
+    const res=await fetch(API_BASE+'/api/lp/parceiros/'+encodeURIComponent(licId),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+    const body=await res.json().catch(()=>({}));
+    if(res.ok){showStatus('ok',body.message||'Cadastro recebido.');form.reset();}
+    else{showStatus('err',body.error||'Falha ao enviar.');}
+  } catch(e){showStatus('err','Sem conexão. Tente novamente.');}
+  finally{btn.disabled=false;btn.innerHTML='Enviar cadastro <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h8M7 3l4 4-4 4"/></svg>';}
+}
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}}),{threshold:0.12,rootMargin:'0px 0px -60px 0px'});
+document.querySelectorAll('.lp-reveal').forEach(el=>io.observe(el));
+</script>
+</body>
+</html>

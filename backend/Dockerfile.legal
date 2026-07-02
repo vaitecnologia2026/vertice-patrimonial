@@ -1,0 +1,10 @@
+# Correção incremental: parte da imagem 2.97 que JÁ roda em produção e adiciona
+# APENAS as páginas legais + o endpoint de exclusão. Preserva front-end, node_modules,
+# prisma e todo o resto byte a byte (nada é reconstruído do host defasado).
+FROM vertice-api:2.97
+COPY index.js                     /app/src/index.js
+COPY conta.js                     /app/src/routes/conta.js
+COPY politica-de-seguranca.html   /app/public/politica-de-seguranca.html
+COPY termos.html                  /app/public/termos.html
+COPY excluir-conta.html           /app/public/excluir-conta.html
+COPY excluir-dados.html           /app/public/excluir-dados.html

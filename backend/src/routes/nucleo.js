@@ -1,0 +1,61 @@
+const express = require('express');
+const prisma = require('../utils/prisma');
+const { auth } = require('../middleware/auth');
+
+// Núcleo do CRM migrado do localStorage → Postgres.
+// Cada coleção é "espelho": o objeto completo vai em `data` (Json); GET devolve a
+// lista de objetos; PUT substitui a coleção inteira (mesma semântica do "salvar
+// array" que o front fazia no localStorage). Single-tenant: coleção global da operação.
+function collectionRouter(model, indexFields) {
+  const router = express.Router();
+  router.use(auth);
+
+  router.get('/', async (req, res, next) => {
+    try {
+      const rows = await prisma[model].findMany({ orderBy: { updatedAt: 'desc' } });
+      res.json(rows.map((r) => r.data));
+    } catch (e) { next(e); }
+  });
+
+  router.put('/', async (req, res, next) => {
+    try {
+      const items = Array.isArray(req.body && req.body.items)
+        ? req.body.items
+        : (Array.isArray(req.body) ? req.body : null);
+      if (!items) return res.status(400).json({ error: 'items deve ser uma lista.' });
+
+      const rows = items
+        .filter((it) => it && it.id != null)
+        .map((it) => {
+          const base = { id: String(it.id), data: it };
+          for (const f of indexFields) {
+            base[f] = it[f] != null ? String(it[f]).slice(0, 160) : null;
+          }
+          return base;
+        });
+
+      // Proteção contra perda de dados: um PUT vazio (cliente com localStorage zerado,
+      // payload corrompido, etc.) NÃO pode zerar uma coleção que já tem registros.
+      if (rows.length === 0) {
+        const existing = await prisma[model].count();
+        if (existing > 0) {
+          return res.status(409).json({ error: 'Recusado: lista vazia não pode substituir uma coleção com dados.' });
+        }
+      }
+
+      await prisma.$transaction([
+        prisma[model].deleteMany({}),
+        ...(rows.length ? [prisma[model].createMany({ data: rows, skipDuplicates: true })] : []),
+      ]);
+      res.json({ ok: true, count: rows.length });
+    } catch (e) { next(e); }
+  });
+
+  return router;
+}
+
+module.exports = {
+  imoveis: collectionRouter('imovel', ['status', 'cidade', 'resp']),
+  colaboradores: collectionRouter('colaborador', ['nome']),
+  corretores: collectionRouter('corretor', ['nome']),
+};

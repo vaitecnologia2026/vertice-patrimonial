@@ -1,0 +1,192 @@
+const express = require('express');
+const prisma = require('../utils/prisma');
+const { auth, adminOnly } = require('../middleware/auth');
+const { pick, formatCPF } = require('../utils/sanitize');
+
+const router = express.Router();
+
+const VALID_STATUS = ['NOVO', 'EM_NEGOCIACAO', 'FECHADO', 'PERDIDO', 'CANCELADO'];
+
+function calcularPayout(parceiro, valorBase) {
+  const v = parseFloat(valorBase) || 0;
+  if (parceiro.tipoComissao === 'PERCENTUAL') {
+    return Math.round((v * (parseFloat(parceiro.valComissao) || 0) / 100) * 100) / 100;
+  }
+  return parseFloat(parceiro.valComissao) || 0;
+}
+
+// ─── LIST ────────────────────────────────────────────────────
+router.get('/', auth, async (req, res, next) => {
+  try {
+    const where = {};
+    if (req.user.role === 'LIC') where.licId = req.user.licId;
+    else if (req.query.licId) where.licId = req.query.licId;
+    if (req.query.parceiroId) where.parceiroId = req.query.parceiroId;
+    if (req.query.status) {
+      const s = String(req.query.status).toUpperCase();
+      if (VALID_STATUS.includes(s)) where.status = s;
+    }
+    if (req.query.q) {
+      const q = req.query.q;
+      where.OR = [
+        { nomeCliente:     { contains: q, mode: 'insensitive' } },
+        { telefoneCliente: { contains: q } },
+        { emailCliente:    { contains: q, mode: 'insensitive' } },
+      ];
+    }
+    const list = await prisma.partnerLead.findMany({
+      where,
+      include: {
+        parceiro: { select: { id: true, nome: true, tipoComissao: true, valComissao: true, regraComissao: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    res.json(list);
+  } catch (err) { next(err); }
+});
+
+// ─── DETAIL ──────────────────────────────────────────────────
+router.get('/:id', auth, async (req, res, next) => {
+  try {
+    const lead = await prisma.partnerLead.findUnique({
+      where: { id: req.params.id },
+      include: { parceiro: true },
+    });
+    if (!lead) return res.status(404).json({ error: 'Lead não encontrado.' });
+    if (req.user.role === 'LIC' && lead.licId !== req.user.licId) {
+      return res.status(403).json({ error: 'Acesso negado.' });
+    }
+    res.json(lead);
+  } catch (err) { next(err); }
+});
+
+// ─── CREATE manual ───────────────────────────────────────────
+router.post('/', auth, async (req, res, next) => {
+  try {
+    const data = pick(req.body, [
+      'parceiroId', 'nomeCliente', 'telefoneCliente', 'emailCliente',
+      'cidadeCliente', 'estadoCliente', 'produto', 'observacao',
+    ]);
+    if (!data.parceiroId) return res.status(400).json({ error: 'parceiroId é obrigatório.' });
+    if (!data.nomeCliente) return res.status(400).json({ error: 'nomeCliente é obrigatório.' });
+    if (!data.telefoneCliente) return res.status(400).json({ error: 'telefoneCliente é obrigatório.' });
+
+    const parc = await prisma.parceiro.findUnique({ where: { id: data.parceiroId } });
+    if (!parc) return res.status(404).json({ error: 'Parceiro não encontrado.' });
+    if (req.user.role === 'LIC' && parc.licId !== req.user.licId) {
+      return res.status(403).json({ error: 'Acesso negado ao parceiro.' });
+    }
+
+    const lead = await prisma.partnerLead.create({
+      data: { ...data, licId: parc.licId, origem: 'manual' },
+    });
+
+    await prisma.auditoria.create({
+      data: { userId: req.user.id, action: 'PARTNER_LEAD_CRIADO', entity: 'PartnerLead', entityId: lead.id, desc: `Lead ${lead.nomeCliente}`, ip: req.ip },
+    });
+
+    res.status(201).json(lead);
+  } catch (err) { next(err); }
+});
+
+// ─── UPDATE STATUS / VALORES (auto-cria Cliente + Payout no FECHADO) ──
+router.patch('/:id', auth, async (req, res, next) => {
+  try {
+    const existing = await prisma.partnerLead.findUnique({
+      where: { id: req.params.id },
+      include: { parceiro: true },
+    });
+    if (!existing) return res.status(404).json({ error: 'Lead não encontrado.' });
+    if (req.user.role === 'LIC' && existing.licId !== req.user.licId) {
+      return res.status(403).json({ error: 'Acesso negado.' });
+    }
+
+    const data = pick(req.body, ['status', 'valorPrevisto', 'valorReceber', 'observacao', 'motivoPerdido', 'vendaId']);
+    let novoStatus = null;
+    if (data.status) {
+      const s = String(data.status).toUpperCase();
+      if (!VALID_STATUS.includes(s)) return res.status(400).json({ error: 'status inválido.' });
+      data.status = s;
+      novoStatus = s;
+      if (s === 'FECHADO') data.fechadoEm = new Date();
+      if (s === 'PERDIDO') data.perdidoEm = new Date();
+    }
+    if (data.valorPrevisto != null) data.valorPrevisto = parseFloat(data.valorPrevisto) || 0;
+    if (data.valorReceber  != null) data.valorReceber  = parseFloat(data.valorReceber)  || 0;
+
+    // Se FECHADO e ainda não tem cliente vinculado, cria Cliente + Payout
+    let clienteCriado = null;
+    let payoutCriado = null;
+    if (novoStatus === 'FECHADO' && !existing.clienteId) {
+      const cpfRaw = req.body.cpfCliente || existing.documento;
+      const cpf = cpfRaw ? formatCPF(cpfRaw) : null;
+
+      // Cria Cliente (sem CPF se não fornecido — preencher depois)
+      try {
+        clienteCriado = await prisma.cliente.create({
+          data: {
+            nome:   existing.nomeCliente,
+            cpf:    cpf || `LEAD-${existing.id}`, // placeholder único pra não quebrar @unique
+            tel:    existing.telefoneCliente,
+            email:  existing.emailCliente,
+            end:    existing.cidadeCliente,
+            orig:   `Parceiro: ${existing.parceiro.nome}`,
+            prod:   existing.produto,
+            status: 'FECHADO',
+            licId:  existing.licId,
+            parceiroId: existing.parceiroId,
+          },
+        });
+        data.clienteId = clienteCriado.id;
+      } catch (e) {
+        if (e.code === 'P2002') {
+          // CPF já existe → vincular Cliente existente
+          const ex = await prisma.cliente.findUnique({ where: { cpf } });
+          if (ex) {
+            await prisma.cliente.update({ where: { id: ex.id }, data: { parceiroId: existing.parceiroId } });
+            data.clienteId = ex.id;
+          }
+        } else { throw e; }
+      }
+
+      // Cria PartnerPayout automaticamente
+      const valorBase = parseFloat(data.valorPrevisto ?? existing.valorPrevisto) || 0;
+      if (valorBase > 0 && existing.parceiro.status === 'ATIVO') {
+        const valorCalculado = calcularPayout(existing.parceiro, valorBase);
+        payoutCriado = await prisma.partnerPayout.create({
+          data: {
+            parceiroId: existing.parceiroId,
+            licId:      existing.licId,
+            leadId:     existing.id,
+            valorBase,
+            tipoComissao:  existing.parceiro.tipoComissao,
+            regraComissao: existing.parceiro.regraComissao,
+            valorCalculado,
+          },
+        });
+      }
+    }
+
+    const lead = await prisma.partnerLead.update({
+      where: { id: existing.id },
+      data,
+      include: { parceiro: { select: { id: true, nome: true, tipoComissao: true, valComissao: true, regraComissao: true } } },
+    });
+
+    await prisma.auditoria.create({
+      data: { userId: req.user.id, action: 'PARTNER_LEAD_ATUALIZADO', entity: 'PartnerLead', entityId: lead.id, desc: `${lead.nomeCliente} → ${lead.status}`, ip: req.ip },
+    });
+
+    res.json({ lead, clienteCriado, payoutCriado });
+  } catch (err) { next(err); }
+});
+
+// ─── DELETE (admin) ──────────────────────────────────────────
+router.delete('/:id', auth, adminOnly, async (req, res, next) => {
+  try {
+    await prisma.partnerLead.delete({ where: { id: req.params.id } });
+    res.json({ ok: true });
+  } catch (err) { next(err); }
+});
+
+module.exports = router;

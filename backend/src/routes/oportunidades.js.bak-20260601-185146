@@ -1,0 +1,289 @@
+// ── Rotas de Oportunidades (LP pública) ────────────────────────
+// Endpoints públicos (LP): GET /slug/:slug, POST /:slug/view, POST /:slug/lead
+// Endpoints admin (autenticados): list, create, update, publish, unpublish
+
+const express = require('express');
+const crypto = require('crypto');
+const prisma = require('../utils/prisma');
+const { auth, adminOnly } = require('../middleware/auth');
+const rateLimit = require('express-rate-limit');
+
+const router = express.Router();
+
+// Rate limit dedicado p/ submissão de leads (anti-spam)
+const leadLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 8,
+  message: { error: 'Muitas submissões. Aguarde alguns minutos.' },
+});
+
+// Contador de visualizações é público — limita p/ não inflar contagem nem engordar a tabela.
+const viewLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 120,
+  message: { error: 'Muitas requisições. Aguarde alguns minutos.' },
+});
+
+function genSlug(base) {
+  const norm = String(base || 'imovel')
+    .toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 60);
+  return norm + '-' + crypto.randomBytes(3).toString('hex');
+}
+
+// ── Helper de sanitização ─────────────────────────────────────
+const OPP_FIELDS = ['titulo','bairro','cidade','tipo','modalidade','lance','aval','deb','ref','leilao','descricao','fotos','lat','lng','corretorNome','corretorTel','corretorWa','pixelFb','pixelGa'];
+function pickOpp(body) {
+  const out = {};
+  for (const k of OPP_FIELDS) if (body[k] !== undefined) out[k] = body[k];
+  if (out.leilao) out.leilao = new Date(out.leilao);
+  if (out.lance != null) out.lance = parseFloat(out.lance) || 0;
+  if (out.aval != null) out.aval = parseFloat(out.aval) || 0;
+  if (out.deb != null) out.deb = parseFloat(out.deb) || 0;
+  if (out.ref != null) out.ref = parseFloat(out.ref) || 0;
+  return out;
+}
+
+// ════════════════════════════════════════════════════════════════
+// ENDPOINTS PÚBLICOS (sem auth — usados pela LP)
+// ════════════════════════════════════════════════════════════════
+
+// GET /api/oportunidades/slug/:slug — payload completo da LP
+router.get('/slug/:slug', async (req, res, next) => {
+  try {
+    const opp = await prisma.opportunity.findFirst({
+      where: { slug: req.params.slug, status: { in: ['PUBLICADO', 'PAUSADO'] } },
+    });
+    if (!opp) return res.status(404).json({ error: 'Oportunidade não encontrada.' });
+    if (opp.status === 'PAUSADO') return res.status(410).json({ error: 'Oportunidade pausada.' });
+    res.json({
+      id: opp.id,
+      slug: opp.slug,
+      titulo: opp.titulo,
+      bairro: opp.bairro,
+      cidade: opp.cidade,
+      tipo: opp.tipo,
+      modalidade: opp.modalidade,
+      lance: opp.lance,
+      aval: opp.aval,
+      deb: opp.deb,
+      ref: opp.ref,
+      leilao: opp.leilao,
+      descricao: opp.descricao,
+      fotos: opp.fotos || [],
+      lat: opp.lat,
+      lng: opp.lng,
+      corretor: {
+        nome: opp.corretorNome,
+        tel: opp.corretorTel,
+        wa: opp.corretorWa,
+      },
+      pixel: { fb: opp.pixelFb, ga: opp.pixelGa },
+      pubAt: opp.publishedAt,
+      views: opp.views,
+    });
+  } catch (err) { next(err); }
+});
+
+// Mantém compatibilidade com a LP que usa ?id=:id
+router.get('/:id', async (req, res, next) => {
+  try {
+    const opp = await prisma.opportunity.findUnique({ where: { id: req.params.id } });
+    if (!opp || opp.status !== 'PUBLICADO') return res.status(404).json({ error: 'Oportunidade não encontrada.' });
+    res.json(opp);
+  } catch (err) { next(err); }
+});
+
+// POST /api/oportunidades/:id/view — registra visualização
+router.post('/:id/view', viewLimiter, async (req, res, next) => {
+  try {
+    const id = req.params.id;
+    const opp = await prisma.opportunity.findUnique({ where: { id } });
+    if (!opp) return res.status(404).json({ error: 'Não encontrada.' });
+    await prisma.$transaction([
+      prisma.opportunity.update({ where: { id }, data: { views: { increment: 1 } } }),
+      prisma.opportunityView.create({
+        data: {
+          opportunityId: id,
+          ip: req.ip,
+          userAgent: req.headers['user-agent']?.slice(0, 300),
+          referrer: req.headers.referer?.slice(0, 300),
+        },
+      }),
+    ]);
+    res.json({ ok: true });
+  } catch (err) { next(err); }
+});
+
+// POST /api/oportunidades/:id/lead — captura lead da LP (público + rate-limit)
+router.post('/:id/lead', leadLimiter, async (req, res, next) => {
+  try {
+    const id = req.params.id;
+    const { nome, tel, email, mensagem, utm } = req.body || {};
+    if (!nome || !tel) return res.status(400).json({ error: 'Nome e telefone obrigatórios.' });
+    const opp = await prisma.opportunity.findUnique({ where: { id } });
+    if (!opp) return res.status(404).json({ error: 'Oportunidade não encontrada.' });
+    const lead = await prisma.opportunityLead.create({
+      data: {
+        opportunityId: id,
+        nome: String(nome).slice(0, 120),
+        tel: String(tel).slice(0, 30),
+        email: email ? String(email).slice(0, 160) : null,
+        mensagem: mensagem ? String(mensagem).slice(0, 2000) : null,
+        utm: utm || null,
+        ip: req.ip,
+        userAgent: req.headers['user-agent']?.slice(0, 300),
+      },
+    });
+    res.status(201).json({ ok: true, leadId: lead.id });
+  } catch (err) { next(err); }
+});
+
+// ════════════════════════════════════════════════════════════════
+// ENDPOINTS ADMIN (autenticados)
+// ════════════════════════════════════════════════════════════════
+
+// GET /api/oportunidades — lista (admin vê tudo, lic vê só publicadas)
+router.get('/', auth, async (req, res, next) => {
+  try {
+    const where = {};
+    if (req.user.role === 'LIC') where.status = 'PUBLICADO';
+    if (req.query.status) where.status = req.query.status;
+    if (req.query.cidade) where.cidade = req.query.cidade;
+    if (req.query.q) {
+      where.OR = [
+        { titulo: { contains: req.query.q, mode: 'insensitive' } },
+        { bairro: { contains: req.query.q, mode: 'insensitive' } },
+        { cidade: { contains: req.query.q, mode: 'insensitive' } },
+      ];
+    }
+    const list = await prisma.opportunity.findMany({
+      where,
+      include: { _count: { select: { leads: true, viewLog: true } } },
+      orderBy: [{ status: 'asc' }, { publishedAt: 'desc' }, { createdAt: 'desc' }],
+    });
+    res.json(list);
+  } catch (err) { next(err); }
+});
+
+// POST /api/oportunidades — cria oportunidade (admin only)
+router.post('/', auth, adminOnly, async (req, res, next) => {
+  try {
+    const data = pickOpp(req.body);
+    if (!data.titulo) return res.status(400).json({ error: 'Título obrigatório.' });
+    let slug = req.body.slug || genSlug(data.titulo);
+    // garante unicidade
+    let n = 0;
+    while (await prisma.opportunity.findUnique({ where: { slug } })) {
+      slug = genSlug(data.titulo) + '-' + (++n);
+      if (n > 5) return res.status(500).json({ error: 'Não foi possível gerar slug único.' });
+    }
+    const opp = await prisma.opportunity.create({
+      data: { ...data, slug, operacaoId: req.body.operacaoId || null, licId: req.user.licId || null },
+    });
+    res.status(201).json(opp);
+  } catch (err) { next(err); }
+});
+
+// PUT /api/oportunidades/:id — atualiza (admin)
+router.put('/:id', auth, adminOnly, async (req, res, next) => {
+  try {
+    const data = pickOpp(req.body);
+    const opp = await prisma.opportunity.update({ where: { id: req.params.id }, data });
+    res.json(opp);
+  } catch (err) { next(err); }
+});
+
+// POST /api/oportunidades/:id/publish — publica (admin)
+router.post('/:id/publish', auth, adminOnly, async (req, res, next) => {
+  try {
+    const opp = await prisma.opportunity.update({
+      where: { id: req.params.id },
+      data: {
+        status: 'PUBLICADO',
+        publishedAt: new Date(),
+        publishedBy: req.user.id,
+      },
+    });
+    res.json(opp);
+  } catch (err) { next(err); }
+});
+
+// POST /api/oportunidades/:id/unpublish — despublica (admin)
+router.post('/:id/unpublish', auth, adminOnly, async (req, res, next) => {
+  try {
+    const opp = await prisma.opportunity.update({
+      where: { id: req.params.id },
+      data: { status: 'PAUSADO' },
+    });
+    res.json(opp);
+  } catch (err) { next(err); }
+});
+
+// DELETE /api/oportunidades/:id (admin)
+router.delete('/:id', auth, adminOnly, async (req, res, next) => {
+  try {
+    await prisma.opportunity.delete({ where: { id: req.params.id } });
+    res.json({ ok: true });
+  } catch (err) { next(err); }
+});
+
+// GET /api/oportunidades/:id/leads (admin)
+router.get('/:id/leads', auth, adminOnly, async (req, res, next) => {
+  try {
+    const leads = await prisma.opportunityLead.findMany({
+      where: { opportunityId: req.params.id },
+      orderBy: { createdAt: 'desc' },
+    });
+    res.json(leads);
+  } catch (err) { next(err); }
+});
+
+// PATCH /api/oportunidades/leads/:leadId — atualiza status do lead (admin)
+router.patch('/leads/:leadId', auth, adminOnly, async (req, res, next) => {
+  try {
+    const { status, convertedTo } = req.body;
+    const lead = await prisma.opportunityLead.update({
+      where: { id: req.params.leadId },
+      data: { status, convertedTo },
+    });
+    res.json(lead);
+  } catch (err) { next(err); }
+});
+
+// POST /api/oportunidades/sync-from-operacao/:opId — cria/atualiza oportunidade a partir de uma operação aprovada
+router.post('/sync-from-operacao/:opId', auth, adminOnly, async (req, res, next) => {
+  try {
+    const op = await prisma.operacao.findUnique({ where: { id: req.params.opId } });
+    if (!op) return res.status(404).json({ error: 'Operação não encontrada.' });
+    if (op.status !== 'aprovado') return res.status(400).json({ error: 'Operação não está aprovada.' });
+    const existing = await prisma.opportunity.findUnique({ where: { operacaoId: op.id } });
+    const data = {
+      titulo: op.end || 'Imóvel',
+      bairro: op.bairro,
+      cidade: op.cidade,
+      tipo: op.tipo_imovel,
+      modalidade: op.modalidade,
+      lance: op.lance,
+      aval: op.aval,
+      deb: op.deb,
+      ref: op.ref,
+      leilao: op.leilao,
+      status: 'APROVADO',
+    };
+    if (existing) {
+      const updated = await prisma.opportunity.update({ where: { id: existing.id }, data });
+      return res.json(updated);
+    }
+    const slug = genSlug(data.titulo + '-' + (op.cidade || ''));
+    const created = await prisma.opportunity.create({
+      data: { ...data, slug, operacaoId: op.id, licId: op.licId || null },
+    });
+    res.status(201).json(created);
+  } catch (err) { next(err); }
+});
+
+module.exports = router;

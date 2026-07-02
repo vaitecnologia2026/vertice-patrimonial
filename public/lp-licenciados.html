@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="theme-color" content="#0D0F14">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%230D0F14'/%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23F9E8B2'/%3E%3Cstop offset='1' stop-color='%23C9A84C'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M 22 22 L 50 80 L 78 22' stroke='url(%23g)' stroke-width='13' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="./logo-pegasus-gold.jpg">
+<title>Vértice · Seja um Licenciado</title>
+<meta name="description" content="Torne-se Licenciado Vértice. Plataforma + 4 produtos lucrativos + treinamento + suporte. Você opera, a Vértice entrega a infraestrutura.">
+<meta property="og:title" content="Vértice · Seja um Licenciado">
+<meta property="og:description" content="Construa sua operação. Multiplique seu faturamento. Com a infraestrutura Vértice.">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./lp-shared.css">
+</head>
+<body>
+
+<nav class="lp-nav">
+  <a href="#" class="lp-nav-logo" onclick="event.preventDefault();window.scrollTo({top:0,behavior:'smooth'})">
+    <img class="lp-nav-logo-img" src="./logo-vertice.svg" alt="Vértice">
+  </a>
+  <div class="lp-nav-links">
+    <a href="#beneficios" class="lp-nav-link">Benefícios</a>
+    <a href="#processo" class="lp-nav-link">Processo</a>
+    <a href="#numeros" class="lp-nav-link">Resultados</a>
+  </div>
+  <button class="lp-nav-cta" onclick="scrollToForm()">Quero ser Licenciado →</button>
+</nav>
+
+<section class="lp-hero">
+  <div class="lp-hero-l">
+    <div class="lp-hero-badge">
+      <span class="lp-hero-badge-dot"></span>
+      Programa de Licenciamento
+    </div>
+    <h1 class="lp-hero-h">
+      Sua operação financeira <em>sem reinventar nada.</em>
+    </h1>
+    <p class="lp-hero-sub">
+      Plataforma pronta. 4 produtos lucrativos. Treinamento, marketing, jurídico e tecnologia inclusos. Você foca no comercial — a Vértice cuida do resto.
+    </p>
+    <div class="lp-hero-stats">
+      <div>
+        <div class="lp-hero-stat-v gold" id="hero-lics">—</div>
+        <div class="lp-hero-stat-l">LICENCIADOS ATIVOS</div>
+      </div>
+      <div>
+        <div class="lp-hero-stat-v">4</div>
+        <div class="lp-hero-stat-l">PRODUTOS INTEGRADOS</div>
+      </div>
+      <div>
+        <div class="lp-hero-stat-v">R$ 3M+</div>
+        <div class="lp-hero-stat-l">META ANUAL MÉDIA</div>
+      </div>
+    </div>
+    <div class="lp-hero-btns">
+      <button class="lp-btn-p" onclick="scrollToForm()">Quero ser Licenciado →</button>
+      <a href="#beneficios" class="lp-btn-s">Ver benefícios</a>
+    </div>
+  </div>
+  <aside class="lp-hero-r" id="form-anchor">
+    <form class="lp-form-box" onsubmit="enviarLicenciado(event)" autocomplete="on">
+      <div class="lp-form-title">Cadastro de candidato</div>
+      <div class="lp-form-sub">Análise em até 48h · Sem custo de inscrição</div>
+
+      <div class="lp-form-row">
+        <label class="lp-label">Nome completo</label>
+        <input type="text" class="lp-input" name="nome" placeholder="Seu nome" required autocomplete="name">
+      </div>
+      <div class="lp-form-row">
+        <label class="lp-label">Empresa / Razão Social</label>
+        <input type="text" class="lp-input" name="empresa" placeholder="Nome da empresa" required autocomplete="organization">
+      </div>
+      <div class="lp-form-row-2">
+        <div>
+          <label class="lp-label">CNPJ</label>
+          <input type="text" class="lp-input" name="cnpj" placeholder="00.000.000/0000-00" required oninput="maskCNPJ(this)" maxlength="18">
+        </div>
+        <div>
+          <label class="lp-label">UF</label>
+          <input type="text" class="lp-input" name="estado" placeholder="SP" required maxlength="2" style="text-transform:uppercase">
+        </div>
+      </div>
+      <div class="lp-form-row-2">
+        <div>
+          <label class="lp-label">WhatsApp</label>
+          <input type="tel" class="lp-input" name="tel" placeholder="(00) 00000-0000" required autocomplete="tel" oninput="maskTel(this)" maxlength="15">
+        </div>
+        <div>
+          <label class="lp-label">E-mail</label>
+          <input type="email" class="lp-input" name="email" placeholder="seu@email.com" required autocomplete="email">
+        </div>
+      </div>
+      <div class="lp-form-row">
+        <label class="lp-label">Por que quer ser Licenciado?</label>
+        <textarea class="lp-input" name="motivo" placeholder="Sua experiência, expectativa de operação, mercado..." rows="3"></textarea>
+      </div>
+      <button type="submit" class="lp-form-btn" id="submit-btn">
+        Enviar candidatura
+        <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h8M7 3l4 4-4 4"/></svg>
+      </button>
+      <div class="lp-form-status" id="form-status"></div>
+      <p class="lp-form-foot">Resposta em até 48h úteis · Dados protegidos LGPD</p>
+    </form>
+  </aside>
+</section>
+
+<section class="lp-section lp-section-alt" id="beneficios">
+  <div class="lp-section-inner">
+    <div class="lp-section-header lp-reveal">
+      <span class="lp-section-label">Por que ser Licenciado</span>
+      <h2 class="lp-section-h">A infraestrutura. <em>Você opera.</em></h2>
+      <p class="lp-section-sub">Tudo que você precisaria construir do zero em 2 anos — entregue pronto no dia 1.</p>
+    </div>
+    <div class="lp-features lp-features-3">
+      <div class="lp-feat lp-reveal">
+        <div class="lp-feat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
+        <div class="lp-feat-title">Plataforma completa</div>
+        <div class="lp-feat-desc">CRM integrado, contratos digitais com auditoria SHA256, motor de comissões automático e área de membros.</div>
+      </div>
+      <div class="lp-feat lp-reveal">
+        <div class="lp-feat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
+        <div class="lp-feat-title">4 produtos lucrativos</div>
+        <div class="lp-feat-desc">Arrematação Judicial, Home Equity, Revisão Contratual e Clube do Milhão. Comissões de 8% a 15%.</div>
+      </div>
+      <div class="lp-feat lp-reveal">
+        <div class="lp-feat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+        <div class="lp-feat-title">Rede de parceiros</div>
+        <div class="lp-feat-desc">LP exclusiva para captar parceiros. Você define a remuneração. Repasse automatizado por venda fechada.</div>
+      </div>
+      <div class="lp-feat lp-reveal">
+        <div class="lp-feat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg></div>
+        <div class="lp-feat-title">Treinamento contínuo</div>
+        <div class="lp-feat-desc">Método VAI, biblioteca de aulas, mentorias mensais e suporte jurídico integrado ao seu painel.</div>
+      </div>
+      <div class="lp-feat lp-reveal">
+        <div class="lp-feat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+        <div class="lp-feat-title">Conformidade e segurança</div>
+        <div class="lp-feat-desc">JWT com refresh rotativo, contratos com chain SHA256 e auditoria de toda ação crítica.</div>
+      </div>
+      <div class="lp-feat lp-reveal">
+        <div class="lp-feat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg></div>
+        <div class="lp-feat-title">Dashboard de performance</div>
+        <div class="lp-feat-desc">KPIs em tempo real, ranking de licenciados, metas trimestrais e relatórios automáticos para o seu time.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="lp-section" id="processo">
+  <div class="lp-section-inner">
+    <div class="lp-section-header lp-reveal">
+      <span class="lp-section-label">Como funciona</span>
+      <h2 class="lp-section-h">Da candidatura ao <em>primeiro deal</em></h2>
+      <p class="lp-section-sub">~30 dias do envio do formulário à sua primeira operação registrada.</p>
+    </div>
+    <div class="lp-features lp-features-3">
+      <div class="lp-feat lp-reveal">
+        <div class="lp-feat-num">1</div>
+        <div class="lp-feat-title">Candidatura + análise</div>
+        <div class="lp-feat-desc">Você envia o formulário. Nosso time analisa em até 48h e marca uma call para alinhar expectativas e território.</div>
+      </div>
+      <div class="lp-feat lp-reveal">
+        <div class="lp-feat-num">2</div>
+        <div class="lp-feat-title">Onboarding 15 dias</div>
+        <div class="lp-feat-desc">Acesso à plataforma, configuração do seu painel branded, treinamento dos 4 produtos e do Método VAI de vendas.</div>
+      </div>
+      <div class="lp-feat lp-reveal">
+        <div class="lp-feat-num">3</div>
+        <div class="lp-feat-title">Operação independente</div>
+        <div class="lp-feat-desc">Você capta parceiros via LP exclusiva, conduz negociações e fatura. Suporte contínuo do time Vértice.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="lp-section lp-section-alt" id="numeros">
+  <div class="lp-section-inner">
+    <div class="lp-section-header lp-reveal">
+      <span class="lp-section-label">Resultados</span>
+      <h2 class="lp-section-h">Números <em>que falam</em></h2>
+      <p class="lp-section-sub">Resultado consolidado da rede Vértice nos últimos 12 meses.</p>
+    </div>
+    <div class="lp-numeros-grid lp-reveal">
+      <div>
+        <div class="lp-num-val" id="num-lics">—</div>
+        <div class="lp-num-lbl">Licenciados ativos no Brasil</div>
+      </div>
+      <div>
+        <div class="lp-num-val">8-15%</div>
+        <div class="lp-num-lbl">Comissão por produto</div>
+      </div>
+      <div>
+        <div class="lp-num-val">R$ 0</div>
+        <div class="lp-num-lbl">Custo de inscrição</div>
+      </div>
+      <div>
+        <div class="lp-num-val">30d</div>
+        <div class="lp-num-lbl">Do cadastro ao 1º deal</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="lp-cta-bottom">
+  <h2 class="lp-cta-h">Pronto para construir <em>sua operação?</em></h2>
+  <p class="lp-cta-sub">Candidatura analisada em 48h. Sem custo de inscrição.</p>
+  <button class="lp-btn-p" onclick="scrollToForm()">Enviar candidatura agora →</button>
+</section>
+
+<footer class="lp-footer">
+  <img class="lp-footer-logo" src="./logo-vertice.svg" alt="Vértice">
+  <p class="lp-footer-txt">VAI Inteligência Comercial · Plataforma integrada para Arrematação Judicial, Home Equity, Revisão Contratual e Clube do Milhão.</p>
+  <p class="lp-footer-mini">© 2026 VÉRTICE · Programa de Licenciamento</p>
+</footer>
+
+<script>
+const API_BASE = window.__VERTICE_API__ || location.origin;
+function maskCNPJ(i){let v=i.value.replace(/\D/g,'');if(v.length>2)v=v.slice(0,2)+'.'+v.slice(2);if(v.length>6)v=v.slice(0,6)+'.'+v.slice(6);if(v.length>10)v=v.slice(0,10)+'/'+v.slice(10);if(v.length>15)v=v.slice(0,15)+'-'+v.slice(15);i.value=v.slice(0,18);}
+function maskTel(i){let v=i.value.replace(/\D/g,'');if(v.length>2)v='('+v.slice(0,2)+') '+v.slice(2);if(v.length>10)v=v.slice(0,10)+'-'+v.slice(10);i.value=v.slice(0,15);}
+function scrollToForm(){document.getElementById('form-anchor').scrollIntoView({behavior:'smooth',block:'center'});setTimeout(()=>{const el=document.querySelector('input[name="nome"]');if(el)el.focus();},500);}
+function showStatus(kind,msg){const el=document.getElementById('form-status');el.className='lp-form-status '+kind;el.textContent=msg;if(kind==='ok')setTimeout(()=>{el.className='lp-form-status';},10000);}
+
+async function loadInfo(){
+  try{
+    const res=await fetch(API_BASE+'/api/lp/licenciados');
+    if(res.ok){
+      const data=await res.json();
+      const v=data.licenciadosAtivos||'—';
+      const a=document.getElementById('hero-lics');if(a)a.textContent=v;
+      const b=document.getElementById('num-lics');if(b)b.textContent=v;
+    }
+  }catch(e){}
+}
+loadInfo();
+
+async function enviarLicenciado(ev){
+  ev.preventDefault();
+  const form=ev.target;
+  const data=Object.fromEntries(new FormData(form));
+  const btn=document.getElementById('submit-btn');
+  if(!data.nome?.trim())return showStatus('err','Informe seu nome.');
+  if(!data.empresa?.trim())return showStatus('err','Informe a empresa.');
+  if(data.cnpj.replace(/\D/g,'').length!==14)return showStatus('err','CNPJ inválido.');
+  if(!data.email?.includes('@'))return showStatus('err','Email inválido.');
+  if(data.tel.replace(/\D/g,'').length<10)return showStatus('err','WhatsApp inválido.');
+  if(!data.estado||data.estado.length!==2)return showStatus('err','UF inválida.');
+  btn.disabled=true; btn.innerHTML='Enviando…';
+  try{
+    const res=await fetch(API_BASE+'/api/lp/licenciados',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+    const body=await res.json().catch(()=>({}));
+    if(res.ok){showStatus('ok',body.message||'Candidatura enviada!');form.reset();}
+    else{showStatus('err',body.error||'Falha ao enviar.');}
+  } catch(e){showStatus('err','Sem conexão. Tente novamente.');}
+  finally{btn.disabled=false;btn.innerHTML='Enviar candidatura <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h8M7 3l4 4-4 4"/></svg>';}
+}
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}}),{threshold:0.12,rootMargin:'0px 0px -60px 0px'});
+document.querySelectorAll('.lp-reveal').forEach(el=>io.observe(el));
+</script>
+</body>
+</html>

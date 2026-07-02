@@ -1,0 +1,29 @@
+version: "3.8"
+services:
+  api:
+    image: vertice-api:1.0
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      DATABASE_URL: "postgresql://vertice:${POSTGRES_PASSWORD}@postgres-stack_postgres:5432/vertice?schema=public"
+      JWT_SECRET: "${JWT_SECRET}"
+      JWT_REFRESH_SECRET: "${JWT_REFRESH_SECRET}"
+      JWT_EXPIRES_IN: "15m"
+      JWT_REFRESH_EXPIRES_IN: "7d"
+      CORS_ORIGIN: "*"
+      LOG_LEVEL: info
+    ports:
+      - "4000:4000"
+    networks:
+      - postgres-stack_pg_net
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        max_attempts: 5
+      resources:
+        limits:
+          memory: 512M
+networks:
+  postgres-stack_pg_net:
+    external: true

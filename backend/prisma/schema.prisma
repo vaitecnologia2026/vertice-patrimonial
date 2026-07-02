@@ -1,0 +1,672 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── USUÁRIOS / AUTH ──────────────────────────────────────────
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      Role     @default(LIC)
+  avatar    String?
+  ativo     Boolean  @default(true)
+  licId     String?
+  licenciado Licenciado? @relation(fields: [licId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  refreshTokens RefreshToken[]
+  auditoria     Auditoria[]
+}
+
+enum Role {
+  ADMIN
+  LIC
+  COLAB
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+// ─── LICENCIADOS ──────────────────────────────────────────────
+model Licenciado {
+  id        String   @id @default(cuid())
+  nome      String
+  empresa   String
+  cnpj      String   @unique
+  estado    String
+  email     String   @unique
+  tel       String
+  pix       String?
+  banco     String?
+  status    StatusLic @default(ATIVO)
+  meta      Float    @default(3000000)
+  inicio    DateTime
+  ano       Int      @default(1)
+  taxa      String   @default("cobrado")
+  comHE     Float    @default(1.0)
+  approvedAt   DateTime?
+  rejectMotivo String?
+  motivo       String?  // "Por que quer ser licenciado?" — vindo da candidatura (site/LP)
+  origem    String   @default("manual")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users      User[]
+  clientes   Cliente[]
+  vendas     Venda[]
+  comissoes  Comissao[]
+  metas      Meta[]
+  parceiros  Parceiro[]
+  mensalidades Mensalidade[]
+}
+
+enum StatusLic {
+  PENDENTE
+  ATIVO
+  SUSPENSO
+  INATIVO
+  REPROVADO
+}
+
+// ─── CLIENTES ────────────────────────────────────────────────
+model Cliente {
+  id        String   @id @default(cuid())
+  nome      String
+  cpf       String   @unique
+  tel       String?
+  email     String?
+  orig      String?
+  end       String?
+  status    StatusCli @default(ATIVO)
+  prod      String?
+  data      DateTime @default(now())
+  licId     String
+  licenciado Licenciado @relation(fields: [licId], references: [id])
+  parceiroId String?
+  parceiro   Parceiro? @relation(fields: [parceiroId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  vendas     Venda[]
+  kanbanCards KanbanCard[]
+}
+
+enum StatusCli {
+  ATIVO
+  INATIVO
+  FECHADO
+  PERDIDO
+}
+
+// ─── KANBAN CRM ──────────────────────────────────────────────
+model KanbanCard {
+  id        String   @id @default(cuid())
+  cliId     String
+  cliente   Cliente  @relation(fields: [cliId], references: [id])
+  licId     String
+  col       String   @default("Prospecção")
+  prod      String?
+  val       Float?
+  dias      Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─── VENDAS ──────────────────────────────────────────────────
+model Venda {
+  id        String   @id @default(cuid())
+  cliId     String
+  cliente   Cliente  @relation(fields: [cliId], references: [id])
+  licId     String
+  licenciado Licenciado @relation(fields: [licId], references: [id])
+  prod      String
+  val       Float
+  canal     String   @default("Licenciado")
+  status    StatusVenda @default(ABERTA)
+  comStatus String   @default("pendente")
+  opId      String?
+  data      DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  comissoes  Comissao[]
+  contrato   Contrato?
+}
+
+enum StatusVenda {
+  ABERTA
+  FECHADA
+  CANCELADA
+}
+
+// ─── COMISSÕES ───────────────────────────────────────────────
+model Comissao {
+  id          String   @id @default(cuid())
+  vendaId     String
+  venda       Venda    @relation(fields: [vendaId], references: [id])
+  licId       String
+  licenciado  Licenciado @relation(fields: [licId], references: [id])
+  prod        String
+  valNeg      Float
+  regra       String?
+  comEmpresa  Float
+  val         Float
+  comAdv      Float    @default(0)
+  comAna      Float    @default(0)
+  netEmpresa  Float
+  papel       String   @default("Licenciado")
+  status      StatusCom @default(PENDENTE)
+  recorrente  Boolean  @default(false)
+  totalFuturo Float?
+  data        DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+enum StatusCom {
+  PENDENTE
+  PAGO
+  CANCELADO
+}
+
+// ─── OPERAÇÕES (Arrematação / Home Equity / etc) ─────────────
+model Operacao {
+  id         String   @id @default(cuid())
+  tipo       TipoOp
+  cliId      String?
+  licId      String?
+  status     String   @default("em_analise")
+  // Arrematação
+  end        String?
+  bairro     String?
+  cidade     String?
+  tipo_imovel String?
+  modalidade String?
+  leilao     DateTime?
+  lance      Float?
+  aval       Float?
+  deb        Float?
+  ref        Float?
+  mes        String?
+  // Home Equity
+  valImovel  Float?
+  valSolicit Float?
+  prazo      Int?
+  taxa       Float?
+  // Revisão Contratual
+  banco      String?
+  contratoCodigo String?
+  dataContrato DateTime?
+  motivo     String?
+  economia   Float?
+  // Clube do Milhão
+  grupo      Int?
+  cota       Int?
+  parcelas   Int?
+  parcelaPagas Int?
+  valorMensal Float?
+  assembleia DateTime?
+  cl         Json?
+  msgs       Json?
+  resp       String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+enum TipoOp {
+  ARREMATA
+  HOMEEQUITY
+  REVISAO
+  CLUBE
+}
+
+// ─── CONTRATOS ───────────────────────────────────────────────
+model Contrato {
+  id        String   @id @default(cuid())
+  vendaId   String   @unique
+  venda     Venda    @relation(fields: [vendaId], references: [id])
+  numero    String   @unique
+  tipo      String
+  status    StatusContrato @default(RASCUNHO)
+  hash      String?
+  hashPrev  String?
+  dataAss   DateTime?
+  pdf       String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum StatusContrato {
+  RASCUNHO
+  ASSINADO
+  CANCELADO
+}
+
+// ─── DOCUMENTOS ──────────────────────────────────────────────
+model Documento {
+  id        String   @id @default(cuid())
+  nome      String
+  tipo      String
+  tam       String?
+  status    StatusDoc @default(PENDENTE)
+  url       String?
+  cliId     String?
+  licId     String?
+  data      DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum StatusDoc {
+  PENDENTE
+  ENTREGUE
+  REJEITADO
+}
+
+// ─── METAS ───────────────────────────────────────────────────
+model Meta {
+  id        String   @id @default(cuid())
+  licId     String
+  licenciado Licenciado @relation(fields: [licId], references: [id])
+  periodo   String   // "Q2/2026"
+  meta      Float
+  realizado Float    @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─── OPORTUNIDADES (LP pública) ──────────────────────────────
+// Cada oportunidade espelha um imóvel aprovado em Operacao (tipo=ARREMATA)
+// e adiciona metadados de publicação: slug, URL pública, fotos, corretor, pixels.
+model Opportunity {
+  id           String   @id @default(cuid())
+  // Vínculo com a operação aprovada (origem dos dados financeiros e endereço)
+  operacaoId   String?  @unique
+  // Snapshot dos dados (cache, evita JOIN em rota pública)
+  titulo       String
+  bairro       String?
+  cidade       String?
+  tipo         String?
+  modalidade   String?
+  lance        Float?
+  aval         Float?
+  deb          Float?
+  ref          Float?
+  leilao       DateTime?
+  // Metadados editorial / SEO
+  slug         String   @unique
+  status       StatusOpp @default(RASCUNHO)
+  descricao    String?
+  fotos        Json?     // ["url1","url2"]
+  lat          Float?
+  lng          Float?
+  // Corretor responsável
+  corretorNome String?
+  corretorTel  String?
+  corretorWa   String?
+  // Tracking
+  pixelFb      String?
+  pixelGa      String?
+  views        Int      @default(0)
+  // Auditoria
+  publishedAt  DateTime?
+  publishedBy  String?
+  licId        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  leads        OpportunityLead[]
+  viewLog      OpportunityView[]
+
+  @@index([status, publishedAt])
+  @@index([cidade, status])
+}
+
+enum StatusOpp {
+  RASCUNHO
+  EM_ANALISE
+  APROVADO
+  PUBLICADO
+  PAUSADO
+  EXPIRADO
+}
+
+model OpportunityLead {
+  id            String   @id @default(cuid())
+  opportunityId String
+  opportunity   Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  nome          String
+  tel           String
+  email         String?
+  mensagem      String?
+  origem        String   @default("lp")
+  utm           Json?
+  ip            String?
+  userAgent     String?
+  status        StatusOppLead @default(NOVO)
+  convertedTo   String?  // ID do Cliente criado, se houver
+  createdAt     DateTime @default(now())
+
+  @@index([opportunityId, createdAt])
+  @@index([status, createdAt])
+}
+
+enum StatusOppLead {
+  NOVO
+  CONTATADO
+  QUALIFICADO
+  CONVERTIDO
+  PERDIDO
+}
+
+model OpportunityView {
+  id            String   @id @default(cuid())
+  opportunityId String
+  opportunity   Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  ip            String?
+  userAgent     String?
+  referrer      String?
+  createdAt     DateTime @default(now())
+
+  @@index([opportunityId, createdAt])
+}
+
+// ─── CONSÓRCIOS ──────────────────────────────────────────────
+model Consorcio {
+  id        String   @id @default(cuid())
+  tipo      String   // imovel, veiculo, servico, outros
+  nome      String
+  admin     String
+  carta     String
+  prazo     String?
+  parcela   String?
+  taxa      String?
+  comissao  String?
+  tabela    String?
+  visivel   Boolean  @default(true)
+  status    String   @default("aprovado")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─── ÁREA DE MEMBROS ─────────────────────────────────────────
+model Curso {
+  id        String   @id @default(cuid())
+  titulo    String
+  desc      String?
+  thumb     String?
+  ativo     Boolean  @default(true)
+  ordem     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  modulos   Modulo[]
+}
+
+model Modulo {
+  id        String   @id @default(cuid())
+  cursoId   String
+  curso     Curso    @relation(fields: [cursoId], references: [id], onDelete: Cascade)
+  titulo    String
+  ordem     Int      @default(0)
+  createdAt DateTime @default(now())
+
+  aulas     Aula[]
+}
+
+model Aula {
+  id        String   @id @default(cuid())
+  moduloId  String
+  modulo    Modulo   @relation(fields: [moduloId], references: [id], onDelete: Cascade)
+  titulo    String
+  video     String?
+  desc      String?
+  pdf       String?
+  ordem     Int      @default(0)
+  createdAt DateTime @default(now())
+}
+
+// ─── CONFIGURAÇÃO DA LICENÇA ─────────────────────────────────
+model Configuracao {
+  id         String  @id @default("singleton")
+  nomeEmpresa String @default("Vértice")
+  corPrimaria String @default("#F87131")
+  corSidebar  String @default("#FDFEFF")
+  corBG       String @default("#F4F6F9")
+  corCard     String @default("#FFFFFF")
+  logo        String?
+  pixelFb     String?
+  ga4         String?
+  // Central de Configurações — regras de negócio editáveis pelo cliente (por domínio).
+  // JSON aditivo: { pipeline_status:[...], prioridade:[...], produto:[...], ... }
+  business    Json?
+  updatedAt  DateTime @updatedAt
+}
+
+// ─── AUDITORIA ───────────────────────────────────────────────
+model Auditoria {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  action    String
+  entity    String?
+  entityId  String?
+  desc      String?
+  ip        String?
+  createdAt DateTime @default(now())
+}
+
+// ─── PARCEIROS ────────────────────────────────────────────────
+model Parceiro {
+  id            String   @id @default(cuid())
+  licId         String
+  licenciado    Licenciado @relation(fields: [licId], references: [id])
+  nome          String
+  whatsapp      String
+  email         String
+  documento     String
+  pix           String?
+  banco         String?
+  contratoUrl   String?
+  contratoNome  String?
+  cidade        String?
+  estado        String?
+  tipoAtuacao   String?
+  prodInteresse String?
+  tipoComissao  TipoComissao   @default(PERCENTUAL)
+  valComissao   Float          @default(0)
+  regraComissao RegraComissaoParceiro?
+  status        StatusParceiro @default(PENDENTE)
+  origem        String         @default("manual")
+  slugLp        String?        @unique
+  approvedAt    DateTime?
+  approvedBy    String?
+  rejectedAt    DateTime?
+  rejectedBy    String?
+  rejectMotivo  String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  leads    PartnerLead[]
+  payouts  PartnerPayout[]
+  clientes Cliente[]
+}
+
+enum TipoComissao {
+  PERCENTUAL
+  FIXO
+}
+
+enum StatusParceiro {
+  PENDENTE
+  ATIVO
+  REPROVADO
+  INATIVO
+}
+
+enum RegraComissaoParceiro {
+  INDICACAO
+  VENDA
+  COMISSAO_RECEBIDA
+}
+
+// ─── PARTNER LEADS ────────────────────────────────────────────
+model PartnerLead {
+  id              String   @id @default(cuid())
+  parceiroId      String
+  parceiro        Parceiro @relation(fields: [parceiroId], references: [id])
+  licId           String
+  nomeCliente     String
+  telefoneCliente String
+  emailCliente    String?
+  cidadeCliente   String?
+  estadoCliente   String?
+  produto         String?
+  observacao      String?
+  status          StatusPartnerLead @default(NOVO)
+  origem          String   @default("lp_parceiro")
+  valorPrevisto   Float    @default(0)
+  valorReceber    Float    @default(0)
+  fechadoEm       DateTime?
+  perdidoEm       DateTime?
+  motivoPerdido   String?
+  vendaId         String?
+  clienteId       String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  payouts PartnerPayout[]
+}
+
+enum StatusPartnerLead {
+  NOVO
+  EM_NEGOCIACAO
+  FECHADO
+  PERDIDO
+  CANCELADO
+}
+
+// ─── PARTNER PAYOUTS ──────────────────────────────────────────
+model PartnerPayout {
+  id              String   @id @default(cuid())
+  parceiroId      String
+  parceiro        Parceiro @relation(fields: [parceiroId], references: [id])
+  licId           String
+  leadId          String?
+  lead            PartnerLead? @relation(fields: [leadId], references: [id])
+  valorBase       Float
+  tipoComissao    TipoComissao
+  regraComissao   RegraComissaoParceiro?
+  valorCalculado  Float
+  status          StatusPartnerPayout @default(PENDENTE)
+  pagoEm          DateTime?
+  pagoBy          String?
+  obs             String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+enum StatusPartnerPayout {
+  PENDENTE
+  APROVADO
+  PAGO
+  CANCELADO
+}
+
+model ClientError {
+  id        String   @id @default(cuid())
+  kind      String   @default("error")
+  message   String
+  stack     String?
+  url       String?
+  userAgent String?
+  userEmail String?
+  resolved  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+// ─── NÚCLEO DO CRM (migrado do localStorage) ─────────────────────────────────
+// Coleções "espelho": o objeto completo vive em `data` (Json); colunas extras
+// só para índice/busca. PUT substitui a coleção inteira (espelha o save do front).
+model Imovel {
+  id        String   @id
+  status    String?
+  cidade    String?
+  resp      String?
+  data      Json
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+
+  @@index([status])
+}
+
+model Colaborador {
+  id        String   @id
+  nome      String?
+  data      Json
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+}
+
+model Corretor {
+  id        String   @id
+  nome      String?
+  data      Json
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+}
+
+// ─── MENSALIDADES / ASSINATURAS DA LICENÇA ───────────────────────────────────
+// Cobrança recorrente da licença (taxa de manutenção). Cada licenciado pode ter
+// uma assinatura ativa; o admin "gera" as parcelas do mês (idempotente por
+// competência) e dá baixa quando recebe. Substitui o módulo antes inexistente.
+model Mensalidade {
+  id         String   @id @default(cuid())
+  licId      String
+  licenciado Licenciado @relation(fields: [licId], references: [id])
+  descricao  String   @default("Mensalidade da licença")
+  valor      Float
+  diaVenc    Int      @default(10)
+  status     String   @default("ATIVA") // ATIVA | SUSPENSA | CANCELADA
+  inicio     DateTime @default(now())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  parcelas   Parcela[]
+
+  @@index([licId])
+  @@index([status])
+}
+
+model Parcela {
+  id            String   @id @default(cuid())
+  mensalidadeId String
+  mensalidade   Mensalidade @relation(fields: [mensalidadeId], references: [id], onDelete: Cascade)
+  licId         String
+  competencia   String   // "AAAA-MM" (ano-mês de referência)
+  valor         Float
+  vencimento    DateTime
+  status        String   @default("PENDENTE") // PENDENTE | PAGA | CANCELADA
+  pagoEm        DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([mensalidadeId, competencia])
+  @@index([licId])
+  @@index([status])
+}

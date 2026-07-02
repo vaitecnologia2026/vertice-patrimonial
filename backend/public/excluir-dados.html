@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<meta name="theme-color" content="#0D0F14">
+<meta name="robots" content="index,follow">
+<title>Excluir Dados — Vértice Patrimonial</title>
+<meta name="description" content="Elimine seus dados pessoais opcionais do Vértice Patrimonial mantendo sua conta de acesso ativa.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --gold:#F9E8B2;--gold2:#E8C96A;--gold-dim:rgba(249,232,178,.6);
+  --bg:#0D0F14;--bg2:#12151C;--card:#161A22;--card2:#1B202A;
+  --ink:#ECEBE8;--soft:#B8C2C0;--muted:#8A9794;--dim:#5E6A68;
+  --border:rgba(255,255,255,.08);--border2:rgba(249,232,178,.22);--gold4:rgba(249,232,178,.10);
+  --red:#E0645F;--red-bg:rgba(224,100,95,.10);--red-bd:rgba(224,100,95,.4);
+  --green:#3FCB8A;--green-bg:rgba(63,203,138,.10);--green-bd:rgba(63,203,138,.4);
+  --info:#5BA3E0;--info-bg:rgba(91,163,224,.10);--info-bd:rgba(91,163,224,.4);
+  --ff:'Plus Jakarta Sans',system-ui,sans-serif;--mono:'DM Mono',ui-monospace,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--ff);background:var(--bg);color:var(--ink);font-size:15px;line-height:1.7;-webkit-font-smoothing:antialiased;min-height:100vh;display:flex;flex-direction:column}
+a{color:var(--gold2);text-decoration:none;transition:color .15s}a:hover{color:var(--gold)}
+.nav{position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;padding:16px 24px;background:rgba(13,15,20,.92);backdrop-filter:blur(20px);border-bottom:1px solid var(--border)}
+.brand{display:flex;align-items:center;gap:11px}
+.logo-box{height:38px;width:auto;flex-shrink:0;display:block;filter:drop-shadow(0 2px 6px rgba(249,232,178,.25))}
+.brand-txt{display:flex;flex-direction:column;line-height:1.15}
+.brand-name{font-size:15px;font-weight:700;letter-spacing:-.02em}
+.brand-sub{font-size:10px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--muted)}
+.nav-back{font-size:13px;font-weight:600;color:var(--muted)}
+.wrap{flex:1;width:100%;max-width:520px;margin:0 auto;padding:48px 24px 64px}
+.eyebrow{display:inline-flex;align-items:center;gap:7px;padding:5px 14px;border:1px solid var(--border2);background:var(--gold4);border-radius:20px;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--gold2);margin-bottom:20px}
+h1{font-size:32px;font-weight:800;letter-spacing:-.035em;line-height:1.1;margin-bottom:12px}
+.lead{font-size:15px;color:var(--soft);margin-bottom:26px}
+.info{background:var(--info-bg);border:1px solid var(--info-bd);border-radius:12px;padding:16px 18px;margin-bottom:26px}
+.info-t{font-size:13px;font-weight:700;color:var(--info);margin-bottom:8px;display:flex;align-items:center;gap:7px}
+.info ul{margin:0;padding-left:18px}.info li{font-size:13.5px;color:var(--soft);margin-bottom:5px}.info li::marker{color:var(--info)}
+.info b{color:var(--ink)}
+.form{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:26px}
+.field{margin-bottom:18px}
+label{display:block;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:7px}
+input{width:100%;padding:13px 15px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;color:var(--ink);font-size:15px;font-family:inherit;outline:none;transition:border-color .15s,box-shadow .15s}
+input:focus{border-color:var(--gold2);box-shadow:0 0 0 3px var(--gold4)}
+input::placeholder{color:var(--dim)}
+.btn{width:100%;padding:14px;border:none;border-radius:11px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-p{background:var(--gold2);color:#0B2B28}.btn-p:hover{background:var(--gold)}
+.btn:disabled{opacity:.55;cursor:not-allowed}
+.msg{display:none;border-radius:12px;padding:16px 18px;margin-bottom:22px;font-size:14px}
+.msg.show{display:block}
+.msg.err{background:var(--red-bg);border:1px solid var(--red-bd);color:var(--red)}
+.msg.ok{background:var(--green-bg);border:1px solid var(--green-bd);color:var(--green)}
+.spinner{width:16px;height:16px;border:2px solid rgba(11,43,40,.3);border-top-color:#0B2B28;border-radius:50%;animation:sp .6s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.alt{text-align:center;margin-top:22px;font-size:13px;color:var(--muted)}
+footer{border-top:1px solid var(--border);padding:28px 24px;text-align:center}
+.foot-links{display:flex;flex-wrap:wrap;gap:18px;justify-content:center;margin-bottom:12px}
+.foot-links a{font-size:13px;color:var(--muted);font-weight:500}
+.foot-c{font-size:12px;color:var(--dim)}
+@media(max-width:600px){h1{font-size:27px}}
+</style>
+</head>
+<body>
+<nav class="nav">
+  <a href="/" class="brand">
+    <img class="logo-box" src="data:image/png;base64,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" alt="Vértice Patrimonial">
+    <div class="brand-txt"><span class="brand-name">Vértice Patrimonial</span><span class="brand-sub">VAI Inteligência Comercial</span></div>
+  </a>
+  <a href="/" class="nav-back">← Voltar ao app</a>
+</nav>
+
+<main class="wrap">
+  <span class="eyebrow">● Exclusão de dados</span>
+  <h1>Excluir meus dados</h1>
+  <p class="lead">Elimine seus dados pessoais opcionais e encerre todas as sessões, <strong>mantendo sua conta de acesso ativa</strong>. Confirme sua identidade para prosseguir.</p>
+
+  <div class="info">
+    <div class="info-t">ℹ O que é eliminado e o que é mantido</div>
+    <ul>
+      <li><b>Eliminado:</b> foto de perfil e demais dados pessoais opcionais;</li>
+      <li><b>Encerrado:</b> todas as sessões ativas (você precisará entrar novamente);</li>
+      <li><b>Mantido:</b> sua conta de acesso e os dados essenciais ao funcionamento do serviço;</li>
+      <li>Registros legais/fiscais permanecem conforme a <a href="/politica-de-seguranca">Política de Privacidade</a>.</li>
+    </ul>
+  </div>
+
+  <div id="msg" class="msg"></div>
+
+  <form class="form" id="form" autocomplete="off">
+    <div class="field">
+      <label for="email">E-mail da conta</label>
+      <input type="email" id="email" name="email" placeholder="voce@empresa.com.br" required>
+    </div>
+    <div class="field">
+      <label for="password">Senha</label>
+      <input type="password" id="password" name="password" placeholder="Sua senha de acesso" required>
+    </div>
+    <button type="submit" class="btn btn-p" id="submit">Eliminar meus dados pessoais</button>
+  </form>
+
+  <p class="alt">Quer remover tudo? <a href="/excluir-conta">Excluir minha conta →</a></p>
+</main>
+
+<footer>
+  <div class="foot-links">
+    <a href="/politica-de-seguranca">Privacidade & Segurança</a>
+    <a href="/termos">Termos de Uso</a>
+    <a href="/excluir-conta">Excluir Conta</a>
+    <a href="/excluir-dados">Excluir Dados</a>
+  </div>
+  <p class="foot-c">© 2026 VAI Inteligência Comercial · Vértice Patrimonial v3.1</p>
+</footer>
+
+<script>
+(function(){
+  var form=document.getElementById('form'),
+      btn=document.getElementById('submit'),
+      msg=document.getElementById('msg');
+
+  function show(type,text){
+    msg.className='msg show '+type;
+    msg.textContent=text;
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+
+  form.addEventListener('submit',async function(e){
+    e.preventDefault();
+    var email=document.getElementById('email').value.trim(),
+        password=document.getElementById('password').value;
+    btn.disabled=true;
+    btn.innerHTML='<span class="spinner"></span> Processando...';
+    msg.className='msg';
+    try{
+      var r=await fetch('/api/conta/excluir-dados',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({email:email,password:password})
+      });
+      var data=await r.json().catch(function(){return {};});
+      if(r.ok){
+        form.style.display='none';
+        document.querySelector('.info').style.display='none';
+        document.querySelector('.alt').style.display='none';
+        show('ok',data.message||'Seus dados pessoais foram eliminados.');
+      }else{
+        show('err',(data.error||'Não foi possível processar a solicitação.')+' Verifique seus dados e tente novamente.');
+        btn.disabled=false;btn.textContent='Eliminar meus dados pessoais';
+      }
+    }catch(err){
+      show('err','Erro de conexão. Verifique sua internet e tente novamente.');
+      btn.disabled=false;btn.textContent='Eliminar meus dados pessoais';
+    }
+  });
+})();
+</script>
+</body>
+</html>

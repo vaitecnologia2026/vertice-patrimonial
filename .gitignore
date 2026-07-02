@@ -1,0 +1,23 @@
+# Dependências
+node_modules/
+
+# Segredos / ambiente
+.env
+.env.local
+.env.production
+*.pem
+*.key
+
+# Uploads e dados de runtime
+backend/uploads/*
+!backend/uploads/.gitkeep
+*.log
+logs/
+
+# Lixo do sistema operacional
+.DS_Store
+._*
+Thumbs.db
+
+# Build local
+dist/

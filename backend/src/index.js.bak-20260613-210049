@@ -1,0 +1,280 @@
+require('dotenv').config();
+const express = require('express');
+const cors = require('cors');
+const helmet = require('helmet');
+const compression = require('compression');
+const morgan = require('morgan');
+const rateLimit = require('express-rate-limit');
+const path = require('path');
+const fs = require('fs');
+
+const { version } = require('../package.json');
+const prisma = require('./utils/prisma');
+const logger = require('./utils/logger');
+const { errorHandler, notFound } = require('./middleware/errorHandler');
+
+// Routes
+const authRoutes        = require('./routes/auth');
+const licenciadosRoutes = require('./routes/licenciados');
+const clientesRoutes    = require('./routes/clientes');
+const vendasRoutes      = require('./routes/vendas');
+const comissoesRoutes   = require('./routes/comissoes');
+const operacoesRoutes   = require('./routes/operacoes');
+const contratosRoutes   = require('./routes/contratos');
+const documentosRoutes  = require('./routes/documentos');
+const metasRoutes       = require('./routes/metas');
+const consorciosRoutes  = require('./routes/consorcios');
+const cursosRoutes      = require('./routes/cursos');
+const configRoutes      = require('./routes/config');
+const auditoriaRoutes   = require('./routes/auditoria');
+const usuariosRoutes    = require('./routes/usuarios');
+const clientLogRoutes  = require('./routes/clientlog');
+const kanbanRoutes      = require('./routes/kanban');
+const dashboardRoutes   = require('./routes/dashboard');
+const parceirosRoutes   = require('./routes/parceiros');
+const partnerLeadsRoutes = require('./routes/partnerLeads');
+const partnerPayoutsRoutes = require('./routes/partnerPayouts');
+const lpRoutes          = require('./routes/lp');
+const oportunidadesRoutes = require('./routes/oportunidades');
+const nucleoRoutes      = require('./routes/nucleo');
+const mensalidadesRoutes = require('./routes/mensalidades');
+
+const app = express();
+
+// ─── SEGURANÇA ────────────────────────────────────────────────
+app.set('trust proxy', 1);
+
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+  contentSecurityPolicy: false,
+}));
+
+// CORS — rejeitar wildcard em produção (defesa em camadas: env var "*" é ignorada em prod)
+const isProd = process.env.NODE_ENV === 'production';
+const rawOrigin = (process.env.CORS_ORIGIN || '').trim();
+let corsOrigin;
+if (isProd) {
+  if (!rawOrigin || rawOrigin === '*') {
+    logger.warn('CORS_ORIGIN ausente ou "*" em produção — CORS bloqueado (apenas same-origin). Configure CORS_ORIGIN com domínio(s) específico(s).');
+    corsOrigin = false;
+  } else {
+    // Aceita lista separada por vírgula: "https://a.com,https://b.com"
+    corsOrigin = rawOrigin.includes(',') ? rawOrigin.split(',').map(s => s.trim()).filter(Boolean) : rawOrigin;
+  }
+} else {
+  corsOrigin = rawOrigin || '*';
+}
+app.use(cors({
+  origin: corsOrigin,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
+  maxAge: 600, // cache preflight por 10 min
+}));
+
+// Rate limiting global
+app.use(rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 300,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Muitas requisições. Tente novamente em instantes.' },
+}));
+
+// Rate limiting para uploads (aplicado só na rota POST de documentos)
+const uploadLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  message: { error: 'Muitos uploads. Aguarde antes de enviar mais arquivos.' },
+});
+
+// ─── MIDDLEWARE ───────────────────────────────────────────────
+app.use(compression());
+// 25mb: o espelho do núcleo (imóveis com fotos base64) passava de 5mb e o backend
+// REJEITAVA o PUT (413) → mudança não salvava. Margem até migrar uploads p/ arquivo.
+app.use(express.json({ limit: '25mb' }));
+app.use(express.urlencoded({ extended: true, limit: '25mb' }));
+app.use(morgan('combined', { stream: { write: msg => logger.http(msg.trim()) } }));
+
+// Uploads estáticos — com headers de segurança.
+// FIX (2026-05-28): Content-Disposition: attachment estava FORÇANDO download de TUDO,
+// impedindo exibição inline de imagens (logo aparecem como download em vez de renderizar).
+// Solução: 'inline' para imagens (jpg/png/webp/gif/svg), 'attachment' para o resto (PDF/Word/etc).
+const IMAGE_EXTS = new Set(['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp', '.ico']);
+app.use('/uploads', (req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  const ext = path.extname(req.path).toLowerCase();
+  res.setHeader('Content-Disposition', IMAGE_EXTS.has(ext) ? 'inline' : 'attachment');
+  res.setHeader('Cache-Control', 'public, max-age=604800, immutable'); // 7 dias — arquivos têm timestamp no nome
+  next();
+}, express.static(path.join(__dirname, '../uploads')));
+
+// Frontend estático — vertice-vai.html, lp-parceiros.html, lp-indicar.html
+// FIX (2026-05-28): HTML estava sendo servido SEM gzip + cache no-store.
+// Com 845 KB cada visita baixava do zero, fritando conexões 3G.
+// Solução: ler arquivo manualmente e usar res.send() para que o middleware compression() pegue.
+// Cache mudou para 'private, must-revalidate' permitindo 304 Not Modified via ETag.
+const FRONTEND_DIR = path.join(__dirname, '..', 'public');
+const noCacheHTML = (req, res, next) => {
+  // Permite cache privado do navegador com revalidação obrigatória (ETag/Last-Modified)
+  res.setHeader('Cache-Control', 'private, must-revalidate, max-age=0');
+  res.setHeader('CDN-Cache-Control', 'no-store'); // mas CDN não cacheia
+  next();
+};
+// Cache dos HTMLs em memória pra evitar I/O em cada request — invalida quando arquivo muda
+const HTML_CACHE = {};
+const getHTML = (file) => {
+  const full = path.join(FRONTEND_DIR, file);
+  try {
+    const stat = fs.statSync(full);
+    const key = file;
+    if (!HTML_CACHE[key] || HTML_CACHE[key].mtime !== stat.mtimeMs) {
+      HTML_CACHE[key] = { content: fs.readFileSync(full, 'utf8'), mtime: stat.mtimeMs };
+    }
+    return HTML_CACHE[key];
+  } catch { return null; }
+};
+app.get('/vertice-vai.html', (req, res) => res.redirect(302, '/app/'));
+[].forEach(file => { // versao classica -> redireciona pro React (acima)
+  app.get('/' + file, noCacheHTML, (req, res) => {
+    const html = getHTML(file);
+    if (!html) return res.status(404).send('Not found');
+    // ETag + Last-Modified para suportar 304
+    const etag = 'W/"' + file + '-' + html.mtime + '"';
+    res.setHeader('ETag', etag);
+    res.setHeader('Last-Modified', new Date(html.mtime).toUTCString());
+    res.setHeader('Vary', 'Accept-Encoding');
+    if (req.headers['if-none-match'] === etag) return res.status(304).end();
+    // res.send() passa pelo compression() middleware (sendFile não)
+    res.type('html').send(html.content);
+  });
+});
+// ── LPs migradas pro React (/app/lp/*): redireciona URLs .html antigas preservando a query ──
+app.get('/lp-licenciados.html', (req, res) => res.redirect(302, '/app/lp/licenciado'));
+app.get('/lp-parceiros.html', (req, res) => { const i = req.url.indexOf('?'); res.redirect(302, '/app/lp/parceiros' + (i >= 0 ? req.url.slice(i) : '')); });
+app.get('/lp-indicar.html', (req, res) => { const i = req.url.indexOf('?'); res.redirect(302, '/app/lp/indicar' + (i >= 0 ? req.url.slice(i) : '')); });
+
+['lp-shared.css', 'logo-vertice.svg', 'logo-pegasus-gold.jpg'].forEach(file => {
+  app.get('/' + file, (req, res) => {
+    res.setHeader('Cache-Control', 'public, max-age=86400, immutable'); // 24h
+    res.sendFile(path.join(FRONTEND_DIR, file));
+  });
+});
+
+// ── REACT BETA (Strangler Fig) ────────────────────────────────
+// App React rodando em /app/* — Vite build com base '/app/'.
+// Assets (CSS/JS) são imutáveis (têm hash no nome) → cache forever.
+// HTML é cacheable mas revalidável.
+const REACT_DIR = path.join(FRONTEND_DIR, 'app');
+// Assets do Vite (têm hash no nome, podem ser imutáveis)
+app.use('/app/assets', express.static(path.join(REACT_DIR, 'assets'), {
+  maxAge: '1y',
+  immutable: true,
+  etag: false,
+}));
+// PWA service worker + workbox runtime: têm nome FIXO, então NUNCA podem ser
+// cacheados na borda — senão o Cloudflare segura o SW antigo (~4h) e o update do
+// PWA não aparece pra quem já tem o site. Servidos com no-store (igual ao SPA
+// fallback) → Cloudflare faz BYPASS e o navegador sempre revalida.
+const serveSW = (req, res) => {
+  res.type('application/javascript');
+  res.sendFile(path.join(REACT_DIR, path.basename(req.path)));
+};
+app.get('/app/sw.js', noCacheHTML, serveSW);
+app.get(/^\/app\/workbox-[^/]+\.js$/, noCacheHTML, serveSW);
+// Outros assets estáticos do React (favicon, icons.svg, etc.)
+app.use('/app', express.static(REACT_DIR, {
+  maxAge: '1h',
+  index: false, // não serve index.html aqui, vamos servir manualmente abaixo
+  setHeaders: (res, filePath) => {
+    // index.html (e qualquer .html) NUNCA pode ser cacheado, senão o navegador
+    // segura o shell antigo apontando pra um bundle velho. Só os assets hasheados
+    // (servidos em /app/assets) ficam imutáveis. Reforça o autoUpdate do PWA.
+    if (filePath.endsWith('.html')) {
+      res.setHeader('Cache-Control', 'private, must-revalidate, max-age=0');
+      res.setHeader('CDN-Cache-Control', 'no-store');
+    }
+  },
+}));
+// SPA fallback: qualquer rota /app/* não-encontrada cai no index.html (React Router)
+app.get(/^\/app(\/.*)?$/, noCacheHTML, (req, res) => {
+  const html = getHTML('app/index.html');
+  if (!html) return res.status(404).send('React app not deployed');
+  const etag = 'W/"app-' + html.mtime + '"';
+  res.setHeader('ETag', etag);
+  res.setHeader('Last-Modified', new Date(html.mtime).toUTCString());
+  res.setHeader('Vary', 'Accept-Encoding');
+  if (req.headers['if-none-match'] === etag) return res.status(304).end();
+  res.type('html').send(html.content);
+});
+
+app.get('/', (req, res) => res.redirect('/app/'));
+
+// ─── HEALTH CHECK ────────────────────────────────────────────
+app.get('/health', async (req, res) => {
+  let db = 'ok';
+  try { await prisma.$queryRaw`SELECT 1`; } catch { db = 'error'; }
+  res.status(db === 'ok' ? 200 : 503).json({
+    status: db === 'ok' ? 'ok' : 'degraded',
+    version,
+    db,
+    timestamp: new Date().toISOString(),
+    uptime: Math.floor(process.uptime()),
+  });
+});
+
+// ─── ROTAS ───────────────────────────────────────────────────
+app.use('/api/auth',         authRoutes);
+app.use('/api/licenciados',  licenciadosRoutes);
+app.use('/api/clientes',     clientesRoutes);
+app.use('/api/vendas',       vendasRoutes);
+app.use('/api/comissoes',    comissoesRoutes);
+app.use('/api/operacoes',    operacoesRoutes);
+app.use('/api/contratos',    contratosRoutes);
+app.use('/api/documentos',   uploadLimiter, documentosRoutes);
+app.use('/api/metas',        metasRoutes);
+app.use('/api/consorcios',   consorciosRoutes);
+app.use('/api/cursos',       cursosRoutes);
+app.use('/api/config',       configRoutes);
+app.use('/api/auditoria',    auditoriaRoutes);
+app.use('/api/usuarios',     usuariosRoutes);
+app.use('/api/client-log',   clientLogRoutes);
+app.use('/api/kanban',       kanbanRoutes);
+app.use('/api/dashboard',    dashboardRoutes);
+app.use('/api/parceiros',         parceirosRoutes);
+app.use('/api/partner-leads',     partnerLeadsRoutes);
+app.use('/api/partner-payouts',   partnerPayoutsRoutes);
+app.use('/api/lp',                lpRoutes);
+app.use('/api/opportunities',     oportunidadesRoutes);
+app.use('/api/oportunidades',     oportunidadesRoutes);
+app.use('/api/imoveis',           nucleoRoutes.imoveis);
+app.use('/api/colaboradores',     nucleoRoutes.colaboradores);
+app.use('/api/corretores',        nucleoRoutes.corretores);
+app.use('/api/mensalidades',      mensalidadesRoutes);
+
+// Serve a LP pública (oportunidade.html) — tanto no path /oportunidade quanto /oportunidades/:slug
+// Mesma estratégia: ler manualmente pra passar pelo compression()
+const serveOpp = (req, res) => {
+  const html = getHTML('oportunidade.html');
+  if (!html) return res.status(404).send('Not found');
+  const etag = 'W/"oportunidade.html-' + html.mtime + '"';
+  res.setHeader('ETag', etag);
+  res.setHeader('Last-Modified', new Date(html.mtime).toUTCString());
+  res.setHeader('Vary', 'Accept-Encoding');
+  if (req.headers['if-none-match'] === etag) return res.status(304).end();
+  res.type('html').send(html.content);
+};
+app.get(['/oportunidade.html', '/oportunidade'], (req, res) => { const i = req.url.indexOf('?'); res.redirect(302, '/app/lp/oportunidade' + (i >= 0 ? req.url.slice(i) : '')); });
+app.get('/oportunidades/:slug', (req, res) => res.redirect(302, '/app/lp/oportunidade?id=' + encodeURIComponent(req.params.slug)));
+
+// ─── ERROR HANDLERS ──────────────────────────────────────────
+app.use(notFound);
+app.use(errorHandler);
+
+// ─── START ───────────────────────────────────────────────────
+const PORT = process.env.PORT || 4000;
+app.listen(PORT, () => {
+  logger.info(`Vertice API v${version} rodando na porta ${PORT} [${process.env.NODE_ENV || 'development'}]`);
+});
+
+module.exports = app;

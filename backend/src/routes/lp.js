@@ -1,0 +1,218 @@
+const express = require('express');
+const rateLimit = require('express-rate-limit');
+const prisma = require('../utils/prisma');
+const { pick } = require('../utils/sanitize');
+
+const router = express.Router();
+
+const lpLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Muitas requisições. Aguarde alguns minutos.' },
+});
+
+const VALID_TIPO_ATUACAO = ['Corretor de imóveis', 'Advogado', 'Contador', 'Consultor financeiro', 'Indicador / Influenciador', 'Outro'];
+const PRODUTOS = ['Arrematação Individual', 'Home Equity', 'Revisão Contratual', 'Clube do Milhão', 'Todos'];
+
+router.use(lpLimiter);
+
+// ═══════════════════════════════════════════════════════════════
+// LP de PARCEIROS — público: licenciado captura parceiros
+// ═══════════════════════════════════════════════════════════════
+
+// GET /api/lp/parceiros/:licId — info pública do licenciado
+router.get('/parceiros/:licId', async (req, res, next) => {
+  try {
+    const lic = await prisma.licenciado.findUnique({
+      where: { id: req.params.licId },
+      select: { id: true, nome: true, empresa: true, estado: true, status: true },
+    });
+    if (!lic) return res.status(404).json({ error: 'Licenciado não encontrado.' });
+    if (lic.status !== 'ATIVO') return res.status(403).json({ error: 'Licenciado indisponível.' });
+    res.json({ licenciado: lic, produtos: PRODUTOS, tiposAtuacao: VALID_TIPO_ATUACAO });
+  } catch (err) { next(err); }
+});
+
+// POST /api/lp/parceiros/:licId — cria Parceiro PENDENTE
+router.post('/parceiros/:licId', async (req, res, next) => {
+  try {
+    const lic = await prisma.licenciado.findUnique({
+      where: { id: req.params.licId },
+      select: { id: true, status: true },
+    });
+    if (!lic || lic.status !== 'ATIVO') {
+      return res.status(404).json({ error: 'Licenciado não disponível.' });
+    }
+
+    const data = pick(req.body, ['nome', 'whatsapp', 'email', 'documento', 'cidade', 'estado', 'tipoAtuacao', 'prodInteresse']);
+    if (!data.nome || !data.whatsapp || !data.email || !data.documento) {
+      return res.status(400).json({ error: 'Preencha nome, WhatsApp, e-mail e documento.' });
+    }
+
+    // Anti-duplicação: mesmo email/documento + licenciado em 24h
+    const recent = await prisma.parceiro.findFirst({
+      where: {
+        licId: lic.id,
+        OR: [{ email: data.email }, { documento: data.documento }],
+        createdAt: { gt: new Date(Date.now() - 24 * 60 * 60 * 1000) },
+      },
+    });
+    if (recent) {
+      return res.status(409).json({ error: 'Cadastro recente já recebido. Aguarde o contato do licenciado.' });
+    }
+
+    const parc = await prisma.parceiro.create({
+      data: {
+        ...data,
+        licId: lic.id,
+        status: 'PENDENTE',
+        origem: 'lp',
+      },
+    });
+
+    res.status(201).json({ ok: true, id: parc.id, message: 'Cadastro recebido. Você será contatado em breve.' });
+  } catch (err) { next(err); }
+});
+
+// ═══════════════════════════════════════════════════════════════
+// LP de INDICAÇÃO — público: parceiro indica clientes
+// ═══════════════════════════════════════════════════════════════
+
+// Permite buscar por id OU slugLp
+async function buscarParceiroPublico(idOrSlug) {
+  return prisma.parceiro.findFirst({
+    where: { OR: [{ id: idOrSlug }, { slugLp: idOrSlug }] },
+    include: { licenciado: { select: { id: true, nome: true, empresa: true } } },
+  });
+}
+
+// GET /api/lp/indicacao/:parceiroId — info pública do parceiro ATIVO
+router.get('/indicacao/:parceiroId', async (req, res, next) => {
+  try {
+    const parc = await buscarParceiroPublico(req.params.parceiroId);
+    if (!parc) return res.status(404).json({ error: 'Link inválido.' });
+    if (parc.status !== 'ATIVO') return res.status(403).json({ error: 'Parceiro indisponível.' });
+    res.json({
+      parceiro: { id: parc.id, nome: parc.nome, slugLp: parc.slugLp },
+      licenciado: parc.licenciado,
+      produtos: PRODUTOS,
+    });
+  } catch (err) { next(err); }
+});
+
+// POST /api/lp/indicacao/:parceiroId — cria PartnerLead
+router.post('/indicacao/:parceiroId', async (req, res, next) => {
+  try {
+    const parc = await buscarParceiroPublico(req.params.parceiroId);
+    if (!parc) return res.status(404).json({ error: 'Link inválido.' });
+    if (parc.status !== 'ATIVO') return res.status(403).json({ error: 'Link expirado ou inativo.' });
+
+    const data = pick(req.body, ['nomeCliente', 'telefoneCliente', 'emailCliente', 'cidadeCliente', 'estadoCliente', 'produto', 'observacao']);
+    // Aceita também os nomes alternativos do form da LP
+    data.nomeCliente     = data.nomeCliente     || req.body.nome;
+    data.telefoneCliente = data.telefoneCliente || req.body.telefone;
+    data.emailCliente    = data.emailCliente    || req.body.email;
+    data.cidadeCliente   = data.cidadeCliente   || req.body.cidade;
+    data.estadoCliente   = data.estadoCliente   || req.body.estado;
+
+    if (!data.nomeCliente)     return res.status(400).json({ error: 'Informe o nome do cliente.' });
+    if (!data.telefoneCliente) return res.status(400).json({ error: 'Informe o telefone do cliente.' });
+
+    // Anti-spam: mesma combinação (parceiro, nome, telefone) em 6h
+    const dup = await prisma.partnerLead.findFirst({
+      where: {
+        parceiroId: parc.id,
+        nomeCliente: data.nomeCliente,
+        telefoneCliente: data.telefoneCliente,
+        createdAt: { gt: new Date(Date.now() - 6 * 60 * 60 * 1000) },
+      },
+    });
+    if (dup) return res.status(409).json({ error: 'Indicação duplicada detectada.' });
+
+    const lead = await prisma.partnerLead.create({
+      data: {
+        ...data,
+        parceiroId: parc.id,
+        licId: parc.licId,
+        origem: 'lp_parceiro',
+        status: 'NOVO',
+      },
+    });
+
+    res.status(201).json({ ok: true, id: lead.id, message: 'Indicação recebida. Obrigado!' });
+  } catch (err) { next(err); }
+});
+
+// ═══════════════════════════════════════════════════════════════
+// LP de LICENCIADOS — público: Vertice capta candidatos a licenciado
+// ═══════════════════════════════════════════════════════════════
+
+// GET /api/lp/licenciados — info pública (estados, produtos, etc)
+router.get('/licenciados', async (req, res, next) => {
+  try {
+    const total = await prisma.licenciado.count({ where: { status: 'ATIVO' } });
+    res.json({
+      plataforma: 'Vértice',
+      produtos: PRODUTOS,
+      licenciadosAtivos: total,
+      estados: ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'],
+    });
+  } catch (err) { next(err); }
+});
+
+// POST /api/lp/licenciados — cria Licenciado PENDENTE
+router.post('/licenciados', async (req, res, next) => {
+  try {
+    const data = pick(req.body, ['nome', 'empresa', 'cnpj', 'estado', 'email', 'tel']);
+    const obs = req.body.motivo ? String(req.body.motivo).slice(0, 500) : null;
+
+    if (!data.nome || !data.empresa || !data.cnpj || !data.email || !data.tel) {
+      return res.status(400).json({ error: 'Preencha nome, empresa, CNPJ, email e telefone.' });
+    }
+    if (!data.estado || data.estado.length !== 2) {
+      return res.status(400).json({ error: 'Estado (UF) inválido.' });
+    }
+    data.estado = data.estado.toUpperCase();
+
+    // Anti-duplicação: mesmo CNPJ ou email em 24h
+    const recent = await prisma.licenciado.findFirst({
+      where: {
+        OR: [{ cnpj: data.cnpj }, { email: data.email }],
+        createdAt: { gt: new Date(Date.now() - 24 * 60 * 60 * 1000) },
+      },
+    });
+    if (recent) {
+      return res.status(409).json({ error: 'Cadastro recente já recebido. Aguarde o contato da Vértice.' });
+    }
+
+    // Bloqueio se CNPJ/email já são de licenciado ATIVO
+    const existing = await prisma.licenciado.findFirst({
+      where: { OR: [{ cnpj: data.cnpj }, { email: data.email }], status: { in: ['ATIVO', 'SUSPENSO'] } },
+    });
+    if (existing) {
+      return res.status(409).json({ error: 'CNPJ ou email já está em uso por uma licença ativa.' });
+    }
+
+    const lic = await prisma.licenciado.create({
+      data: {
+        ...data,
+        status: 'PENDENTE',
+        origem: 'lp',
+        inicio: new Date(),
+        meta: 3000000,
+        ano: 1,
+        motivo: obs, // candidatura: "por que quer ser licenciado?" (coluna própria)
+      },
+    });
+
+    res.status(201).json({
+      ok: true,
+      id: lic.id,
+      message: 'Candidatura recebida. A Vértice entrará em contato em breve.',
+    });
+  } catch (err) { next(err); }
+});
+
+module.exports = router;
