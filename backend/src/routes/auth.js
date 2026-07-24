@@ -44,7 +44,7 @@ function generateTokens(userId) {
 
 // POST /api/auth/login (rate-limit IP + email)
 router.post('/login', loginLimiter, loginEmailLimiter, [
-  body('email').isEmail().normalizeEmail().withMessage('Email inválido.'),
+  body('email').isEmail().normalizeEmail({ gmail_remove_dots: false }).withMessage('Email inválido.'),
   body('password').isLength({ min: 8 }).withMessage('Senha muito curta.'),
 ], async (req, res, next) => {
   try {

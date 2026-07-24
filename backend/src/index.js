@@ -39,7 +39,6 @@ const oportunidadesRoutes = require('./routes/oportunidades');
 const nucleoRoutes      = require('./routes/nucleo');
 const mensalidadesRoutes = require('./routes/mensalidades');
 const uploadsRoutes     = require('./routes/uploads');
-const contaRoutes       = require('./routes/conta');
 
 const app = express();
 
@@ -270,16 +269,6 @@ app.use('/api/colaboradores',     nucleoRoutes.colaboradores);
 app.use('/api/corretores',        nucleoRoutes.corretores);
 app.use('/api/mensalidades',      mensalidadesRoutes);
 app.use('/api/uploads',           uploadsRoutes);
-// Autoatendimento de privacidade (exclusão de conta/dados) — público, protegido por
-// verificação de credenciais na própria rota + rate-limit dedicado (anti força-bruta)
-const contaLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 20,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { error: 'Muitas tentativas. Aguarde alguns minutos.' },
-});
-app.use('/api/conta',             contaLimiter, contaRoutes);
 
 // Serve a LP pública (oportunidade.html) — tanto no path /oportunidade quanto /oportunidades/:slug
 // Mesma estratégia: ler manualmente pra passar pelo compression()
@@ -295,29 +284,6 @@ const serveOpp = (req, res) => {
 };
 app.get(['/oportunidade.html', '/oportunidade'], (req, res) => { const i = req.url.indexOf('?'); res.redirect(302, '/app/lp/oportunidade' + (i >= 0 ? req.url.slice(i) : '')); });
 app.get('/oportunidades/:slug', (req, res) => res.redirect(302, '/app/lp/oportunidade?id=' + encodeURIComponent(req.params.slug)));
-
-// ─── PÁGINAS LEGAIS PÚBLICAS (privacidade, termos, exclusão) ──
-// Exigidas para validação nas lojas (App Store / Play Store). Servidas do
-// FRONTEND_DIR (backend/public) com o mesmo padrão getHTML (gzip + ETag/304).
-const LEGAL_PAGES = {
-  '/politica-de-seguranca': 'politica-de-seguranca.html',
-  '/privacidade':           'politica-de-seguranca.html',
-  '/termos':                'termos.html',
-  '/excluir-conta':         'excluir-conta.html',
-  '/excluir-dados':         'excluir-dados.html',
-};
-Object.entries(LEGAL_PAGES).forEach(([route, file]) => {
-  app.get(route, noCacheHTML, (req, res) => {
-    const html = getHTML(file);
-    if (!html) return res.status(404).send('Not found');
-    const etag = 'W/"' + file + '-' + html.mtime + '"';
-    res.setHeader('ETag', etag);
-    res.setHeader('Last-Modified', new Date(html.mtime).toUTCString());
-    res.setHeader('Vary', 'Accept-Encoding');
-    if (req.headers['if-none-match'] === etag) return res.status(304).end();
-    res.type('html').send(html.content);
-  });
-});
 
 // ─── ERROR HANDLERS ──────────────────────────────────────────
 app.use(notFound);

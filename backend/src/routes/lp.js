@@ -10,6 +10,9 @@ const lpLimiter = rateLimit({
   max: 30,
   standardHeaders: true,
   legacyHeaders: false,
+  // Limita só os POST (envio de formulário/lead — anti-spam). GET é leitura pública da LP
+  // (ver imóvel, parceiros) e não pode ser estrangulado a 30/15min — fica no limite global.
+  skip: (req) => req.method === 'GET',
   message: { error: 'Muitas requisições. Aguarde alguns minutos.' },
 });
 
@@ -211,6 +214,60 @@ router.post('/licenciados', async (req, res, next) => {
       ok: true,
       id: lic.id,
       message: 'Candidatura recebida. A Vértice entrará em contato em breve.',
+    });
+  } catch (err) { next(err); }
+});
+
+// GET /api/lp/imovel/:id — dados PÚBLICOS do imóvel pra a LP (LINK CURTO, sem ?d=).
+// Antes o link embutia tudo em base64 no ?d= → URL gigante que truncava no WhatsApp.
+// Agora o link é só /app/lp/oportunidade/<id> e a LP busca os dados aqui.
+// Whitelist de campos públicos (NÃO expõe jurídico/parecer/checklist/anexos/estudo).
+router.get('/imovel/:id', async (req, res, next) => {
+  try {
+    const row = await prisma.imovel.findUnique({ where: { id: String(req.params.id) } });
+    if (!row || !row.data) return res.status(404).json({ error: 'Imóvel não encontrado.' });
+    const d = row.data;
+    const fotos = Array.isArray(d.opp_fotos)
+      ? d.opp_fotos.filter((f) => typeof f === 'string' && f && !f.startsWith('data:')).slice(0, 12)
+      : [];
+    let corretor = d.opp_corretor || { nome: 'Equipe Vértice', tel: '', wa: '' };
+    let respAq = d.opp_respAq || { nome: '', tel: '', wa: '' };
+    // Atribuição: ?lic= → leva o contato do licenciado que compartilhou.
+    if (req.query.lic) {
+      const lic = await prisma.licenciado.findUnique({ where: { id: String(req.query.lic) } }).catch(() => null);
+      if (lic && lic.tel) {
+        const digits = String(lic.tel).replace(/\D/g, '');
+        const wa = digits.startsWith('55') ? digits : (digits.length <= 11 ? '55' + digits : digits);
+        corretor = { nome: lic.nome, tel: lic.tel, wa };
+        respAq = corretor;
+      }
+    }
+    res.json({
+      id: d.id,
+      slug: d.opp_slug || null,
+      licId: req.query.lic || null,
+      titulo: d.end,
+      bairro: d.bairro,
+      cidade: d.cidade,
+      tipo: d.tipo,
+      lance: d.lance,
+      aval: d.aval,
+      deb: d.deb,
+      ref: d.ref,
+      leilao: d.leilao,
+      mod: d.mod,
+      resp: d.resp,
+      desc: d.opp_desc || '',
+      fotos,
+      finalidade: d.opp_finalidade || 'venda',
+      corretor,
+      respAq,
+      lat: d.opp_lat != null ? d.opp_lat : null,
+      lng: d.opp_lng != null ? d.opp_lng : null,
+      mapsUrl: d.opp_mapsUrl || '',
+      pubAt: d.opp_publishedAt || null,
+      views: d.opp_views || 0,
+      pixel: d.opp_pixel || { fb: '', ga: '' },
     });
   } catch (err) { next(err); }
 });
